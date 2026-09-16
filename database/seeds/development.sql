@@ -51,13 +51,13 @@ SELECT id, 'Forklift and pedestrian safety overview', 'text',
 FROM training_modules WHERE slug = 'forklift-pedestrian-safety'
 ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
 
--- Prototype Manual Handling scenario fixture. The resource reference is a
--- development placeholder until the Phase 6 viewer supplies a real panorama.
+-- Manual Handling 360-degree scenario fixture. The browser viewer uses the
+-- local equirectangular panorama stored with the client assets.
 INSERT INTO scenarios
   (training_module_id, title, description, resource_reference, sequence_order, is_active)
 SELECT id, 'Warehouse Manual Handling Scenario',
   'Prototype warehouse decision scenario for applying Manual Handling learning.',
-  'prototype://manual-handling-warehouse', 1, true
+  'asset://scenarios/manual-handling/manual-handling-warehouse.jpg', 1, true
 FROM training_modules WHERE slug = 'manual-handling'
 ON CONFLICT (training_module_id, sequence_order) DO UPDATE SET
   title = EXCLUDED.title,

@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { BrandLogo } from '../components/BrandLogo';
 import { useAuth } from '../features/auth/auth.context';
@@ -23,8 +23,13 @@ const sidebarItems = [
 
 export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const traineeScenarioActive =
+    audience === 'Trainee' &&
+    /^\/trainee\/training\/[^/]+\/scenario(?:\/|$)/.test(location.pathname);
 
   const items =
     audience === 'Trainee'
@@ -95,9 +100,18 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
               key={label}
               to={to}
               end={label === 'Dashboard'}
-              className={({ isActive }) =>
-                `nav-item ${isActive || active ? 'active' : ''}`
-              }
+              className={({ isActive }) => {
+                const scenarioNavActive =
+                  traineeScenarioActive && label === 'Scenarios';
+                const nestedTrainingShouldYieldToScenario =
+                  traineeScenarioActive && label === 'My Training';
+                return `nav-item ${
+                  scenarioNavActive ||
+                  (!nestedTrainingShouldYieldToScenario && (isActive || active))
+                    ? 'active'
+                    : ''
+                }`;
+              }}
             >
               <span className="nav-icon" aria-hidden="true">
                 {label === 'Dashboard' && '▣'}

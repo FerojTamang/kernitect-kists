@@ -33,6 +33,34 @@ export async function createTrainee() {
   );
 }
 
+export async function prepareScenarioReadyTrainee() {
+  if (!pool || userId === undefined)
+    throw new Error('The browser trainee has not been created.');
+
+  await pool.query(
+    `DELETE FROM scenario_attempts sa
+     USING training_assignments a, training_modules m
+     WHERE sa.training_assignment_id = a.id
+       AND a.training_module_id = m.id
+       AND a.trainee_id = $1
+       AND m.slug = 'manual-handling'`,
+    [userId],
+  );
+
+  await pool.query(
+    `INSERT INTO training_content_completion
+       (trainee_id, training_assignment_id, training_module_id, training_content_id)
+     SELECT a.trainee_id, a.id, a.training_module_id, c.id
+     FROM training_assignments a
+     JOIN training_modules m ON m.id = a.training_module_id
+     JOIN training_content c
+       ON c.training_module_id = a.training_module_id AND c.is_active = true
+     WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+     ON CONFLICT (training_assignment_id, training_content_id) DO NOTHING`,
+    [userId],
+  );
+}
+
 export async function removeTrainee() {
   if (!pool) return;
   try {

@@ -164,7 +164,7 @@ export function TraineeTrainingModule() {
         </Link>
       </header>
       {allComplete ? (
-        <CompletionState />
+        <CompletionState assignmentId={module.assignmentId} />
       ) : (
         <>
           <section className="module-overview card">
@@ -713,7 +713,7 @@ function sectionImageAlt(title: string): string {
   return 'Worker using safe handling equipment in a warehouse';
 }
 
-function CompletionState() {
+function CompletionState({ assignmentId }: { assignmentId: number }) {
   return (
     <section className="completion-state card">
       <span className="completion-check" aria-hidden="true">
@@ -731,14 +731,19 @@ function CompletionState() {
       <div className="next-stage">
         <strong>Next stage</strong>
         <span>Interactive Warehouse Safety Scenario</span>
-        <small>Coming next</small>
+        <small>
+          Apply what you learned in five warehouse safety decisions.
+        </small>
       </div>
       <div className="completion-actions">
         <Link className="dashboard-action ghost" to="/trainee/training">
           Return to My Training
         </Link>
-        <Link className="dashboard-action" to="/trainee/dashboard">
-          Return to Dashboard
+        <Link
+          className="dashboard-action"
+          to={`/trainee/training/${assignmentId}/scenario`}
+        >
+          Start Interactive Scenario <span aria-hidden="true">→</span>
         </Link>
       </div>
     </section>

@@ -9,6 +9,8 @@ import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { TraineeDashboard } from './features/trainee/TraineeDashboard';
 import { TraineeTrainingModule } from './features/training/TraineeTrainingModule';
 import { TraineeTraining } from './features/trainee/TraineeTraining';
+import { TraineeScenario } from './features/scenarios/TraineeScenario';
+import { TraineeScenarios } from './features/trainee/TraineeScenarios';
 
 export function App() {
   return (
@@ -28,14 +30,20 @@ export function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TraineeDashboard />} />
           <Route path="training" element={<TraineeTraining />} />
+          <Route path="scenarios" element={<TraineeScenarios />} />
           <Route
             path="training/:assignmentId"
             element={<TraineeTrainingModule />}
           />
+          <Route
+            path="training/:assignmentId/scenario"
+            element={<TraineeScenario />}
+          />
           {traineeNavigation.map(
             (item) =>
               item.path !== 'dashboard' &&
-              item.path !== 'training' && (
+              item.path !== 'training' &&
+              item.path !== 'scenarios' && (
                 <Route
                   key={item.path}
                   path={item.path}
@@ -48,6 +56,33 @@ export function App() {
                 />
               ),
           )}
+          <Route
+            path="assessments"
+            element={
+              <PlaceholderPage
+                title="Assessments"
+                description="Final graded assessments will become available after the required learning and scenario stages are complete."
+              />
+            }
+          />
+          <Route
+            path="resources"
+            element={
+              <PlaceholderPage
+                title="Resources"
+                description="Additional workplace safety resources will be added as the KISTS prototype develops."
+              />
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <PlaceholderPage
+                title="Settings"
+                description="Trainee preferences and account settings are outside the current prototype scope."
+              />
+            }
+          />
         </Route>
       </Route>
       <Route element={<ProtectedRoute role="administrator" />}>
