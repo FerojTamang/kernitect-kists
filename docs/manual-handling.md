@@ -8,12 +8,13 @@ It does not implement the Phase 6 interactive 360-degree scenario, scenario scor
 
 **100% learning progress does not equal final module completion.** The assignment remains `in_progress` until later scenario and assessment phases exist.
 
-## Frontend route
+## Frontend routes
 
+- `/trainee/training` - authenticated trainee-specific assigned module list.
 - `/trainee/training/:assignmentId` - overview, ordered section list, learning content, formative checks and the final learning-content state.
 - `/trainee/dashboard` - existing dashboard entry point. The Manual Handling card shows persisted learning progress and section count.
 
-The route remains inside the protected trainee shell, with My Training active.
+The route remains inside the protected trainee shell, with My Training active. The module list reuses the trainee dashboard assignment contract, so it shows only modules assigned to the authenticated trainee. Forklift & Pedestrian Safety is shown honestly as not started/content coming later; no fake forklift lesson is added.
 
 ## API endpoints
 
@@ -49,9 +50,21 @@ The existing `progress` table remains the aggregate assignment record. Opening t
 
 Each section has two concise, single-answer multiple-choice practice questions and exactly four answer options per question.
 
+## Training imagery
+
+The learning UI uses the supplied assets from `client/src/assets/training/manual-handling/`:
+
+- `manual-handling-hero.png` for the module overview and Introduction.
+- `manual-handling-injury-risk.png` for Risks and Injuries.
+- `assess-load-before-lifting.png` for Assessing the Task and Load.
+- `correct-lifting-posture.png` and `incorrect-lifting-posture.png` for the Safe Lifting Techniques DO/DON'T comparison.
+- `safe-handling-equipment.png` for Practical Examples.
+
+The lifting comparison teaches safer and unsafe choices without claiming that one posture eliminates all injury risk.
+
 ## Formative behavior
 
-The trainee must open the section content and answer both questions correctly. Opening a page alone never completes a section. A wrong answer shows negative feedback and leaves the question retryable. A correct answer shows positive feedback and persists the correct state. Once both questions are correct, the section completion row is written and the learning progress updates immediately.
+The trainee must open the section content and answer both questions correctly. Opening a page alone never completes a section. Selecting an option is separate from submission: the selected option remains visible and only `Check Answer` sends the response to the API. A wrong answer shows negative feedback on the current question and leaves it retryable. A correct answer shows positive feedback and persists the correct state. Once both questions are correct, the section completion row is written and the learning progress updates immediately. The UI stays on the current section until the trainee clicks the explicit Continue action.
 
 The UI shows `X of 5 sections completed` and `Y% learning progress`, with an accessible progress bar. It clearly distinguishes Completed, In progress and Not started sections without relying only on color.
 

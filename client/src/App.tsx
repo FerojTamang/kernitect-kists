@@ -8,6 +8,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { TraineeDashboard } from './features/trainee/TraineeDashboard';
 import { TraineeTrainingModule } from './features/training/TraineeTrainingModule';
+import { TraineeTraining } from './features/trainee/TraineeTraining';
 
 export function App() {
   return (
@@ -26,13 +27,15 @@ export function App() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TraineeDashboard />} />
+          <Route path="training" element={<TraineeTraining />} />
           <Route
             path="training/:assignmentId"
             element={<TraineeTrainingModule />}
           />
           {traineeNavigation.map(
             (item) =>
-              item.path !== 'dashboard' && (
+              item.path !== 'dashboard' &&
+              item.path !== 'training' && (
                 <Route
                   key={item.path}
                   path={item.path}

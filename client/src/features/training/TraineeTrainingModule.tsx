@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import manualHandlingImage from '../../assets/images/dashboard/manual-handling.jpg';
+import heroImage from '../../assets/training/manual-handling/manual-handling-hero.png';
+import correctLiftingImage from '../../assets/training/manual-handling/correct-lifting-posture.png';
+import incorrectLiftingImage from '../../assets/training/manual-handling/incorrect-lifting-posture.png';
+import assessLoadImage from '../../assets/training/manual-handling/assess-load-before-lifting.png';
+import equipmentImage from '../../assets/training/manual-handling/safe-handling-equipment.png';
+import injuryRiskImage from '../../assets/training/manual-handling/manual-handling-injury-risk.png';
 import { ApiError, apiRequest } from '../../services/api/request';
 import './training-module.css';
 
@@ -51,6 +56,9 @@ export function TraineeTrainingModule() {
   const [module, setModule] = useState<TrainingModuleResponse | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [feedback, setFeedback] = useState<Record<number, string>>({});
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<number, number>
+  >({});
   const [submitting, setSubmitting] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +86,15 @@ export function TraineeTrainingModule() {
     return () => window.clearTimeout(timer);
   }, [loadModule]);
 
-  async function answerQuestion(question: FormativeQuestion, optionId: number) {
+  function selectOption(questionId: number, optionId: number) {
+    setSelectedOptions((current) => ({ ...current, [questionId]: optionId }));
+    setFeedback((current) => ({ ...current, [questionId]: '' }));
+  }
+
+  async function answerQuestion(question: FormativeQuestion) {
     if (!module || submitting !== null) return;
+    const optionId = selectedOptions[question.id];
+    if (!optionId) return;
     const section = module.sections[activeIndex];
     if (!section) return;
     setSubmitting(question.id);
@@ -99,12 +114,6 @@ export function TraineeTrainingModule() {
         ...current,
         [question.id]: result.feedback,
       }));
-      if (result.sectionComplete) {
-        const next = result.module.sections.findIndex(
-          (section) => !section.completedAt,
-        );
-        setActiveIndex(next === -1 ? result.module.sections.length - 1 : next);
-      }
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401)
         return;
@@ -150,8 +159,8 @@ export function TraineeTrainingModule() {
             {allComplete ? 'Learning content complete' : module.moduleTitle}
           </h1>
         </div>
-        <Link className="secondary-link" to="/trainee/dashboard">
-          ← Back to dashboard
+        <Link className="secondary-link" to="/trainee/training">
+          ← Back to My Training
         </Link>
       </header>
       {allComplete ? (
@@ -184,7 +193,7 @@ export function TraineeTrainingModule() {
             </div>
             <img
               className="module-hero-image"
-              src={manualHandlingImage}
+              src={heroImage}
               alt="Warehouse worker lifting a box safely"
             />
           </section>
@@ -268,13 +277,20 @@ export function TraineeTrainingModule() {
             total={module.sections.length}
             feedback={feedback}
             submitting={submitting}
+            selectedOptions={selectedOptions}
             onPrevious={() => setActiveIndex((index) => Math.max(0, index - 1))}
             onNext={() =>
               setActiveIndex((index) =>
                 Math.min(module.sections.length - 1, index + 1),
               )
             }
+            onSelect={selectOption}
             onAnswer={answerQuestion}
+            onContinue={() =>
+              setActiveIndex((index) =>
+                Math.min(module.sections.length - 1, index + 1),
+              )
+            }
           />
         </>
       )}
@@ -288,18 +304,24 @@ function SectionContent({
   total,
   feedback,
   submitting,
+  selectedOptions,
   onPrevious,
   onNext,
+  onSelect,
   onAnswer,
+  onContinue,
 }: {
   section?: TrainingSection;
   index: number;
   total: number;
   feedback: Record<number, string>;
   submitting: number | null;
+  selectedOptions: Record<number, number>;
   onPrevious: () => void;
   onNext: () => void;
-  onAnswer: (question: FormativeQuestion, optionId: number) => Promise<void>;
+  onSelect: (questionId: number, optionId: number) => void;
+  onAnswer: (question: FormativeQuestion) => Promise<void>;
+  onContinue: () => void;
 }) {
   if (!section) return null;
   const checksComplete =
@@ -326,16 +348,19 @@ function SectionContent({
         </div>
         <img
           className="section-image"
-          src={manualHandlingImage}
-          alt="Safe manual handling in a warehouse"
+          src={sectionImageFor(section.title)}
+          alt={sectionImageAlt(section.title)}
         />
       </div>
       <KnowledgeCheck
         section={section}
         feedback={feedback}
         submitting={submitting}
+        selectedOptions={selectedOptions}
+        onSelect={onSelect}
         onAnswer={onAnswer}
         checksComplete={checksComplete}
+        onContinue={onContinue}
       />
       <div className="section-actions">
         <button
@@ -369,14 +394,20 @@ function KnowledgeCheck({
   section,
   feedback,
   submitting,
+  selectedOptions,
+  onSelect,
   onAnswer,
   checksComplete,
+  onContinue,
 }: {
   section: TrainingSection;
   feedback: Record<number, string>;
   submitting: number | null;
-  onAnswer: (question: FormativeQuestion, optionId: number) => Promise<void>;
+  selectedOptions: Record<number, number>;
+  onSelect: (questionId: number, optionId: number) => void;
+  onAnswer: (question: FormativeQuestion) => Promise<void>;
   checksComplete: boolean;
+  onContinue: () => void;
 }) {
   return (
     <section
@@ -408,14 +439,26 @@ function KnowledgeCheck({
               <button
                 key={option.id}
                 type="button"
-                className={`${question.selectedOptionId === option.id ? (question.answeredCorrectly ? 'selected-correct' : 'selected-wrong') : ''}`}
-                onClick={() => void onAnswer(question, option.id)}
+                className={`${selectedOptions[question.id] === option.id ? 'selected-option' : ''} ${question.selectedOptionId === option.id ? (question.answeredCorrectly ? 'selected-correct' : 'selected-wrong') : ''}`}
+                onClick={() => onSelect(question.id, option.id)}
                 disabled={submitting !== null || question.answeredCorrectly}
               >
                 {option.optionText}
               </button>
             ))}
           </div>
+          <button
+            className="check-answer-button"
+            type="button"
+            onClick={() => void onAnswer(question)}
+            disabled={
+              !selectedOptions[question.id] ||
+              submitting !== null ||
+              question.answeredCorrectly
+            }
+          >
+            {submitting === question.id ? 'Checking...' : 'Check Answer'}
+          </button>
           {feedback[question.id] ? (
             <p
               className={`answer-feedback ${question.answeredCorrectly ? 'correct' : 'incorrect'}`}
@@ -428,9 +471,19 @@ function KnowledgeCheck({
         </div>
       ))}
       {checksComplete ? (
-        <p className="check-complete" role="status">
-          ✓ Both answers are correct. Section completed.
-        </p>
+        <div className="check-complete" role="status">
+          <strong>✓ Check Your Understanding Complete</strong>
+          <span>Section completed. Learning progress updated.</span>
+          {section.sequenceOrder < 5 ? (
+            <button
+              className="dashboard-action compact"
+              type="button"
+              onClick={onContinue}
+            >
+              Continue to the next section <span aria-hidden="true">→</span>
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );
@@ -482,6 +535,36 @@ function SectionBody({ section }: { section: TrainingSection }) {
       <>
         <h3>The key steps to safe lifting</h3>
         <p>Follow these steps:</p>
+        <div className="lifting-comparison">
+          <div className="lifting-card safer">
+            <img
+              src={correctLiftingImage}
+              alt="Worker demonstrating a controlled lifting posture"
+            />
+            <strong>DO / Safer technique</strong>
+            <ul>
+              <li>Stable footing</li>
+              <li>Bend the knees appropriately</li>
+              <li>Keep the load close</li>
+              <li>Lift smoothly</li>
+              <li>Avoid unnecessary twisting</li>
+            </ul>
+          </div>
+          <div className="lifting-card unsafe">
+            <img
+              src={incorrectLiftingImage}
+              alt="Example of an unsafe lifting posture"
+            />
+            <strong>DON'T / Unsafe technique</strong>
+            <ul>
+              <li>Do not bend mainly from the back</li>
+              <li>Do not hold the load far away</li>
+              <li>Do not twist while lifting</li>
+              <li>Do not rush</li>
+              <li>Ask for assistance when needed</li>
+            </ul>
+          </div>
+        </div>
         <ol className="technique-list">
           {[
             'Plan the lift.',
@@ -507,6 +590,11 @@ function SectionBody({ section }: { section: TrainingSection }) {
       <p>
         Compare the examples and choose the technique that protects your body.
       </p>
+      <img
+        className="section-inline-image"
+        src={equipmentImage}
+        alt="Warehouse worker using suitable handling equipment"
+      />
       <div className="example-grid">
         <div className="example-card unsafe">
           <span>× Unsafe</span>
@@ -525,6 +613,26 @@ function SectionBody({ section }: { section: TrainingSection }) {
       </div>
     </>
   );
+}
+
+function sectionImageFor(title: string): string {
+  if (title === 'Introduction') return heroImage;
+  if (title === 'Risks and Injuries') return injuryRiskImage;
+  if (title === 'Assessing the Task and Load') return assessLoadImage;
+  if (title === 'Safe Lifting Techniques') return correctLiftingImage;
+  return equipmentImage;
+}
+
+function sectionImageAlt(title: string): string {
+  if (title === 'Introduction')
+    return 'Warehouse worker preparing to move a load';
+  if (title === 'Risks and Injuries')
+    return 'Illustration highlighting manual handling injury risk';
+  if (title === 'Assessing the Task and Load')
+    return 'Worker assessing a load before lifting';
+  if (title === 'Safe Lifting Techniques')
+    return 'Worker demonstrating safer lifting posture';
+  return 'Worker using safe handling equipment in a warehouse';
 }
 
 function CompletionState() {
@@ -547,9 +655,14 @@ function CompletionState() {
         <span>Interactive Warehouse Safety Scenario</span>
         <small>Coming next</small>
       </div>
-      <Link className="dashboard-action" to="/trainee/dashboard">
-        Return to Dashboard
-      </Link>
+      <div className="completion-actions">
+        <Link className="dashboard-action ghost" to="/trainee/training">
+          Return to My Training
+        </Link>
+        <Link className="dashboard-action" to="/trainee/dashboard">
+          Return to Dashboard
+        </Link>
+      </div>
     </section>
   );
 }

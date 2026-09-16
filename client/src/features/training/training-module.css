@@ -344,6 +344,25 @@
   border-color: var(--danger);
   background: rgb(239 68 68 / 8%);
 }
+.answer-options button.selected-option {
+  border-color: var(--purple);
+  background: rgb(108 92 231 / 8%);
+  box-shadow: 0 0 0 2px rgb(108 92 231 / 12%);
+}
+.check-answer-button {
+  justify-self: start;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--purple);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+.check-answer-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 .answer-feedback {
   margin: 0;
   padding: 10px 12px;
@@ -359,9 +378,72 @@
   background: rgb(239 68 68 / 8%);
 }
 .check-complete {
+  display: grid;
+  gap: 10px;
   margin: 0;
+  padding: 16px;
+  border-radius: 8px;
   color: #047857 !important;
+  background: rgb(16 185 129 / 10%);
   font-weight: 700;
+}
+.check-complete span {
+  color: #047857;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+.lifting-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.lifting-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.lifting-card img {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+}
+.lifting-card strong {
+  display: block;
+  padding: 14px 16px 4px;
+}
+.lifting-card ul {
+  margin: 0;
+  padding: 8px 24px 18px;
+}
+.lifting-card.safer {
+  background: rgb(16 185 129 / 8%);
+  border-color: rgb(16 185 129 / 28%);
+}
+.lifting-card.safer strong {
+  color: #047857;
+}
+.lifting-card.unsafe {
+  background: rgb(239 68 68 / 7%);
+  border-color: rgb(239 68 68 / 25%);
+}
+.lifting-card.unsafe strong {
+  color: #b91c1c;
+}
+.section-inline-image {
+  display: block;
+  width: min(100%, 460px);
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+.completion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
 }
 .completion-hint {
   align-self: center;
@@ -445,6 +527,9 @@
     grid-column: 2;
   }
   .example-grid {
+    grid-template-columns: 1fr;
+  }
+  .lifting-comparison {
     grid-template-columns: 1fr;
   }
   .section-actions {
