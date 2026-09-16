@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { HttpError } from '../utils/http-error.js';
 
 export const notFound: RequestHandler = (_req, res) => {
   res.status(404).json({ error: { message: 'Route not found' } });
@@ -12,6 +13,12 @@ export const errorHandler: ErrorRequestHandler = (
 ) => {
   if (res.headersSent) {
     next(error);
+    return;
+  }
+  if (error instanceof HttpError) {
+    res
+      .status(error.status)
+      .json({ error: { message: error.message, code: error.code } });
     return;
   }
   const candidate =

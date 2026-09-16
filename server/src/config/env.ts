@@ -49,7 +49,23 @@ if (
   );
 }
 
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+if (!['development', 'test', 'production'].includes(nodeEnv))
+  throw new Error('NODE_ENV must be development, test or production');
+if (nodeEnv === 'production' && clientUrl.protocol !== 'https:')
+  throw new Error('Production CLIENT_URL must use HTTPS');
+if (
+  nodeEnv !== 'production' &&
+  !['localhost', '127.0.0.1', '[::1]'].includes(clientUrl.hostname)
+) {
+  throw new Error(
+    'HTTP development cookies are restricted to a local CLIENT_URL',
+  );
+}
+
 export const env = Object.freeze({
+  isProduction: nodeEnv === 'production',
+  cookieSecure: nodeEnv === 'production' || clientUrl.protocol === 'https:',
   port,
   databaseUrl: databaseUrl.href,
   clientUrl: clientUrl.origin,

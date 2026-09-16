@@ -9,14 +9,14 @@ import {
   assertLocalDevelopmentDatabase,
 } from './helpers/database.js';
 
-test('migrations create all 17 domain tables and rerun without changes', async () =>
+test('migrations create all 18 domain tables and rerun without changes', async () =>
   isolated(async (client) => {
     const tables = await client.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
     WHERE table_schema = $1 AND table_type = 'BASE TABLE'`,
       [schema],
     );
-    assert.equal(tables.rowCount, 18); // 17 domain tables + migration ledger.
+    assert.equal(tables.rowCount, 19); // 18 domain tables + migration ledger.
     assert.deepEqual(await migrate(client, schema), []);
   }));
 

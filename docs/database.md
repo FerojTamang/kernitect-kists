@@ -1,10 +1,10 @@
-# KISTS database foundation — Phase 2
+# KISTS database design — Phases 2 and 3
 
 ## Overview
 
 KISTS is a warehousing and logistics safety-training platform developed for the CET257 Enterprise Project. This foundation supports the A7 Manual Handling prototype and later modules; requirements remain subject to client consultation.
 
-PostgreSQL 16 is the local verification target. React, Express, REST and the modular monolith remain unchanged. Future features follow Route → Controller → Service → Repository → PostgreSQL. Tooling reuses `server/src/config/database.ts`; no ORM, additional service or authentication is introduced.
+PostgreSQL 16 is the local verification target. React, Express, REST and the modular monolith remain unchanged. Features follow Route → Controller → Service → Repository → PostgreSQL. Tooling reuses the existing pool; no ORM or additional service is introduced. Phase 3 adds only the auth session migration to this model; see [authentication](authentication.md).
 
 Objects live in the **`kists` schema**. The pool sets `search_path=kists,pg_catalog` and UTC session time. Event timestamps use `timestamptz`; clients may display instants in local time.
 
@@ -33,7 +33,7 @@ Domain keys use `integer GENERATED ALWAYS AS IDENTITY`. Integers are sufficient 
 | `certificate_assessment_attempts` | Passing attempt evidence for each active assessment in that set.                                                           |
 | `schema_migrations`               | Tooling ledger: migration filename, SHA-256 checksum, timestamp.                                                           |
 
-There are **17 domain tables plus one migration ledger**. The two certificate supporting tables are necessary because one certificate covers many assignments and assessment results.
+Phase 2 has **17 domain tables plus one migration ledger**. Phase 3 adds **`auth_sessions`**, making 18 domain tables plus the ledger. Sessions reference users and store only a token hash, creation, expiry, last-use and revocation timestamps. The two certificate supporting tables remain necessary because one certificate covers many assignments and assessment results.
 
 ## System roles and job roles
 
@@ -163,7 +163,7 @@ Fixtures include:
 - Disabled fictional accounts `demo.administrator@example.invalid` and `demo.trainee@example.invalid`.
 - A required Manual Handling assignment, optional Forklift and Pedestrian Safety assignment and zero progress. Assignment optionality is illustrative, not client policy.
 
-Demo users receive salted scrypt hashes of random discarded values. There is no usable demo password or authentication flow. Seed preserves existing hashes and refuses reserved emails if they identify active/non-demo users. No completed attempts or certificates are seeded.
+These Phase 2 demo users retain salted scrypt hashes of discarded random values and cannot sign in. Seed preserves existing hashes and refuses reserved emails if they identify active/non-demo users. Separate Phase 3 accounts use `npm run auth:demo` and the ignored `KISTS_DEMO_PASSWORD`; see [login setup](authentication.md). No completed attempts or certificates are seeded.
 
 ## Development reset
 

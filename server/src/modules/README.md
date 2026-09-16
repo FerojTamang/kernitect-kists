@@ -1,6 +1,6 @@
 # Modular monolith conventions
 
-Reserved module directories: auth, users, roles, training, assignments, scenarios, assessments, progress and certificates. `.gitkeep` files preserve empty directories in source control; no feature behavior is implemented yet.
+Module directories: auth, users, roles, training, assignments, scenarios, assessments, progress and certificates. Phase 3 implements the auth module; the other feature directories remain reserved. `.gitkeep` files preserve empty directories in source control.
 
 Each module can later contain:
 

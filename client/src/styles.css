@@ -1,14 +1,20 @@
 :root {
   font-family: Inter, 'Segoe UI', Arial, sans-serif;
-  color: #202a40;
-  background: #f5f6fa;
+  color: #1f2937;
+  background: #f8fafc;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --navy: #172039;
-  --purple: #6941c6;
-  --success: #16816b;
-  --warning: #a56610;
-  --danger: #bd3548;
+  --navy: #0f172a;
+  --navy-secondary: #1e293b;
+  --purple: #6c5ce7;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --background: #f8fafc;
+  --card: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
 }
 * {
   box-sizing: border-box;
@@ -20,8 +26,10 @@ body {
 a {
   color: var(--purple);
 }
-a:focus-visible {
-  outline: 3px solid #c09bff;
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--purple);
   outline-offset: 4px;
 }
 h1,
@@ -45,7 +53,7 @@ h3 {
 }
 p {
   line-height: 1.7;
-  color: #626b7d;
+  color: var(--text-secondary);
 }
 .brand {
   display: flex;
@@ -61,7 +69,7 @@ p {
 .brand span:not(.brand-mark) {
   display: block;
   font-size: 0.72rem;
-  color: #bbc3d9;
+  color: var(--border);
   margin-top: 5px;
 }
 .brand-mark {
@@ -80,7 +88,7 @@ p {
 }
 .sidebar {
   background: var(--navy);
-  color: #bbc3d9;
+  color: var(--border);
   width: 260px;
   padding: 32px 22px 24px;
   display: flex;
@@ -88,7 +96,7 @@ p {
   flex-shrink: 0;
 }
 .nav-heading {
-  color: #aab3ca;
+  color: var(--border);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -99,14 +107,14 @@ nav {
   gap: 6px;
 }
 nav a {
-  color: #d1d7e6;
+  color: var(--border);
   text-decoration: none;
   padding: 13px 16px;
   border-radius: 7px;
   font-size: 0.92rem;
 }
 nav a:hover {
-  background: #26314c;
+  background: var(--navy-secondary);
 }
 nav a.active {
   background: var(--purple);
@@ -120,7 +128,7 @@ nav a.active {
   font-size: 0.75rem;
 }
 .sidebar-footer a {
-  color: #ded2ff;
+  color: var(--card);
 }
 .workspace {
   flex: 1;
@@ -132,7 +140,7 @@ nav a.active {
   min-height: 80px;
   padding: 20px 40px;
   background: white;
-  border-bottom: 1px solid #e5e8ef;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -158,8 +166,8 @@ nav a.active {
 }
 .badge {
   display: inline-block;
-  color: #62409f;
-  background: #f0eafb;
+  color: var(--text-primary);
+  background: rgb(108 92 231 / 8%);
   padding: 7px 11px;
   border-radius: 5px;
   font-size: 0.73rem;
@@ -167,7 +175,7 @@ nav a.active {
 }
 .card {
   background: white;
-  border: 1px solid #e1e5ed;
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 28px;
 }
@@ -189,7 +197,7 @@ nav a.active {
   gap: 20px;
 }
 .module-number {
-  color: #796791;
+  color: var(--text-secondary);
   font-size: 0.8rem;
   display: block;
   margin-bottom: 20px;
@@ -197,7 +205,7 @@ nav a.active {
 .page-footer {
   margin-top: auto;
   padding: 24px 40px;
-  color: #727a8b;
+  color: var(--text-secondary);
   font-size: 0.75rem;
 }
 .login-page {
@@ -219,14 +227,14 @@ nav a.active {
   font-size: clamp(2.4rem, 4vw, 4rem);
 }
 .login-intro p {
-  color: #c6cee0;
+  color: var(--border);
   max-width: 480px;
 }
 .login-intro .eyebrow {
-  color: #c6a6ff;
+  color: var(--card);
 }
 .login-intro > span {
-  color: #aab3ca;
+  color: var(--border);
   font-size: 0.8rem;
 }
 .login-content {
@@ -259,8 +267,8 @@ nav a.active {
   filter: brightness(0.94);
 }
 .button.secondary {
-  background: #f2edf9;
-  color: #57339c;
+  background: rgb(108 92 231 / 8%);
+  color: var(--purple);
 }
 .small-note {
   font-size: 0.78rem;
@@ -329,4 +337,17 @@ nav a.active {
   .page-footer {
     padding: 24px;
   }
+}
+
+button,
+input {
+  font: inherit;
+}
+button.button {
+  border: 0;
+  cursor: pointer;
+}
+.sidebar .brand-logo {
+  width: 160px;
+  align-self: center;
 }

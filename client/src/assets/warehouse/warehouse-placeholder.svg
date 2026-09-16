@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="1100" viewBox="0 0 600 1100">
+  <title>Abstract warehouse placeholder</title>
+  <rect width="600" height="1100" fill="#1E293B"/>
+  <g stroke="#F8FAFC" stroke-opacity=".16" fill="none" stroke-width="3">
+    <path d="M0 0 265 310H335L600 0M0 1100 265 670H335L600 1100M300 310V670"/>
+    <path d="M0 180 265 350M0 360 265 400M0 580 265 470M0 820 265 570M600 180 335 350M600 360 335 400M600 580 335 470M600 820 335 570"/>
+    <path d="M60 30v990M150 165v710M215 245v515M540 30v990M450 165v710M385 245v515"/>
+  </g>
+  <g fill="#6C5CE7" fill-opacity=".17" stroke="#F8FAFC" stroke-opacity=".08">
+    <path d="m8 216 48 28v117L8 339Zm65 40 67 40v105l-67-34Zm88 53 44 27v98l-44-25ZM8 400l48 15v142L8 568Zm65 20 67 23v104l-67 8Zm88 27 44 16v72l-44 7Z"/>
+    <path d="m592 216-48 28v117l48-22Zm-65 40-67 40v105l67-34Zm-88 53-44 27v98l44-25Zm153 91-48 15v142l48 11Zm-65 20-67 23v104l67 8Zm-88 27-44 16v72l44 7Z"/>
+  </g>
+  <g fill="#F8FAFC" fill-opacity=".25"><rect x="245" y="65" width="110" height="8" rx="4"/><rect x="266" y="190" width="68" height="5" rx="2"/><rect x="282" y="263" width="36" height="3" rx="1"/></g>
+</svg>
