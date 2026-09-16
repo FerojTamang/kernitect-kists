@@ -1,4 +1,4 @@
-# KISTS database design — Phases 2 and 3
+# KISTS database design — foundation through Phase 6A
 
 ## Overview
 
@@ -22,6 +22,8 @@ Domain keys use `integer GENERATED ALWAYS AS IDENTITY`. Integers are sufficient 
 | `training_content`                | Ordered typed content with body and/or resource reference.                                                                 |
 | `scenarios`                       | Multiple ordered scenes per module; inactive drafts may lack assets.                                                       |
 | `hazards`                         | Ordered decision points, feedback, yaw/pitch in degrees and optional JSON object metadata.                                 |
+| `scenario_attempts`               | One persisted scenario attempt per assignment/scenario with start/completion timestamps.                                   |
+| `scenario_hazard_responses`       | Latest trainee decision for each scenario hazard/objective, including correctness and answer time.                         |
 | `assessments`                     | Multiple per module; configurable pass percentage in `(0,100]`, **without a default**.                                     |
 | `questions`                       | Ordered single-choice, true/false or free-text questions.                                                                  |
 | `answer_options`                  | Question options, answer key and ordering.                                                                                 |
@@ -33,7 +35,7 @@ Domain keys use `integer GENERATED ALWAYS AS IDENTITY`. Integers are sufficient 
 | `certificate_assessment_attempts` | Passing attempt evidence for each active assessment in that set.                                                           |
 | `schema_migrations`               | Tooling ledger: migration filename, SHA-256 checksum, timestamp.                                                           |
 
-Phase 2 has **17 domain tables plus one migration ledger**. Phase 3 adds **`auth_sessions`**, making 18 domain tables plus the ledger. Sessions reference users and store only a token hash, creation, expiry, last-use and revocation timestamps. The two certificate supporting tables remain necessary because one certificate covers many assignments and assessment results.
+The current schema contains **24 domain tables plus one migration ledger**. Later migrations add authentication sessions, learning-content completion, formative-check persistence and Phase 6A scenario-attempt persistence. Sessions reference users and store only a token hash, creation, expiry, last-use and revocation timestamps. The two certificate supporting tables remain necessary because one certificate covers many assignments and assessment results.
 
 ## System roles and job roles
 
@@ -55,6 +57,10 @@ erDiagram
     training_modules ||--o{ training_content : contains
     training_modules ||--o{ scenarios : contains
     scenarios ||--o{ hazards : contains
+    training_assignments ||--o{ scenario_attempts : permits
+    scenarios ||--o{ scenario_attempts : attempted
+    scenario_attempts ||--o{ scenario_hazard_responses : records
+    hazards ||--o{ scenario_hazard_responses : answered
     training_modules ||--o{ assessments : checks_learning
     assessments ||--o{ questions : contains
     questions ||--o{ answer_options : offers
@@ -79,11 +85,12 @@ erDiagram
 - Progress at 100% requires a completion timestamp; other percentages forbid one. Progress means aggregate **learning completion**, with assessment passing checked separately.
 - Assignment status tracks lifecycle only; completion is not duplicated there. One assignment per trainee/module includes cancelled rows. Re-enable that row for the same assignment. Recertification cycles would need a future explicit period model.
 - Submitted attempts and their responses are immutable. Thresholds are snapshotted at attempt creation; `passed` is generated from score and the snapshot, so later configuration changes do not rewrite results.
-- Aggregate progress and final scores are stored because detailed interaction events/grading are outside Phase 2. Response correctness, thresholds and completion snapshots preserve history. Future services must compute/validate results: the database is **not a grading engine**.
+- Scenario attempts and hazard responses are stored separately from learning progress and graded assessment attempts. Composite keys keep each response attached to the correct scenario. Scenario completion is derived by the service from persisted correct hazard responses.
+- Aggregate progress and final scores remain separate from detailed interaction events. Response correctness, thresholds and completion snapshots preserve history. Services compute/validate results: the database is **not a grading engine**.
 - Exactly-one-correct-option authoring rules, content versioning, attempt limits and multiple selections require later validated feature work. The current response model supports one selected option or free text, not a multi-selection question.
 - Referenced users, roles, modules, assignments and historical records use `ON DELETE RESTRICT`; deactivate/archive them. Limited cascades apply to scenario → hazards, assessment → questions, question → answer options and draft attempt → responses. Referenced questions/options and submitted attempts cannot be deleted.
 - Foreign-key/query indexes cover module assignments, assigning users, active due dates, module progress, attempts, responses and evidence. Unique parent/sequence and trainee/module indexes also cover their leading columns.
-- Mutable tables get automatic `updated_at` timestamps. Resource references reserve future assets; no panorama viewer or VR is included.
+- Mutable tables get automatic `updated_at` timestamps. Resource references reserve future assets. Phase 6A stores a prototype scenario resource reference, but the panoramic viewer and VR remain frontend/future work.
 
 ## Certification: all required assigned training
 
@@ -158,7 +165,7 @@ Run migrations first. Seeding is transactional and repeatable, preserves existin
 Fixtures include:
 
 - Two system roles, three example job roles and the two initial training modules.
-- Explicit **DEMO** content, an inactive scenario/hazard, an inactive assessment, one sample question and two options.
+- Explicit development content, an active prototype Manual Handling scenario with five safety decision points, an inactive assessment, one sample question and two options.
 - An arbitrary **75% demo-only threshold**, not a client-confirmed requirement or database default.
 - Disabled fictional accounts `demo.administrator@example.invalid` and `demo.trainee@example.invalid`.
 - A required Manual Handling assignment, optional Forklift and Pedestrian Safety assignment and zero progress. Assignment optionality is illustrative, not client policy.

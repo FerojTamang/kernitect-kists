@@ -8,6 +8,7 @@ import { AuthService } from './modules/auth/auth.service.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { createTraineeRouter } from './modules/trainee/trainee.routes.js';
 import { createTrainingRouter } from './modules/training/training.routes.js';
+import { createScenarioRouter } from './modules/scenarios/scenario.routes.js';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error-handler.js';
 import { apiRouter } from './routes/index.js';
@@ -28,6 +29,7 @@ export function createApp(database: Pick<Pool, 'query'> = pool) {
   app.use('/api/auth', createAuthRouter(authService));
   app.use('/api/trainee', createTraineeRouter(database, authService));
   app.use('/api/trainee/training', createTrainingRouter(database, authService));
+  app.use('/api/trainee/training', createScenarioRouter(database, authService));
   app.use('/api', apiRouter);
   app.use(notFound);
   app.use(errorHandler);

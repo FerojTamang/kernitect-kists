@@ -296,3 +296,79 @@ test('recorded responses become immutable when their attempt is submitted', asyn
       '23514',
     );
   }));
+
+test('scenario attempts and hazard responses stay bound to the assigned module and scenario', async () =>
+  isolated(async (client) => {
+    const f = await fixture(client);
+    const manualAssignment = await assign(client, f.trainee, f.manual, f.admin);
+    const manualScenario = (
+      await client.query<{ id: number }>(
+        'SELECT id FROM scenarios WHERE training_module_id = $1 ORDER BY sequence_order LIMIT 1',
+        [f.manual],
+      )
+    ).rows[0]!.id;
+    const manualHazard = (
+      await client.query<{ id: number }>(
+        'SELECT id FROM hazards WHERE scenario_id = $1 ORDER BY sequence_order LIMIT 1',
+        [manualScenario],
+      )
+    ).rows[0]!.id;
+
+    const attemptId = (
+      await client.query<{ id: number }>(
+        `INSERT INTO scenario_attempts
+          (trainee_id, training_assignment_id, training_module_id, scenario_id)
+         VALUES ($1, $2, $3, $4) RETURNING id`,
+        [f.trainee, manualAssignment, f.manual, manualScenario],
+      )
+    ).rows[0]!.id;
+
+    const forkliftAssignment = await assign(
+      client,
+      f.trainee,
+      f.forklift,
+      f.admin,
+    );
+    await rejectsSql(
+      client,
+      `INSERT INTO scenario_attempts
+        (trainee_id, training_assignment_id, training_module_id, scenario_id)
+       VALUES ($1, $2, $3, $4)`,
+      [f.trainee, forkliftAssignment, f.forklift, manualScenario],
+      '23503',
+    );
+
+    const secondScenario = (
+      await client.query<{ id: number }>(
+        `INSERT INTO scenarios
+          (training_module_id, title, resource_reference, sequence_order, is_active)
+         VALUES ($1, 'TEST: second scenario', 'prototype://test', 2, true)
+         RETURNING id`,
+        [f.manual],
+      )
+    ).rows[0]!.id;
+    const secondHazard = (
+      await client.query<{ id: number }>(
+        `INSERT INTO hazards
+          (scenario_id, title, feedback, hotspot_yaw, hotspot_pitch, sequence_order)
+         VALUES ($1, 'TEST: second hazard', 'TEST', 0, 0, 1)
+         RETURNING id`,
+        [secondScenario],
+      )
+    ).rows[0]!.id;
+
+    await client.query(
+      `INSERT INTO scenario_hazard_responses
+        (scenario_attempt_id, scenario_id, hazard_id, selected_decision_key, is_correct)
+       VALUES ($1, $2, $3, 'test-choice', true)`,
+      [attemptId, manualScenario, manualHazard],
+    );
+    await rejectsSql(
+      client,
+      `INSERT INTO scenario_hazard_responses
+        (scenario_attempt_id, scenario_id, hazard_id, selected_decision_key, is_correct)
+       VALUES ($1, $2, $3, 'test-choice', true)`,
+      [attemptId, manualScenario, secondHazard],
+      '23503',
+    );
+  }));

@@ -9,14 +9,14 @@ import {
   assertLocalDevelopmentDatabase,
 } from './helpers/database.js';
 
-test('migrations create all 18 domain tables and rerun without changes', async () =>
+test('migrations create all 24 domain tables and rerun without changes', async () =>
   isolated(async (client) => {
     const tables = await client.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
     WHERE table_schema = $1 AND table_type = 'BASE TABLE'`,
       [schema],
     );
-    assert.equal(tables.rowCount, 23); // 22 domain tables + migration ledger.
+    assert.equal(tables.rowCount, 25); // 24 domain tables + migration ledger.
     assert.deepEqual(await migrate(client, schema), []);
   }));
 
@@ -54,6 +54,25 @@ test('development seed is repeatable and preserves disabled account hashes', asy
       (await client.query('SELECT * FROM training_assignments')).rowCount,
       2,
     );
+    const scenario = await client.query<{
+      isActive: boolean;
+      resourceReference: string;
+      hazards: number;
+    }>(
+      `SELECT s.is_active AS "isActive", s.resource_reference AS "resourceReference",
+        count(h.id)::int AS hazards
+       FROM scenarios s
+       JOIN training_modules m ON m.id = s.training_module_id
+       LEFT JOIN hazards h ON h.scenario_id = s.id
+       WHERE m.slug = 'manual-handling' AND s.sequence_order = 1
+       GROUP BY s.id`,
+    );
+    assert.equal(scenario.rows[0]?.isActive, true);
+    assert.equal(
+      scenario.rows[0]?.resourceReference,
+      'prototype://manual-handling-warehouse',
+    );
+    assert.equal(scenario.rows[0]?.hazards, 5);
   }));
 
 test('seed and reset safety checks reject remote and unrelated databases', () => {

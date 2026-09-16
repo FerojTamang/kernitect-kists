@@ -4,7 +4,7 @@
 
 Phase 5 provides the protected, database-backed Manual Handling learning journey. It includes five learning sections, two formative Check Your Understanding questions per section, persistent answers, retry feedback, section completion and resume behavior.
 
-It does not implement the Phase 6 interactive 360-degree scenario, scenario scoring, the Phase 7 final graded assessment, certificate issuance or administrator content-management workflows.
+Phase 6A now provides the protected database/API foundation for the next interactive scenario, but the panoramic/360 trainee viewer is not yet implemented. Phase 7 final graded assessment, certificate issuance and administrator content-management workflows remain later work.
 
 **100% learning progress does not equal final module completion.** The assignment remains `in_progress` until later scenario and assessment phases exist.
 
@@ -86,8 +86,8 @@ The final state offers Return to Dashboard. It does not say Module Complete and 
 
 ## Development reset
 
-`npm.cmd run auth:demo` restores Alex Morgan’s local account and active assignments, sets the Manual Handling aggregate demo progress to its development value, and clears only Alex’s Manual Handling `training_content_completion` and `formative_responses` rows. It does not run `db:reset` or destroy unrelated development records.
+`npm.cmd run auth:demo` restores Alex Morgan’s local account and active assignments, sets the Manual Handling aggregate demo progress to its development value, and clears Alex’s Manual Handling `training_content_completion`, `formative_responses` and scenario-attempt state. It does not run `db:reset` or destroy unrelated development records.
 
 ## Later phases and limitations
 
-The next stage is the Phase 6 interactive warehouse safety scenario. The current UI only presents it as upcoming. No 360 viewer, hazard interaction, scenario score, final graded assessment, assessment attempt, certificate or final module-completion rule is implemented here. Phase 7 will use the existing graded `assessments`, `questions`, `answer_options`, `assessment_attempts` and `assessment_responses` model separately.
+Phase 6A now implements scenario persistence, five seeded Manual Handling safety decision points and protected trainee APIs. The current UI still presents the scenario as upcoming because the Phase 6B panoramic/interactive viewer is not implemented yet. No final graded assessment, assessment attempt, certificate or final module-completion rule is implemented here. Phase 7 will use the existing graded `assessments`, `questions`, `answer_options`, `assessment_attempts` and `assessment_responses` model separately. See `docs/scenario.md`.

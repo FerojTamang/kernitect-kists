@@ -51,17 +51,83 @@ SELECT id, 'Forklift and pedestrian safety overview', 'text',
 FROM training_modules WHERE slug = 'forklift-pedestrian-safety'
 ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
 
-INSERT INTO scenarios (training_module_id, title, description, sequence_order)
-SELECT id, 'DEMO: Warehouse loading area', 'Draft scene. No panorama asset or viewer is implemented.', 1
+-- Prototype Manual Handling scenario fixture. The resource reference is a
+-- development placeholder until the Phase 6 viewer supplies a real panorama.
+INSERT INTO scenarios
+  (training_module_id, title, description, resource_reference, sequence_order, is_active)
+SELECT id, 'Warehouse Manual Handling Scenario',
+  'Prototype warehouse decision scenario for applying Manual Handling learning.',
+  'prototype://manual-handling-warehouse', 1, true
 FROM training_modules WHERE slug = 'manual-handling'
-ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
+ON CONFLICT (training_module_id, sequence_order) DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  resource_reference = EXCLUDED.resource_reference,
+  is_active = EXCLUDED.is_active,
+  updated_at = clock_timestamp();
 
-INSERT INTO hazards (scenario_id, title, description, feedback, hotspot_yaw, hotspot_pitch, sequence_order)
-SELECT s.id, 'DEMO: Obstructed route', 'Fictional draft decision point.',
-  'Placeholder feedback; requires client and safety-content review.', 25, -12, 1
-FROM scenarios s JOIN training_modules m ON m.id = s.training_module_id
+INSERT INTO hazards
+  (scenario_id, title, description, feedback, hotspot_yaw, hotspot_pitch, metadata, sequence_order)
+SELECT s.id, hazard.title, hazard.description, hazard.feedback,
+  hazard.hotspot_yaw, hazard.hotspot_pitch, hazard.metadata::jsonb, hazard.sequence_order
+FROM scenarios s
+JOIN training_modules m ON m.id = s.training_module_id
+CROSS JOIN (VALUES
+  (
+    1,
+    'Obstructed handling route',
+    'Packaging has been left in the route between the load and its destination.',
+    'Clear the route before moving the load so the handling path is unobstructed.',
+    -70.000::numeric,
+    -12.000::numeric,
+    '{"decisionPrompt":"What should you do before moving the load?","decisionOptions":[{"key":"clear-route","label":"Clear the route before moving the load"},{"key":"step-around","label":"Carry the load and step around the obstruction"},{"key":"move-faster","label":"Move quickly before the route gets busier"}],"correctDecisionKey":"clear-route"}'
+  ),
+  (
+    2,
+    'Unstable stacked load',
+    'A carton is leaning on top of an unstable stack and may shift when handled.',
+    'Stabilise or restack the load before attempting to move it.',
+    15.000::numeric,
+    -8.000::numeric,
+    '{"decisionPrompt":"What is the safer action?","decisionOptions":[{"key":"stabilise-load","label":"Stabilise or restack the load first"},{"key":"hold-top-box","label":"Hold the top box with one hand while carrying"},{"key":"pull-from-bottom","label":"Pull a lower carton out quickly"}],"correctDecisionKey":"stabilise-load"}'
+  ),
+  (
+    3,
+    'Awkward lifting posture',
+    'A worker is reaching forward and bending mainly from the back to lift a carton.',
+    'Reposition close to the load, use stable footing and avoid an awkward reach before lifting.',
+    75.000::numeric,
+    -15.000::numeric,
+    '{"decisionPrompt":"Which response best reduces the handling risk?","decisionOptions":[{"key":"reposition-close","label":"Reposition close to the load and use stable footing"},{"key":"lift-from-reach","label":"Keep reaching and lift from the current position"},{"key":"twist-lift","label":"Twist while lifting to save time"}],"correctDecisionKey":"reposition-close"}'
+  ),
+  (
+    4,
+    'Load suited to handling equipment',
+    'A bulky load would be difficult to carry safely by hand over the required distance.',
+    'Use suitable handling equipment when the load or route makes manual carrying inappropriate.',
+    140.000::numeric,
+    -10.000::numeric,
+    '{"decisionPrompt":"How should this load be moved?","decisionOptions":[{"key":"use-equipment","label":"Use suitable handling equipment"},{"key":"carry-alone","label":"Carry it alone even if it blocks your view"},{"key":"drag-floor","label":"Drag it across the floor by hand"}],"correctDecisionKey":"use-equipment"}'
+  ),
+  (
+    5,
+    'Load requires assistance',
+    'The load is large enough that one person may not be able to control it safely.',
+    'Pause the task and arrange appropriate assistance or another safer handling method.',
+    -150.000::numeric,
+    -6.000::numeric,
+    '{"decisionPrompt":"What should the worker do?","decisionOptions":[{"key":"get-assistance","label":"Get appropriate assistance or use another safer method"},{"key":"try-alone","label":"Try the lift alone first"},{"key":"lift-higher","label":"Lift it higher so it is easier to see around"}],"correctDecisionKey":"get-assistance"}'
+  )
+) AS hazard(sequence_order, title, description, feedback, hotspot_yaw, hotspot_pitch, metadata)
 WHERE m.slug = 'manual-handling' AND s.sequence_order = 1
-ON CONFLICT (scenario_id, sequence_order) DO NOTHING;
+ON CONFLICT (scenario_id, sequence_order) DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  feedback = EXCLUDED.feedback,
+  hotspot_yaw = EXCLUDED.hotspot_yaw,
+  hotspot_pitch = EXCLUDED.hotspot_pitch,
+  metadata = EXCLUDED.metadata,
+  updated_at = clock_timestamp();
 
 -- 75 is an arbitrary DEMO threshold, NOT a confirmed KISTS requirement. No schema default.
 INSERT INTO assessments (training_module_id, title, description, pass_percentage, sequence_order, is_active)

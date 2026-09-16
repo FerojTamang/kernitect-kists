@@ -197,6 +197,33 @@ async function answerTrainingQuestion(
   );
 }
 
+async function trainingScenario(cookie?: string, assignmentId?: number) {
+  return fetch(`${base}/api/trainee/training/${assignmentId ?? 0}/scenario`, {
+    headers: cookie ? { Cookie: cookie } : {},
+  });
+}
+
+async function answerScenarioHazard(
+  cookie: string | undefined,
+  assignmentId: number | string,
+  hazardId: number | string,
+  decisionKey: string,
+  trusted = true,
+) {
+  return fetch(
+    `${base}/api/trainee/training/${assignmentId}/scenario/hazards/${hazardId}/respond`,
+    {
+      method: 'POST',
+      headers: {
+        ...(cookie ? { Cookie: cookie } : {}),
+        'Content-Type': 'application/json',
+        ...(trusted ? { Origin: env.clientUrl, 'X-KISTS-Request': '1' } : {}),
+      },
+      body: JSON.stringify({ decisionKey }),
+    },
+  );
+}
+
 test('valid trainee login returns only safe profile fields', async () => {
   const response = await login();
   assert.equal(response.status, 200);
@@ -578,6 +605,240 @@ test('content completion persists, is idempotent and never completes the full as
   );
   assert.equal(JSON.stringify(refreshed).includes('password'), false);
   assert.equal(JSON.stringify(refreshed).includes('token'), false);
+});
+
+test('manual handling scenario is learning-gated, assignment-bound and persists five safety decisions', async () => {
+  const cookie = cookieFrom(await login());
+  const otherCookie = cookieFrom(
+    await login('other.dashboard@example.invalid'),
+  );
+  const assignmentId = (
+    await database.query<{ id: number }>(
+      `SELECT a.id FROM training_assignments a
+       JOIN training_modules m ON m.id = a.training_module_id
+       WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'`,
+      [traineeId],
+    )
+  ).rows[0]!.id;
+  const otherAssignmentId = (
+    await database.query<{ id: number }>(
+      `SELECT a.id FROM training_assignments a
+       JOIN training_modules m ON m.id = a.training_module_id
+       WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'`,
+      [otherTraineeId],
+    )
+  ).rows[0]!.id;
+
+  assert.equal((await trainingScenario()).status, 401);
+  assert.equal(
+    (await trainingScenario(cookieFrom(await login(adminEmail)), assignmentId))
+      .status,
+    403,
+  );
+  assert.equal((await trainingScenario(cookie, otherAssignmentId)).status, 404);
+
+  const locked = await trainingScenario(otherCookie, otherAssignmentId);
+  assert.equal(locked.status, 409);
+  assert.equal(
+    ((await locked.json()) as { error: { code: string } }).error.code,
+    'SCENARIO_LOCKED',
+  );
+
+  await database.query(
+    `INSERT INTO training_content_completion
+      (trainee_id, training_assignment_id, training_module_id, training_content_id)
+     SELECT a.trainee_id, a.id, a.training_module_id, c.id
+     FROM training_assignments a
+     JOIN training_content c ON c.training_module_id = a.training_module_id AND c.is_active
+     WHERE a.id = $1
+     ON CONFLICT (training_assignment_id, training_content_id) DO NOTHING`,
+    [assignmentId],
+  );
+
+  const opened = await trainingScenario(cookie, assignmentId);
+  assert.equal(opened.status, 200);
+  const body = (await opened.json()) as {
+    assignmentId: number;
+    scenario: { id: number; resourceReference: string };
+    progress: {
+      completedHazards: number;
+      totalHazards: number;
+      completed: boolean;
+    };
+    hazards: Array<{
+      id: number;
+      sequenceOrder: number;
+      decisionOptions: Array<{ key: string; label: string }>;
+      selectedDecisionKey: string | null;
+      answeredCorrectly: boolean;
+      feedback: string | null;
+    }>;
+  };
+  assert.equal(body.assignmentId, assignmentId);
+  assert.equal(
+    body.scenario.resourceReference,
+    'prototype://manual-handling-warehouse',
+  );
+  assert.equal(body.progress.completedHazards, 0);
+  assert.equal(body.progress.totalHazards, 5);
+  assert.equal(body.progress.completed, false);
+  assert.equal(body.hazards.length, 5);
+  assert.ok(
+    body.hazards.every((hazard) => hazard.decisionOptions.length === 3),
+  );
+  assert.equal(JSON.stringify(body).includes('correctDecisionKey'), false);
+
+  const firstHazard = body.hazards[0]!;
+  assert.equal(
+    (
+      await answerScenarioHazard(
+        cookie,
+        assignmentId,
+        firstHazard.id,
+        firstHazard.decisionOptions[0]!.key,
+        false,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await answerScenarioHazard(
+        cookie,
+        assignmentId,
+        firstHazard.id,
+        'not-a-real-decision',
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await answerScenarioHazard(
+        otherCookie,
+        assignmentId,
+        firstHazard.id,
+        firstHazard.decisionOptions[0]!.key,
+      )
+    ).status,
+    404,
+  );
+
+  const decisions = (
+    await database.query<{
+      hazardId: number;
+      correctDecisionKey: string;
+      wrongDecisionKey: string;
+    }>(
+      `SELECT h.id AS "hazardId",
+        h.metadata->>'correctDecisionKey' AS "correctDecisionKey",
+        (
+          SELECT option->>'key'
+          FROM jsonb_array_elements(h.metadata->'decisionOptions') option
+          WHERE option->>'key' <> h.metadata->>'correctDecisionKey'
+          LIMIT 1
+        ) AS "wrongDecisionKey"
+       FROM hazards h
+       WHERE h.scenario_id = $1
+       ORDER BY h.sequence_order`,
+      [body.scenario.id],
+    )
+  ).rows;
+  assert.equal(decisions.length, 5);
+
+  const wrong = await answerScenarioHazard(
+    cookie,
+    assignmentId,
+    decisions[0]!.hazardId,
+    decisions[0]!.wrongDecisionKey,
+  );
+  assert.equal(wrong.status, 200);
+  assert.equal(((await wrong.json()) as { correct: boolean }).correct, false);
+
+  for (const [index, decision] of decisions.entries()) {
+    const response = await answerScenarioHazard(
+      cookie,
+      assignmentId,
+      decision.hazardId,
+      decision.correctDecisionKey,
+    );
+    assert.equal(response.status, 200);
+    const result = (await response.json()) as {
+      correct: boolean;
+      scenario: {
+        progress: {
+          completedHazards: number;
+          totalHazards: number;
+          completed: boolean;
+        };
+      };
+    };
+    assert.equal(result.correct, true);
+    assert.equal(result.scenario.progress.completedHazards, index + 1);
+    assert.equal(result.scenario.progress.totalHazards, 5);
+    assert.equal(result.scenario.progress.completed, index === 4);
+  }
+
+  const refreshed = (await (
+    await trainingScenario(cookie, assignmentId)
+  ).json()) as {
+    progress: {
+      completedHazards: number;
+      completed: boolean;
+      completedAt: string | null;
+    };
+  };
+  assert.equal(refreshed.progress.completedHazards, 5);
+  assert.equal(refreshed.progress.completed, true);
+  assert.ok(refreshed.progress.completedAt);
+
+  const repeated = await answerScenarioHazard(
+    cookie,
+    assignmentId,
+    decisions[4]!.hazardId,
+    decisions[4]!.correctDecisionKey,
+  );
+  assert.equal(repeated.status, 200);
+  assert.equal(
+    (
+      await database.query(
+        `SELECT count(*)::int AS count
+         FROM scenario_hazard_responses shr
+         JOIN scenario_attempts sa ON sa.id = shr.scenario_attempt_id
+         WHERE sa.training_assignment_id = $1`,
+        [assignmentId],
+      )
+    ).rows[0].count,
+    5,
+  );
+
+  const assignmentProgress = (
+    await database.query<{ percentage: string; completedAt: Date | null }>(
+      `SELECT percentage::text AS percentage, completed_at AS "completedAt"
+       FROM progress WHERE training_assignment_id = $1`,
+      [assignmentId],
+    )
+  ).rows[0]!;
+  assert.equal(Number(assignmentProgress.percentage), 60);
+  assert.equal(assignmentProgress.completedAt, null);
+  assert.equal(
+    (
+      await database.query(
+        'SELECT count(*)::int AS count FROM assessment_attempts WHERE training_assignment_id = $1',
+        [assignmentId],
+      )
+    ).rows[0].count,
+    0,
+  );
+  assert.equal(
+    (
+      await database.query(
+        'SELECT count(*)::int AS count FROM certificates WHERE trainee_id = $1',
+        [traineeId],
+      )
+    ).rows[0].count,
+    0,
+  );
 });
 
 test('session cookie is HttpOnly, host-only, SameSite=Lax with an explicit eight-hour max-age', async () => {
