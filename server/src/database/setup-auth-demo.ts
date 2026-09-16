@@ -74,6 +74,59 @@ try {
         [result.rows[0].id],
       );
     }
+    const trainee = await client.query<{ id: number }>(
+      `SELECT u.id FROM users u JOIN system_roles r ON r.id = u.system_role_id
+       WHERE lower(u.email) = 'alex.morgan@example.invalid' AND r.name = 'trainee'`,
+    );
+    const administrator = await client.query<{ id: number }>(
+      `SELECT u.id FROM users u JOIN system_roles r ON r.id = u.system_role_id
+       WHERE lower(u.email) = 'kists.administrator@example.invalid' AND r.name = 'administrator'`,
+    );
+    if (!trainee.rows[0] || !administrator.rows[0])
+      throw new Error('Auth demo users were not created.');
+    await client.query(
+      `INSERT INTO training_assignments
+        (trainee_id, training_module_id, assigned_by, required)
+       SELECT $1, m.id, $2, true FROM training_modules m
+       WHERE m.slug IN ('manual-handling', 'forklift-pedestrian-safety')
+       ON CONFLICT (trainee_id, training_module_id) DO UPDATE SET
+         status = 'active', required = EXCLUDED.required`,
+      [trainee.rows[0].id, administrator.rows[0].id],
+    );
+    await client.query(
+      `INSERT INTO progress (trainee_id, training_module_id, training_assignment_id)
+       SELECT trainee_id, training_module_id, id FROM training_assignments
+       WHERE trainee_id = $1 AND status = 'active'
+       ON CONFLICT (training_assignment_id) DO NOTHING`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      `DELETE FROM training_content_completion
+       WHERE training_assignment_id IN (
+         SELECT a.id FROM training_assignments a
+         JOIN training_modules m ON m.id = a.training_module_id
+         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      `DELETE FROM formative_responses
+       WHERE training_assignment_id IN (
+         SELECT a.id FROM training_assignments a
+         JOIN training_modules m ON m.id = a.training_module_id
+         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      `UPDATE progress p SET percentage = 60,
+        started_at = COALESCE(p.started_at, clock_timestamp() - interval '45 minutes'),
+        last_accessed_at = clock_timestamp(), completed_at = NULL
+       FROM training_assignments a JOIN training_modules m ON m.id = a.training_module_id
+       WHERE p.training_assignment_id = a.id AND a.trainee_id = $1
+         AND m.slug = 'manual-handling'`,
+      [trainee.rows[0].id],
+    );
   });
   console.info(
     'Fictional local login accounts configured: alex.morgan@example.invalid and kists.administrator@example.invalid. Passwords were not printed.',

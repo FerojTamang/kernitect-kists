@@ -1,0 +1,144 @@
+.assigned-training-page {
+  display: grid;
+  gap: 24px;
+  padding: clamp(18px, 2.2vw, 36px);
+  max-width: 1500px;
+  margin: 0 auto;
+}
+.assigned-training-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.assigned-training-header h1 {
+  margin-bottom: 12px;
+}
+.assigned-training-header .lead {
+  margin-bottom: 0;
+}
+.secondary-link {
+  color: var(--purple);
+  font-weight: 600;
+  text-decoration: none;
+}
+.assigned-training-summary {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 18px 24px;
+}
+.assigned-training-summary > div {
+  display: grid;
+  gap: 3px;
+  padding-left: 28px;
+  border-left: 1px solid var(--border);
+}
+.assigned-training-summary strong {
+  color: var(--navy);
+  font-size: 1.4rem;
+}
+.assigned-training-summary span:not(.summary-icon) {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+.assigned-module-list {
+  display: grid;
+  gap: 18px;
+}
+.assigned-module-card {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.assigned-module-image {
+  width: 100%;
+  height: 100%;
+  min-height: 230px;
+  object-fit: cover;
+}
+.assigned-module-content {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 26px 30px;
+}
+.assigned-module-content .dashboard-action {
+  justify-self: start;
+}
+.assigned-learning-track {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--border);
+  overflow: hidden;
+  max-width: 520px;
+}
+.assigned-learning-track span {
+  display: block;
+  height: 100%;
+  background: var(--purple);
+  border-radius: inherit;
+}
+.module-order {
+  color: var(--purple);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.assigned-module-content h2 {
+  margin-bottom: 0;
+  color: var(--navy);
+}
+.assigned-module-content p {
+  margin-bottom: 0;
+}
+.assigned-module-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+.module-state {
+  font-weight: 700;
+}
+.module-state.in_progress {
+  color: var(--purple);
+}
+.module-state.not_started {
+  color: var(--text-secondary);
+}
+.module-coming-soon {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+@media (max-width: 700px) {
+  .assigned-training-header,
+  .assigned-training-summary {
+    display: grid;
+  }
+  .assigned-training-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .assigned-training-summary .summary-icon {
+    display: none;
+  }
+  .assigned-training-summary > div {
+    padding-left: 12px;
+  }
+  .assigned-module-card {
+    grid-template-columns: 1fr;
+  }
+  .assigned-module-image {
+    height: 180px;
+    min-height: 0;
+  }
+  .assigned-module-content {
+    padding: 22px;
+  }
+}

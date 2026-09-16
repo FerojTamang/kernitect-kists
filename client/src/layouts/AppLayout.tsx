@@ -10,10 +10,48 @@ interface AppLayoutProps {
   navigation: NavigationItem[];
 }
 
+const sidebarItems = [
+  'Dashboard',
+  'My Training',
+  'Scenarios',
+  'Assessments',
+  'Certificates',
+  'Progress',
+  'Resources',
+  'Settings',
+];
+
 export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const items =
+    audience === 'Trainee'
+      ? sidebarItems.map((label, index) => {
+          const pathMap: Record<number, string> = {
+            0: 'dashboard',
+            1: 'training',
+            2: 'scenarios',
+            3: 'assessments',
+            4: 'certificates',
+            5: 'progress',
+            6: 'resources',
+            7: 'settings',
+          };
+          const to = `${basePath}/${pathMap[index]}`;
+          return {
+            label,
+            to,
+            active: false,
+          };
+        })
+      : navigation.map((item) => ({
+          label: item.label,
+          to: `${basePath}/${item.path}`,
+          active: item.path === 'dashboard',
+        }));
+
   async function signOut() {
     if (signingOut) return;
     setSigningOut(true);
@@ -30,33 +68,72 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
       setSigningOut(false);
     }
   }
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${audience.toLowerCase()}-shell`}>
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
       <aside className="sidebar">
-        <BrandLogo />
-        <p className="nav-heading">{audience} workspace</p>
-        <nav aria-label={`${audience} navigation`}>
-          {navigation.map((item) => (
-            <NavLink key={item.path} to={`${basePath}/${item.path}`} end>
-              {item.label}
+        <div className="brand-block">
+          <BrandLogo variant="dark" />
+          <div className="brand-tagline">PEOPLE | SAFETY | PROGRESS</div>
+          <div className="brand-copy">
+            <div className="brand-name">KISTS</div>
+            <div className="brand-subtitle">
+              Kernitect Interactive
+              <br />
+              Safety Training System
+            </div>
+            <span className="brand-divider" aria-hidden="true" />
+          </div>
+        </div>
+
+        <nav className="sidebar-nav" aria-label={`${audience} navigation`}>
+          {items.map(({ label, to, active }) => (
+            <NavLink
+              key={label}
+              to={to}
+              end={label === 'Dashboard'}
+              className={({ isActive }) =>
+                `nav-item ${isActive || active ? 'active' : ''}`
+              }
+            >
+              <span className="nav-icon" aria-hidden="true">
+                {label === 'Dashboard' && '▣'}
+                {label === 'My Training' && '◫'}
+                {label === 'Scenarios' && '◧'}
+                {label === 'Assessments' && '▤'}
+                {label === 'Certificates' && '◨'}
+                {label === 'Progress' && '▥'}
+                {label === 'Resources' && '◫'}
+                {label === 'Settings' && '⚙'}
+              </span>
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
+
         <div className="sidebar-footer">
-          <span>
-            {user?.firstName} {user?.lastName}
+          <span className="sidebar-message">
+            Safer People.
+            <br />
+            Stronger Workplaces.
           </span>
-          <button
-            className="button"
-            onClick={() => void signOut()}
-            disabled={signingOut}
-          >
-            {signingOut ? 'Signing out…' : 'Sign out'}
-          </button>
-          {logoutError && <p role="alert">{logoutError}</p>}
+
+          <div className="sidebar-user">
+            <span>
+              {user?.firstName} {user?.lastName}
+            </span>
+            <button
+              className="button sidebar-signout"
+              onClick={() => void signOut()}
+              disabled={signingOut}
+            >
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+            {logoutError && <p role="alert">{logoutError}</p>}
+          </div>
         </div>
       </aside>
       <div className="workspace">

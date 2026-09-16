@@ -206,4 +206,4 @@ kists/
 
 Empty reserved directories contain `.gitkeep` files so Git preserves them. Dependency and generated build directories are omitted above.
 
-Read [architecture](docs/architecture.md), [authentication](docs/authentication.md), [database design](docs/database.md), and [module conventions](server/src/modules/README.md). Manual Handling remains the main A7 demonstration module; Forklift and Pedestrian Safety is the other initial module. Phase 4 has not started.
+Read [architecture](docs/architecture.md), [authentication](docs/authentication.md), [database design](docs/database.md), [trainee dashboard](docs/trainee-dashboard.md), and [module conventions](server/src/modules/README.md). Manual Handling remains the main A7 demonstration module; Forklift and Pedestrian Safety is the other initial module. Phase 4 adds the database-backed trainee dashboard; later learning workflows remain out of scope.

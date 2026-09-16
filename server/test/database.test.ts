@@ -16,7 +16,7 @@ test('migrations create all 18 domain tables and rerun without changes', async (
     WHERE table_schema = $1 AND table_type = 'BASE TABLE'`,
       [schema],
     );
-    assert.equal(tables.rowCount, 19); // 18 domain tables + migration ledger.
+    assert.equal(tables.rowCount, 23); // 22 domain tables + migration ledger.
     assert.deepEqual(await migrate(client, schema), []);
   }));
 
