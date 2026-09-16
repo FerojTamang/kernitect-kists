@@ -32,9 +32,7 @@ test('desktop login uses real branding and excludes design documentation', async
     page.getByRole('img', { name: 'Kernitect', exact: true }),
   ).toHaveAttribute('src', /kernitect-logo-on-dark/);
   await expect(
-    page.getByText(
-      /KISTS COLOUR THEME|#[0-9A-F]{6}|Explore trainee/i,
-    ),
+    page.getByText(/KISTS COLOUR THEME|#[0-9A-F]{6}|Explore trainee/i),
   ).toHaveCount(0);
   await expect(
     page.getByRole('button', { name: 'Sign In', exact: true }),
@@ -84,16 +82,39 @@ test('empty/invalid form input and password visibility are keyboard accessible',
   ).toBeVisible();
 });
 
-test('trainee login persists on reload, cannot access admin routes, and logs out', async ({
+test('trainee login reaches the database-backed dashboard, persists on reload, and logs out', async ({
   page,
   context,
 }) => {
   await page.goto('/admin/users');
   await expect(page).toHaveURL(/\/$/);
   await signIn(page);
-  await expect(page.getByText('Alex Morgan', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('.sidebar-footer').getByText('Alex Morgan', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Welcome back, Alex' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Manual Handling' }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Forklift and Pedestrian Safety', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('60% complete', { exact: true }).first(),
+  ).toBeVisible();
   await page.reload();
-  await expect(page.getByText('Alex Morgan', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('.sidebar-footer').getByText('Alex Morgan', { exact: true }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1536, height: 900 });
   const me = await page.request.get('/api/auth/me');
   expect(me.status()).toBe(200);
   expect((await me.json()).user.systemRole).toBe('trainee');
@@ -196,6 +217,25 @@ test('network and server failures remain recoverable', async ({ page }) => {
   ).toBeEnabled();
 });
 
+test('dashboard loading and API errors remain honest and recoverable', async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.route('**/api/trainee/dashboard', (route) =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: '{}' }),
+  );
+  await page.goto('/trainee/dashboard');
+  await expect(
+    page.getByRole('heading', { name: 'Your dashboard is unavailable' }),
+  ).toBeVisible();
+  await page.unroute('**/api/trainee/dashboard');
+  await page.getByRole('button', { name: 'Try again' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Welcome back, Alex' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+});
+
 test('loading state prevents duplicate sign-in requests', async ({ page }) => {
   let requests = 0;
   let release!: () => void;
@@ -252,4 +292,95 @@ test('mobile login remains usable without horizontal overflow', async ({
     path: '.local/verification/login-mobile.png',
     fullPage: true,
   });
+});
+
+test('trainee completes the four-section Manual Handling learning journey and resumes safely', async ({
+  page,
+}) => {
+  await signIn(page);
+  await page
+    .getByRole('button', { name: /Continue|Start/ })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/trainee\/training\/\d+$/);
+  await expect(
+    page.getByRole('heading', { name: 'Manual Handling' }).first(),
+  ).toBeVisible();
+  const sectionList = page.getByRole('list').last();
+  await expect(
+    sectionList.getByText('Introduction', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    sectionList.getByText('Risks and Injuries', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    sectionList.getByText('Safe Lifting Techniques', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    sectionList.getByText('Practical Examples', { exact: true }),
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole('heading', { name: 'What is manual handling?' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Common injuries from manual handling' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /Previous/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'What is manual handling?' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /Next/ }).click();
+  await expect(
+    page.getByText('Back pain and slipped discs', { exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'The key steps to safe lifting' }),
+  ).toBeVisible();
+  await expect(page.getByText(/Plan the lift/i)).toBeVisible();
+  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Safe and unsafe lifting' }),
+  ).toBeVisible();
+  await expect(page.getByText('× Unsafe', { exact: true })).toBeVisible();
+  await expect(page.getByText('✓ Safe', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('You have completed the Manual Handling learning sections.'),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Interactive warehouse safety scenario'),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('main').getByText(/certificate|assessment|pass|score/i),
+  ).toHaveCount(0);
+
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1536, height: 900 });
+
+  await page.goto('/trainee/training/999999');
+  await expect(
+    page.getByRole('heading', { name: 'Training module unavailable' }),
+  ).toBeVisible();
+  await page.goto('/trainee/dashboard');
+  await expect(
+    page.getByRole('heading', { name: /Welcome back, Alex/ }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await expect(page).toHaveURL(/\/$/);
 });

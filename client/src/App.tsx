@@ -6,6 +6,8 @@ import { AppLayout } from './layouts/AppLayout';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
+import { TraineeDashboard } from './features/trainee/TraineeDashboard';
+import { TraineeTrainingModule } from './features/training/TraineeTrainingModule';
 
 export function App() {
   return (
@@ -23,18 +25,26 @@ export function App() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
-          {traineeNavigation.map((item) => (
-            <Route
-              key={item.path}
-              path={item.path}
-              element={
-                <PlaceholderPage
-                  title={item.label}
-                  description={item.description}
+          <Route path="dashboard" element={<TraineeDashboard />} />
+          <Route
+            path="training/:assignmentId"
+            element={<TraineeTrainingModule />}
+          />
+          {traineeNavigation.map(
+            (item) =>
+              item.path !== 'dashboard' && (
+                <Route
+                  key={item.path}
+                  path={item.path}
+                  element={
+                    <PlaceholderPage
+                      title={item.label}
+                      description={item.description}
+                    />
+                  }
                 />
-              }
-            />
-          ))}
+              ),
+          )}
         </Route>
       </Route>
       <Route element={<ProtectedRoute role="administrator" />}>

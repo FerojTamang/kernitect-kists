@@ -16,9 +16,33 @@ INSERT INTO training_modules (title, slug, description) VALUES
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
-SELECT id, 'DEMO: Introduction to ' || title, 'text',
+SELECT id, 'Introduction', 'text',
+  'Manual handling is the movement of objects by hand, including lifting, lowering, pushing, pulling, carrying and holding. It matters because poor technique can cause injury in warehouses, distribution centres and delivery work. Everyday examples include moving cartons, loading pallets and placing stock on shelving.', 1, true
+FROM training_modules WHERE slug = 'manual-handling'
+ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
+
+INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
+SELECT id, 'Risks and Injuries', 'text',
+  'Poor manual handling can cause back pain, muscle strain, joint injury and longer-term musculoskeletal disorders. Warning: do not rush a lift or work around a load that is too heavy, unstable or difficult to reach. Stop, make the area safe and use the correct technique or equipment.', 2, true
+FROM training_modules WHERE slug = 'manual-handling'
+ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
+
+INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
+SELECT id, 'Safe Lifting Techniques', 'text',
+  'Use these steps: plan the lift; assess the load and route; set stable footing; bend your knees; secure a firm grip; keep the load close; lift smoothly; avoid twisting; and ask for assistance or use equipment when the load or route requires it.', 3, true
+FROM training_modules WHERE slug = 'manual-handling'
+ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
+
+INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
+SELECT id, 'Practical Examples', 'text',
+  'Safe example: bend your knees, keep your back steady and hold the carton close as you move. Unsafe example: bending from the waist, twisting while lifting or carrying a load that blocks your view. Choose the safe approach and ask for help when needed.', 4, true
+FROM training_modules WHERE slug = 'manual-handling'
+ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
+
+INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
+SELECT id, 'Forklift and pedestrian safety overview', 'text',
   'Development placeholder only. Replace with client-reviewed safety learning content before use.', 1, false
-FROM training_modules WHERE slug IN ('manual-handling', 'forklift-pedestrian-safety')
+FROM training_modules WHERE slug = 'forklift-pedestrian-safety'
 ON CONFLICT (training_module_id, sequence_order) DO NOTHING;
 
 INSERT INTO scenarios (training_module_id, title, description, sequence_order)

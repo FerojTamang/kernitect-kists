@@ -2,7 +2,7 @@
 
 ## Scope and architecture
 
-Phase 3 adds the login screen, stateful authentication and system-role access control. Existing trainee/admin pages remain placeholders. No dashboard, user-management, assessment, progress, certificate, password-recovery or VR workflow was added.
+Phase 3 added the login screen, stateful authentication and system-role access control. Phase 4 adds the authenticated trainee dashboard as a read-only consumer of existing training data. Administrator pages, learning content, assessment, certificate, password-recovery and VR workflows remain outside the implemented scope.
 
 ```text
 React login / AuthProvider
