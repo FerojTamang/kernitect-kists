@@ -1,20 +1,21 @@
 # Kernitect Interactive Safety Training System (KISTS)
 
-Phase 1 foundation for a university warehousing and logistics safety-training project, shared by the A7 initial prototype and later final system.
+Phase 1 project scaffolding and Phase 2 PostgreSQL foundation for a university warehousing and logistics safety-training project, shared by the A7 prototype and later final system.
 
 ## What is included
 
 - React, Vite and TypeScript frontend with feature directories, basic routing, reusable responsive layouts and placeholder pages.
 - Express and TypeScript REST API organised as a modular monolith, validated environment configuration, PostgreSQL pool, JSON errors and graceful shutdown.
 - Shared strict TypeScript defaults, ESLint, Prettier, npm workspaces and a dependency lockfile.
+- PostgreSQL schema, transactional migrations, development seed, database integration tests and a documented ERD.
 - API contract checks and architecture documentation.
 
-Authentication, database schema, training behavior, assessments, the 360-degree viewer and VR are **not implemented**. Workspace preview links do not authenticate users. No progress, results or certificates are fabricated.
+Authentication, training/assessment APIs and interfaces, the 360-degree viewer and VR are **not implemented**. Workspace preview links do not authenticate users. Development records are clearly labelled and no successful results or certificates are seeded.
 
 ## Prerequisites
 
 1. Node.js 22.12 or newer (Node 22 LTS recommended for this foundation), with npm.
-2. PostgreSQL for database connectivity checks and later persistence. It is not needed to render placeholder pages or call the liveness endpoint.
+2. Local PostgreSQL 16 for migrations, seeds and database tests. It is not needed to render placeholder pages or call the liveness endpoint.
 3. Git if you want to track and commit changes. No global Vite, TypeScript or Express installation is required.
 
 ## Install and configure
@@ -25,7 +26,7 @@ Run from the `kists` root:
 npm ci
 ```
 
-Copy the example files using PowerShell:
+For a fresh checkout, copy the example files using PowerShell (preserve existing local `.env` files):
 
 ```powershell
 Copy-Item server/.env.example server/.env
@@ -53,6 +54,15 @@ The server requires all three server variables and validates their format at sta
 **Windows:** If PowerShell blocks `npm.ps1`, use `npm.cmd` in place of `npm` for every command below. No execution-policy change is required.
 
 ## Run locally
+
+First configure local PostgreSQL and apply the database foundation:
+
+```sh
+npm run db:migrate
+npm run db:seed
+```
+
+Use a local `kists_dev` database. An optional Windows setup script creates an isolated project-owned cluster on port 55432. See [database setup, ERD, seed and reset instructions](docs/database.md).
 
 Terminal 1, from the repository root:
 
@@ -95,7 +105,7 @@ npm run db:check --workspace server
 | `/admin/assignments`    | Training assignment             |
 | `/admin/progress`       | Progress and results monitoring |
 
-Unknown routes display a 404 page. All workspace routes are intentionally public in Phase 1.
+Unknown routes display a 404 page. Workspace placeholders remain public; Phase 2 does not add authentication or UI behavior.
 
 ## Build and quality checks
 
@@ -107,7 +117,7 @@ npm test
 npm run build
 ```
 
-`npm run format` applies formatting. Build output is `client/dist/` and `server/dist/` (ignored by Git). Tests use Node's built-in test runner and do not contact PostgreSQL.
+`npm run format` applies formatting. Build output is `client/dist/` and `server/dist/` (ignored by Git). Tests use Node's built-in runner. `npm test` includes PostgreSQL integration tests in isolated temporary schemas; `npm run test:db` runs only database tests. A running local development database is required.
 
 Run the compiled API with `npm start --workspace server`. Preview the built frontend with `npm run preview --workspace client`; this is a local static preview, and its API integration needs a reverse proxy. For normal integrated local use, use the two development commands above. Production hosting must provide an SPA fallback and route `/api` to the server.
 
@@ -146,9 +156,11 @@ kists/
 │   ├── .env.example
 │   ├── package.json
 │   ├── tsconfig.json
-│   ├── test/health.test.ts
+│   ├── tsconfig.check.json
+│   ├── test/                      # API and PostgreSQL integration tests
 │   └── src/
 │       ├── config/                # Environment and PostgreSQL pool
+│       ├── database/              # Migration/seed/reset tooling
 │       ├── middleware/            # JSON 404 and error handling
 │       ├── modules/
 │       │   ├── README.md          # Route/controller/service/repository conventions
@@ -166,9 +178,14 @@ kists/
 │       ├── utils/check-database.ts
 │       ├── app.ts
 │       └── index.ts
-├── database/README.md             # No schema yet
+├── database/
+│   ├── migrations/                # Four versioned SQL migrations
+│   ├── seeds/development.sql
+│   ├── scripts/start-local-postgres.ps1
+│   └── README.md
 ├── docs/
 │   ├── architecture.md
+│   ├── database.md
 │   └── verification.md
 ├── .editorconfig
 ├── .gitignore
@@ -183,4 +200,4 @@ kists/
 
 Empty reserved directories contain `.gitkeep` files so Git preserves them. Dependency and generated build directories are omitted above.
 
-Read [architecture and preserved requirements](docs/architecture.md) and [backend module conventions](server/src/modules/README.md). Manual Handling remains the main A7 demonstration module; Forklift and Pedestrian Safety is the other initial module. Phase 2 work has not started.
+Read [architecture and preserved requirements](docs/architecture.md), [database design and commands](docs/database.md), and [backend module conventions](server/src/modules/README.md). Manual Handling remains the main A7 demonstration module; Forklift and Pedestrian Safety is the other initial module. Phase 3 has not started.

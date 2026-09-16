@@ -1,7 +1,7 @@
-# Database boundary
+# PostgreSQL database foundation
 
-PostgreSQL is the persistence tier. Phase 1 intentionally contains no schema, migrations or seed data.
+Phase 2 adds a normalized schema, forward SQL migrations, development seeds and real PostgreSQL integration tests. No application APIs or authentication are added.
 
-Create an empty local database and a local login using PostgreSQL tooling if you want to verify connectivity. Put its connection URL in `server/.env`; never commit credentials. Run `npm run db:check --workspace server` from the repository root to issue `SELECT 1` without creating tables.
+See [database design, ERD and commands](../docs/database.md). Configure `server/.env`, then run `npm run db:migrate`, `npm run db:seed` and `npm run test:db` from the root. Use `npm.cmd` on Windows if PowerShell blocks the npm wrapper.
 
-Later phases will store versioned SQL migrations here. Application SQL belongs in feature repositories and must use parameterized queries. Do not place business rules in route handlers or connect React directly to PostgreSQL.
+SQL runs in the dedicated `kists` schema. Tooling under `server/src/database` reuses the existing pool. Migrations are atomic and checksum-verified: add numbered migrations instead of editing applied files. Future application SQL belongs in feature repositories and must use parameterized queries. Never connect React directly to PostgreSQL.

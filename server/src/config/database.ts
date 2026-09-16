@@ -7,6 +7,8 @@ export const pool = new pg.Pool({
   max: 10,
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 30000,
+  // Dedicated application namespace; migrations create it before feature queries run.
+  options: '-c search_path=kists,pg_catalog -c timezone=UTC',
 });
 
 pool.on('error', () => {

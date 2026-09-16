@@ -1,4 +1,26 @@
-# Phase 1 verification
+# Verification record
+
+## Phase 2 — PostgreSQL foundation
+
+Verified locally with Node.js 22.18.0, npm 10.9.3 and PostgreSQL 16.12. The project-owned database is `kists_dev` on `127.0.0.1:55432`; credentials are stored only in ignored `server/.env`. The existing PostgreSQL service was not modified.
+
+| Check                  | Result                                                             |
+| ---------------------- | ------------------------------------------------------------------ |
+| Migration execution    | All four SQL migrations applied successfully                       |
+| Migration replay       | No-op on an up-to-date database; applied checksums verified        |
+| Development seed       | Successful, including repeated execution without duplicate records |
+| Database connection    | `SELECT 1` passed through the existing pool                        |
+| Reset guard            | Refused without the matching database-name flag                    |
+| Explicit local reset   | Rebuilt only the project schema, then seeded successfully          |
+| `npm test`             | 28 passed: 24 database integration tests and 4 API tests           |
+| `npm run typecheck`    | Passed for client, server and server test files                    |
+| `npm run lint`         | Passed                                                             |
+| `npm run build`        | Passed for client and server                                       |
+| `npm run format:check` | Passed                                                             |
+
+Database tests create isolated temporary schemas in local PostgreSQL. Coverage includes role integrity, foreign keys, duplicate emails/assignments, multiple scenarios/assessments, response membership, immutable submitted results, required-only certification, snapshots and current availability. No browser/UI changes, authentication, feature APIs, certificate documents or deployment were implemented.
+
+## Phase 1 — historical record
 
 Verified in this workspace using Node.js 22.18.0 and npm 10.9.3. The compiled API also launched successfully on an alternate port and returned the expected health response.
 

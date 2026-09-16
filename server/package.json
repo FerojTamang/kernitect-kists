@@ -6,10 +6,14 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --project tsconfig.check.json",
     "start": "node dist/index.js",
     "test": "tsx --test test/*.test.ts",
-    "db:check": "tsx src/utils/check-database.ts"
+    "db:check": "tsx src/utils/check-database.ts",
+    "db:migrate": "tsx src/database/cli.ts migrate",
+    "db:seed": "tsx src/database/cli.ts seed",
+    "db:reset": "tsx src/database/cli.ts reset",
+    "test:db": "tsx --test test/database*.test.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
