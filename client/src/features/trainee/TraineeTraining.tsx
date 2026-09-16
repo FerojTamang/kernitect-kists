@@ -56,6 +56,20 @@ function TrainingCard({
             </span>
           ) : null}
         </div>
+        {assignment.learningTotalSections > 0 && (
+          <div
+            className="assigned-learning-track"
+            role="progressbar"
+            aria-label={`${assignment.title} learning progress`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={assignment.learningProgressPercentage}
+          >
+            <span
+              style={{ width: `${assignment.learningProgressPercentage}%` }}
+            />
+          </div>
+        )}
         {isManualHandling ? (
           <Link
             className="dashboard-action compact"

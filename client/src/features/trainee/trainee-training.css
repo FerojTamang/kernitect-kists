@@ -1,6 +1,9 @@
 .assigned-training-page {
   display: grid;
   gap: 24px;
+  padding: clamp(18px, 2.2vw, 36px);
+  max-width: 1500px;
+  margin: 0 auto;
 }
 .assigned-training-header {
   display: flex;
@@ -62,6 +65,22 @@
   align-content: center;
   gap: 12px;
   padding: 26px 30px;
+}
+.assigned-module-content .dashboard-action {
+  justify-self: start;
+}
+.assigned-learning-track {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--border);
+  overflow: hidden;
+  max-width: 520px;
+}
+.assigned-learning-track span {
+  display: block;
+  height: 100%;
+  background: var(--purple);
+  border-radius: inherit;
 }
 .module-order {
   color: var(--purple);
