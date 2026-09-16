@@ -177,6 +177,26 @@ async function completeTrainingContent(
   );
 }
 
+async function answerTrainingQuestion(
+  cookie: string | undefined,
+  assignmentId: number | string,
+  contentId: number | string,
+  questionId: number | string,
+  optionId: number | string,
+) {
+  return fetch(
+    `${base}/api/trainee/training/${assignmentId}/content/${contentId}/questions/${questionId}/answer`,
+    {
+      method: 'POST',
+      headers: {
+        ...(cookie ? { Cookie: cookie } : {}),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ optionId }),
+    },
+  );
+}
+
 test('valid trainee login returns only safe profile fields', async () => {
   const response = await login();
   assert.equal(response.status, 200);
@@ -325,6 +345,7 @@ test('manual handling module endpoint is trainee-only, assignment-bound and resu
       title: string;
       sequenceOrder: number;
       completedAt: string | null;
+      formativeQuestions: Array<{ options: unknown[] }>;
     }>;
     resumeSectionIndex: number;
   };
@@ -333,12 +354,15 @@ test('manual handling module endpoint is trainee-only, assignment-bound and resu
   assert.equal(body.status, 'in_progress');
   assert.equal(body.progress.assignmentPercentage, 60);
   assert.equal(body.progress.learningProgressPercentage, 0);
-  assert.equal(body.progress.totalSections, 4);
+  assert.equal(body.progress.totalSections, 5);
+  assert.equal(body.sections[0]?.formativeQuestions.length, 2);
+  assert.equal(body.sections[0]?.formativeQuestions[0]?.options.length, 4);
   assert.deepEqual(
     body.sections.map((section) => section.title),
     [
       'Introduction',
       'Risks and Injuries',
+      'Assessing the Task and Load',
       'Safe Lifting Techniques',
       'Practical Examples',
     ],
@@ -374,7 +398,23 @@ test('content completion persists, is idempotent and never completes the full as
        WHERE m.slug = 'manual-handling' AND c.is_active ORDER BY c.sequence_order`,
     )
   ).rows.map((row) => row.id);
-  assert.equal(contentIds.length, 4);
+  assert.equal(contentIds.length, 5);
+
+  const questions = (
+    await database.query<{
+      contentId: number;
+      questionId: number;
+      optionId: number;
+      isCorrect: boolean;
+    }>(
+      `SELECT fq.training_content_id AS "contentId", fq.id AS "questionId",
+        fo.id AS "optionId", fo.is_correct AS "isCorrect"
+       FROM formative_questions fq
+       JOIN formative_answer_options fo ON fo.formative_question_id = fq.id
+       WHERE fo.is_correct ORDER BY fq.training_content_id, fq.sequence_order`,
+    )
+  ).rows;
+  assert.equal(questions.length, 10);
 
   assert.equal(
     (await completeTrainingContent(undefined, assignmentId, contentIds[0]!))
@@ -403,12 +443,70 @@ test('content completion persists, is idempotent and never completes the full as
     404,
   );
 
+  assert.equal(
+    (await completeTrainingContent(cookie, assignmentId, contentIds[0]!))
+      .status,
+    409,
+  );
+
+  const firstQuestion = questions[0]!;
+  assert.equal(
+    (
+      await answerTrainingQuestion(
+        cookie,
+        otherAssignmentId,
+        firstQuestion.contentId,
+        firstQuestion.questionId,
+        firstQuestion.optionId,
+      )
+    ).status,
+    404,
+  );
+  const wrongOption = (
+    await database.query<{ id: number }>(
+      `SELECT id FROM formative_answer_options
+       WHERE formative_question_id = $1 AND is_correct = false LIMIT 1`,
+      [firstQuestion.questionId],
+    )
+  ).rows[0]!.id;
+  const wrong = await answerTrainingQuestion(
+    cookie,
+    assignmentId,
+    firstQuestion.contentId,
+    firstQuestion.questionId,
+    wrongOption,
+  );
+  assert.equal(wrong.status, 200);
+  assert.equal(((await wrong.json()) as { correct: boolean }).correct, false);
+  const firstCorrect = await answerTrainingQuestion(
+    cookie,
+    assignmentId,
+    firstQuestion.contentId,
+    firstQuestion.questionId,
+    firstQuestion.optionId,
+  );
+  assert.equal(firstCorrect.status, 200);
+  assert.equal(
+    ((await firstCorrect.json()) as { sectionComplete: boolean })
+      .sectionComplete,
+    false,
+  );
+
   for (const [index, contentId] of contentIds.entries()) {
-    const response = await completeTrainingContent(
-      cookie,
-      assignmentId,
-      contentId,
-    );
+    for (const question of questions.filter(
+      (item) => item.contentId === contentId,
+    )) {
+      if (question.questionId === firstQuestion.questionId) continue;
+      const response = await answerTrainingQuestion(
+        cookie,
+        assignmentId,
+        contentId,
+        question.questionId,
+        question.optionId,
+      );
+      assert.equal(response.status, 200);
+    }
+    const response = await trainingModule(cookie, assignmentId);
     assert.equal(response.status, 200);
     const body = (await response.json()) as {
       progress: {
@@ -419,17 +517,19 @@ test('content completion persists, is idempotent and never completes the full as
       resumeSectionIndex: number;
       sections: Array<{ completedAt: string | null }>;
     };
-    assert.equal(body.progress.learningProgressPercentage, (index + 1) * 25);
+    assert.equal(body.progress.learningProgressPercentage, (index + 1) * 20);
     assert.equal(body.progress.completedSections, index + 1);
-    assert.equal(body.progress.totalSections, 4);
-    assert.equal(body.resumeSectionIndex, index < 3 ? index + 1 : 0);
+    assert.equal(body.progress.totalSections, 5);
+    assert.equal(body.resumeSectionIndex, index < 4 ? index + 1 : 0);
     assert.ok(body.sections[index]!.completedAt);
   }
 
-  const repeated = await completeTrainingContent(
+  const repeated = await answerTrainingQuestion(
     cookie,
     assignmentId,
-    contentIds[3]!,
+    firstQuestion.contentId,
+    firstQuestion.questionId,
+    firstQuestion.optionId,
   );
   assert.equal(repeated.status, 200);
   assert.equal(
@@ -439,7 +539,7 @@ test('content completion persists, is idempotent and never completes the full as
         [assignmentId],
       )
     ).rows[0].count,
-    4,
+    5,
   );
 
   const refreshed = (await (

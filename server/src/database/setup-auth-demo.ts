@@ -110,6 +110,15 @@ try {
       [trainee.rows[0].id],
     );
     await client.query(
+      `DELETE FROM formative_responses
+       WHERE training_assignment_id IN (
+         SELECT a.id FROM training_assignments a
+         JOIN training_modules m ON m.id = a.training_module_id
+         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
       `UPDATE progress p SET percentage = 60,
         started_at = COALESCE(p.started_at, clock_timestamp() - interval '45 minutes'),
         last_accessed_at = clock_timestamp(), completed_at = NULL

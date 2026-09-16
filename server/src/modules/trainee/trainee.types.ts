@@ -11,6 +11,9 @@ export interface TraineeDashboardAssignment {
   required: boolean;
   status: AssignmentPresentationStatus;
   progressPercentage: number;
+  learningProgressPercentage: number;
+  learningCompletedSections: number;
+  learningTotalSections: number;
   assignedAt: string;
   dueAt: string | null;
   nextAction: 'start' | 'continue' | 'review';

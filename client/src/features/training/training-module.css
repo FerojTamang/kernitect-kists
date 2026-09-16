@@ -276,6 +276,98 @@
   padding-top: 18px;
   border-top: 1px solid var(--border);
 }
+.knowledge-check {
+  display: grid;
+  gap: 16px;
+  padding: 22px 0;
+  border-top: 1px solid var(--border);
+}
+.knowledge-check-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.knowledge-check-heading h3 {
+  margin-bottom: 0;
+  color: var(--navy);
+}
+.knowledge-check-heading > span {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.question-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fbfbfe;
+}
+.question-card h4 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 1rem;
+}
+.question-number {
+  margin: 0;
+  color: var(--purple) !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.answer-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.answer-options button {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: white;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.answer-options button:hover,
+.answer-options button:focus-visible {
+  border-color: var(--purple);
+  background: rgb(108 92 231 / 6%);
+}
+.answer-options button.selected-correct {
+  border-color: var(--success);
+  background: rgb(16 185 129 / 10%);
+}
+.answer-options button.selected-wrong {
+  border-color: var(--danger);
+  background: rgb(239 68 68 / 8%);
+}
+.answer-feedback {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+}
+.answer-feedback.correct {
+  color: #047857;
+  background: rgb(16 185 129 / 10%);
+}
+.answer-feedback.incorrect {
+  color: #b91c1c;
+  background: rgb(239 68 68 / 8%);
+}
+.check-complete {
+  margin: 0;
+  color: #047857 !important;
+  font-weight: 700;
+}
+.completion-hint {
+  align-self: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
 .completion-state {
   display: grid;
   justify-items: center;
@@ -298,6 +390,10 @@
 }
 .completion-state h2 {
   margin-bottom: 0;
+}
+.completion-progress {
+  color: var(--purple) !important;
+  font-weight: 700;
 }
 .next-stage {
   display: grid;
@@ -353,5 +449,12 @@
   }
   .section-actions {
     flex-wrap: wrap;
+  }
+  .answer-options {
+    grid-template-columns: 1fr;
+  }
+  .knowledge-check-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

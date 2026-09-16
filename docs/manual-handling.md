@@ -2,49 +2,79 @@
 
 ## Phase 5 scope
 
-Phase 5 implements the database-backed Manual Handling learning journey for authenticated trainees. It covers the module overview, four learning sections, persistent section completion and resume behavior. It does not implement the interactive warehouse scenario, assessment, certificate or administrator content-management workflows.
+Phase 5 provides the protected, database-backed Manual Handling learning journey. It includes five learning sections, two formative Check Your Understanding questions per section, persistent answers, retry feedback, section completion and resume behavior.
 
-Learning-content completion is **not final module completion**. Completing all four learning sections produces 100% learning progress, while the full Manual Handling assignment remains in progress because the later scenario and assessment stages are not complete.
+It does not implement the Phase 6 interactive 360-degree scenario, scenario scoring, the Phase 7 final graded assessment, certificate issuance or administrator content-management workflows.
 
-## Frontend routes
+**100% learning progress does not equal final module completion.** The assignment remains `in_progress` until later scenario and assessment phases exist.
 
-- `/trainee/training/:assignmentId` - Manual Handling overview, section list, learning content and final learning-content state.
-- `/trainee/dashboard` - Existing dashboard entry point. Continue Learning opens the assigned Manual Handling route.
+## Frontend route
 
-The route uses the existing protected trainee layout. My Training is active while the route is open.
+- `/trainee/training/:assignmentId` - overview, ordered section list, learning content, formative checks and the final learning-content state.
+- `/trainee/dashboard` - existing dashboard entry point. The Manual Handling card shows persisted learning progress and section count.
+
+The route remains inside the protected trainee shell, with My Training active.
 
 ## API endpoints
 
-- `GET /api/trainee/training/:assignmentId` returns the assigned Manual Handling module, ordered active sections, persisted completion timestamps, learning progress and the first incomplete section index.
-- `POST /api/trainee/training/:assignmentId/content/:contentId/complete` completes one section. It requires an authenticated trainee, verifies assignment ownership and verifies that the content belongs to the assigned Manual Handling module. Repeated requests are idempotent.
+- `GET /api/trainee/training/:assignmentId` returns the assigned Manual Handling module, five active sections, formative questions/options, persisted answer state, learning progress and the first incomplete section.
+- `POST /api/trainee/training/:assignmentId/content/:contentId/questions/:questionId/answer` records a selected formative option and returns correctness, retry feedback, section-completion state and the refreshed module.
+- `POST /api/trainee/training/:assignmentId/content/:contentId/complete` remains assignment-bound but rejects with `409` until both formative questions for the section are correct. Repeated eligible calls are idempotent.
 
-Malformed assignment or content IDs return `400`. An unknown, unassigned or non-Manual-Handling assignment/content returns `404`. Administrator and unauthenticated requests are rejected by the existing trainee middleware.
+All endpoints require an authenticated trainee. Assignment ownership, Manual Handling module ownership, section/question ownership and option ownership are checked server-side. Malformed IDs return `400`; unavailable or cross-trainee resources return `404`.
 
-## Database persistence model
+## Persistence model
 
-Migration `006_training_content_completion.sql` adds `training_content_completion`. Each row stores the trainee, assignment, module, content section and completion timestamp. Composite foreign keys keep the completion tied to the same trainee, assignment and module, while a primary key on `(training_assignment_id, training_content_id)` makes completion idempotent.
+Migration `006_training_content_completion.sql` stores completed sections in `training_content_completion`, tied to trainee, assignment, module and content with composite foreign keys. Its primary key makes completion idempotent.
 
-Migration `007_manual_handling_content.sql` normalizes existing development content to the four Phase 5 sections. The repeatable development seed contains the same four active rows.
+Migration `007_manual_handling_content.sql` established the original learning content. Migration `008_formative_checks.sql` adds the fifth section and formative tables. Migrations `009_formative_question_seed.sql` and `010_formative_question_content_fk.sql` preserve the migration history and correct the formative question ownership constraint. Development seed data inserts the question definitions and options after migrations create the tables.
 
-The existing `progress` table remains the aggregate assignment record. Phase 5 only touches its access/start timestamps when the module is opened; section completion does not set aggregate percentage to 100 and does not create a certificate or assessment attempt.
+Formative checks intentionally do not reuse `assessments`, `questions`, `answer_options`, `assessment_attempts` or `assessment_responses`. Those tables retain their Phase 7 graded-assessment meaning. The formative model consists of:
 
-## Learning sections
+- `formative_questions` - two questions per active learning section.
+- `formative_answer_options` - exactly four options per question, with one correct option in development data.
+- `formative_responses` - the trainee’s latest selected option and correctness, tied to the assignment, module, section and question.
 
-1. **Introduction** - what manual handling is, why it matters, and warehouse/logistics examples.
+Wrong answers are persisted safely and can be replaced by a later retry. Correct answers persist across refresh and re-login. No response creates an assessment attempt, score, pass/fail result or certificate evidence.
+
+The existing `progress` table remains the aggregate assignment record. Opening training updates access/start timestamps only. Learning completion does not set assignment percentage to 100 and does not mark the assignment complete.
+
+## Five learning sections
+
+1. **Introduction to Manual Handling** - what manual handling includes and why safe handling matters.
 2. **Risks and Injuries** - back pain, muscle strain, joint injury and musculoskeletal injury, with a warning panel.
-3. **Safe Lifting Techniques** - planning, assessing the load and route, stable footing, knees, grip, keeping the load close, smooth lifting, avoiding twisting and getting help or equipment.
-4. **Practical Examples** - clear safe and unsafe handling examples.
+3. **Assessing the Task and Load** - size, shape, stability, weight, route, obstacles, destination, assistance, equipment and individual capability.
+4. **Safe Lifting Techniques** - planning, stable posture, knees, grip, keeping the load close, smooth lifting, avoiding twisting and asking for help or using equipment.
+5. **Practical Examples** - safe and unsafe warehouse handling choices.
 
-## Completion and resume logic
+Each section has two concise, single-answer multiple-choice practice questions and exactly four answer options per question.
 
-The API derives completion from `training_content_completion`, not React state, local storage or session storage. The first incomplete ordered section is the resume target. With no completed rows, the module opens at Introduction. With partial completion, it opens at the first incomplete section. When all four rows exist, learning progress is 100% and the UI shows **Learning content complete** with the next stage locked as **Interactive warehouse safety scenario**.
+## Formative behavior
 
-Learning progress is calculated as:
+The trainee must open the section content and answer both questions correctly. Opening a page alone never completes a section. A wrong answer shows negative feedback and leaves the question retryable. A correct answer shows positive feedback and persists the correct state. Once both questions are correct, the section completion row is written and the learning progress updates immediately.
 
-`completed active sections / total active sections * 100`
+The UI shows `X of 5 sections completed` and `Y% learning progress`, with an accessible progress bar. It clearly distinguishes Completed, In progress and Not started sections without relying only on color.
 
-For the four-section Manual Handling content, each completed section contributes 25 percentage points. This is learning progress only; it is not an arbitrary weighting of the eventual scenario or assessment.
+## Progress and resume
 
-## Limitations and next stage
+Learning progress is calculated dynamically from persisted active-section state:
 
-The interactive warehouse safety scenario is shown as an upcoming locked stage. No 360-degree viewer, hazard interaction, knowledge check, assessment scoring, certificate issuance or pass/fail state is implemented in Phase 5.
+`learningProgressPercentage = (completed learning sections / total active learning sections) * 100`
+
+With five active sections the progression is 0%, 20%, 40%, 60%, 80% and 100%. The implementation does not hard-code those values and continues to work if the active section count changes.
+
+Resume selects the first incomplete ordered section. With no completions it opens Introduction. After two completed sections it opens Assessing the Task and Load. After all five sections and checks are complete, the UI shows **Learning content complete** and:
+
+- You have completed all Manual Handling learning sections and knowledge checks.
+- Next stage: Interactive Warehouse Safety Scenario.
+- Coming next.
+
+The final state offers Return to Dashboard. It does not say Module Complete and does not show certificates, assessment scores or pass/fail results.
+
+## Development reset
+
+`npm.cmd run auth:demo` restores Alex Morgan’s local account and active assignments, sets the Manual Handling aggregate demo progress to its development value, and clears only Alex’s Manual Handling `training_content_completion` and `formative_responses` rows. It does not run `db:reset` or destroy unrelated development records.
+
+## Later phases and limitations
+
+The next stage is the Phase 6 interactive warehouse safety scenario. The current UI only presents it as upcoming. No 360 viewer, hazard interaction, scenario score, final graded assessment, assessment attempt, certificate or final module-completion rule is implemented here. Phase 7 will use the existing graded `assessments`, `questions`, `answer_options`, `assessment_attempts` and `assessment_responses` model separately.

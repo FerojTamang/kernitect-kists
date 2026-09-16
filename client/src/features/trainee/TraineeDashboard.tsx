@@ -69,6 +69,9 @@ function ContinueLearningCard({
   assignment: DashboardAssignment;
 }) {
   const navigate = useNavigate();
+  const learningProgress = assignment.title.toLowerCase().includes('manual')
+    ? assignment.learningProgressPercentage
+    : assignment.progressPercentage;
   const actionLabel =
     assignment.nextAction === 'start'
       ? 'Start'
@@ -95,14 +98,20 @@ function ContinueLearningCard({
             aria-label={`${assignment.title} progress`}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={assignment.progressPercentage}
+            aria-valuenow={learningProgress}
           >
-            <span style={{ width: `${assignment.progressPercentage}%` }} />
+            <span style={{ width: `${learningProgress}%` }} />
           </div>
           <span className="progress-value">
-            {assignment.progressPercentage}% complete
+            Learning progress {learningProgress}%
           </span>
         </div>
+        {assignment.learningTotalSections > 0 ? (
+          <p className="learning-progress-detail">
+            {assignment.learningCompletedSections} of{' '}
+            {assignment.learningTotalSections} sections complete
+          </p>
+        ) : null}
 
         <div className="continue-learning-meta">
           <span>
@@ -110,7 +119,7 @@ function ContinueLearningCard({
               ◔
             </span>
             {assignment.dueAt
-              ? `Approx. ${Math.max(15, 60 - assignment.progressPercentage)} mins remaining`
+              ? `Approx. ${Math.max(15, 60 - learningProgress)} mins remaining`
               : 'On track'}
           </span>
           <button
@@ -169,7 +178,7 @@ function AssignedTrainingCard({
               <span aria-hidden="true">▣</span>
               {assignment.future
                 ? 'Not started'
-                : `${assignment.progressPercentage}%`}
+                : `${assignment.title.toLowerCase().includes('manual') ? assignment.learningProgressPercentage : assignment.progressPercentage}%`}
             </span>
           </div>
           <button
@@ -275,6 +284,9 @@ export function TraineeDashboard() {
         required: false,
         status: 'not_started',
         progressPercentage: 0,
+        learningProgressPercentage: 0,
+        learningCompletedSections: 0,
+        learningTotalSections: 0,
         assignedAt: new Date().toISOString(),
         dueAt: null,
         nextAction: 'start',

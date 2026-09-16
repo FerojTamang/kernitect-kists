@@ -1,6 +1,8 @@
 import { HttpError } from '../../utils/http-error.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import type {
+  FormativeAnswerResult,
+  FormativeQuestion,
   TrainingModuleDetail,
   TrainingModuleStatus,
 } from './training.types.js';
@@ -27,6 +29,34 @@ export class TrainingService {
     }
 
     await this.repository.touchProgress(user.id, assignmentId);
+    const questionRows = await this.repository.findFormativeQuestions(
+      user.id,
+      assignmentId,
+    );
+    const questionsByContent = new Map<number, FormativeQuestion[]>();
+    for (const row of questionRows) {
+      const questions = questionsByContent.get(row.contentId) ?? [];
+      let question = questions.find((item) => item.id === row.questionId);
+      if (!question) {
+        question = {
+          id: row.questionId,
+          questionText: row.questionText,
+          sequenceOrder: row.questionOrder,
+          options: [],
+          selectedOptionId: row.selectedOptionId,
+          answeredCorrectly: row.answeredCorrectly,
+        };
+        questions.push(question);
+      }
+      if (row.optionId !== null) {
+        question.options.push({
+          id: row.optionId,
+          optionText: row.optionText!,
+          sequenceOrder: row.optionOrder!,
+        });
+      }
+      questionsByContent.set(row.contentId, questions);
+    }
 
     const assignmentPercentage = Math.max(
       0,
@@ -50,6 +80,7 @@ export class TrainingService {
         sequenceOrder: row.sequenceOrder!,
         isActive: row.isActive ?? true,
         completedAt: row.contentCompletedAt?.toISOString() ?? null,
+        formativeQuestions: questionsByContent.get(row.sectionId!) ?? [],
       }));
 
     const completedSections = sections.filter((section) => section.completedAt);
@@ -95,16 +126,80 @@ export class TrainingService {
         'That learning module is not available for your account.',
         'MODULE_NOT_FOUND',
       );
-    const contentBelongsToAssignment = rows.some(
-      (row) => row.sectionId === contentId,
-    );
-    if (!contentBelongsToAssignment)
+    const questions = (
+      await this.getAssignmentDetail(user, assignmentId)
+    ).sections.find((section) => section.id === contentId)?.formativeQuestions;
+    if (!questions)
       throw new HttpError(
         404,
         'That learning section is not available for this assignment.',
         'CONTENT_NOT_FOUND',
       );
+    if (
+      !questions.length ||
+      questions.some((question) => !question.answeredCorrectly)
+    )
+      throw new HttpError(
+        409,
+        'Answer both check questions correctly before completing this section.',
+        'FORMATIVE_CHECK_REQUIRED',
+      );
     await this.repository.completeContent(user.id, assignmentId, contentId);
     return this.getAssignmentDetail(user, assignmentId);
+  }
+
+  async answerFormativeQuestion(
+    user: AuthUser,
+    assignmentId: number,
+    contentId: number,
+    questionId: number,
+    optionId: number,
+  ): Promise<FormativeAnswerResult> {
+    const module = await this.getAssignmentDetail(user, assignmentId);
+    const section = module.sections.find((item) => item.id === contentId);
+    const question = section?.formativeQuestions.find(
+      (item) => item.id === questionId,
+    );
+    if (
+      !section ||
+      !question ||
+      !question.options.some((option) => option.id === optionId)
+    )
+      throw new HttpError(
+        404,
+        'That formative question is not available for this section.',
+        'FORMATIVE_QUESTION_NOT_FOUND',
+      );
+
+    const answer = await this.repository.submitFormativeAnswer(
+      user.id,
+      assignmentId,
+      contentId,
+      questionId,
+      optionId,
+    );
+    if (!answer)
+      throw new HttpError(
+        404,
+        'That formative question is not available for this assignment.',
+        'FORMATIVE_QUESTION_NOT_FOUND',
+      );
+
+    if (answer.correct)
+      await this.repository.completeContent(user.id, assignmentId, contentId);
+    const updatedModule = await this.getAssignmentDetail(user, assignmentId);
+    const updatedSection = updatedModule.sections.find(
+      (item) => item.id === contentId,
+    )!;
+    return {
+      questionId,
+      selectedOptionId: optionId,
+      correct: answer.correct,
+      feedback: answer.correct
+        ? 'Correct. This is the safer workplace approach.'
+        : 'Not quite. Review the section and try again.',
+      sectionComplete: Boolean(updatedSection.completedAt),
+      module: updatedModule,
+    };
   }
 }

@@ -4,6 +4,19 @@ import manualHandlingImage from '../../assets/images/dashboard/manual-handling.j
 import { ApiError, apiRequest } from '../../services/api/request';
 import './training-module.css';
 
+interface FormativeOption {
+  id: number;
+  optionText: string;
+  sequenceOrder: number;
+}
+interface FormativeQuestion {
+  id: number;
+  questionText: string;
+  sequenceOrder: number;
+  options: FormativeOption[];
+  selectedOptionId: number | null;
+  answeredCorrectly: boolean;
+}
 interface TrainingSection {
   id: number;
   title: string;
@@ -13,8 +26,8 @@ interface TrainingSection {
   sequenceOrder: number;
   isActive: boolean;
   completedAt: string | null;
+  formativeQuestions: FormativeQuestion[];
 }
-
 interface TrainingModuleResponse {
   assignmentId: number;
   moduleId: number;
@@ -37,8 +50,9 @@ export function TraineeTrainingModule() {
   const { assignmentId } = useParams();
   const [module, setModule] = useState<TrainingModuleResponse | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [feedback, setFeedback] = useState<Record<number, string>>({});
+  const [submitting, setSubmitting] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadModule = useCallback(async () => {
@@ -64,29 +78,39 @@ export function TraineeTrainingModule() {
     return () => window.clearTimeout(timer);
   }, [loadModule]);
 
-  async function completeCurrentSection() {
-    const section = module?.sections[activeIndex];
-    if (!module || !section || section.completedAt || saving) return;
-    setSaving(true);
+  async function answerQuestion(question: FormativeQuestion, optionId: number) {
+    if (!module || submitting !== null) return;
+    const section = module.sections[activeIndex];
+    if (!section) return;
+    setSubmitting(question.id);
     setError(null);
     try {
-      const updated = await apiRequest<TrainingModuleResponse>(
-        `/trainee/training/${module.assignmentId}/content/${section.id}/complete`,
-        { method: 'POST' },
+      const result = await apiRequest<{
+        correct: boolean;
+        feedback: string;
+        sectionComplete: boolean;
+        module: TrainingModuleResponse;
+      }>(
+        `/trainee/training/${module.assignmentId}/content/${section.id}/questions/${question.id}/answer`,
+        { method: 'POST', body: JSON.stringify({ optionId }) },
       );
-      setModule(updated);
-      const nextIncomplete = updated.sections.findIndex(
-        (item) => !item.completedAt,
-      );
-      setActiveIndex(
-        nextIncomplete === -1 ? updated.sections.length - 1 : nextIncomplete,
-      );
+      setModule(result.module);
+      setFeedback((current) => ({
+        ...current,
+        [question.id]: result.feedback,
+      }));
+      if (result.sectionComplete) {
+        const next = result.module.sections.findIndex(
+          (section) => !section.completedAt,
+        );
+        setActiveIndex(next === -1 ? result.module.sections.length - 1 : next);
+      }
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401)
         return;
-      setError('Your section completion could not be saved right now.');
+      setError('Your answer could not be saved right now. Please try again.');
     } finally {
-      setSaving(false);
+      setSubmitting(null);
     }
   }
 
@@ -98,7 +122,7 @@ export function TraineeTrainingModule() {
         loading
       />
     );
-  if (error || !module) {
+  if (error || !module)
     return (
       <TrainingState
         title="Training module unavailable"
@@ -113,11 +137,10 @@ export function TraineeTrainingModule() {
         </button>
       </TrainingState>
     );
-  }
 
   const allComplete =
-    module.sections.length > 0 &&
-    module.progress.learningProgressPercentage === 100;
+    module.progress.learningProgressPercentage === 100 &&
+    module.sections.length > 0;
   return (
     <div className="training-module-page">
       <header className="training-module-header">
@@ -144,8 +167,8 @@ export function TraineeTrainingModule() {
               </span>
               <h2>Manual Handling</h2>
               <p>
-                Complete all four learning sections to prepare for the
-                interactive warehouse safety scenario.
+                Complete each learning section and check your understanding
+                before moving to the next stage.
               </p>
               <p className="module-facts">
                 <strong>{module.progress.totalSections} sections</strong>
@@ -170,8 +193,13 @@ export function TraineeTrainingModule() {
             aria-label="Learning progress"
           >
             <div className="progress-header">
-              <span>Your learning progress</span>
-              <strong>{module.progress.learningProgressPercentage}%</strong>
+              <span>
+                {module.progress.completedSections} of{' '}
+                {module.progress.totalSections} sections completed
+              </span>
+              <strong>
+                {module.progress.learningProgressPercentage}% learning progress
+              </strong>
             </div>
             <div
               className="progress-track"
@@ -238,14 +266,15 @@ export function TraineeTrainingModule() {
             section={module.sections[activeIndex]}
             index={activeIndex}
             total={module.sections.length}
-            saving={saving}
+            feedback={feedback}
+            submitting={submitting}
             onPrevious={() => setActiveIndex((index) => Math.max(0, index - 1))}
             onNext={() =>
               setActiveIndex((index) =>
                 Math.min(module.sections.length - 1, index + 1),
               )
             }
-            onComplete={() => void completeCurrentSection()}
+            onAnswer={answerQuestion}
           />
         </>
       )}
@@ -257,20 +286,25 @@ function SectionContent({
   section,
   index,
   total,
-  saving,
+  feedback,
+  submitting,
   onPrevious,
   onNext,
-  onComplete,
+  onAnswer,
 }: {
   section?: TrainingSection;
   index: number;
   total: number;
-  saving: boolean;
+  feedback: Record<number, string>;
+  submitting: number | null;
   onPrevious: () => void;
   onNext: () => void;
-  onComplete: () => void;
+  onAnswer: (question: FormativeQuestion, optionId: number) => Promise<void>;
 }) {
   if (!section) return null;
+  const checksComplete =
+    section.formativeQuestions.length > 0 &&
+    section.formativeQuestions.every((question) => question.answeredCorrectly);
   return (
     <article className="section-content card" id="section-content">
       <div className="section-content-heading">
@@ -296,6 +330,13 @@ function SectionContent({
           alt="Safe manual handling in a warehouse"
         />
       </div>
+      <KnowledgeCheck
+        section={section}
+        feedback={feedback}
+        submitting={submitting}
+        onAnswer={onAnswer}
+        checksComplete={checksComplete}
+      />
       <div className="section-actions">
         <button
           className="dashboard-action ghost"
@@ -315,17 +356,83 @@ function SectionContent({
             Next <span aria-hidden="true">→</span>
           </button>
         ) : (
-          <button
-            className="dashboard-action"
-            type="button"
-            onClick={onComplete}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Mark as Complete ✓'}
-          </button>
+          <span className="completion-hint">
+            Answer both questions correctly to complete this section.
+          </span>
         )}
       </div>
     </article>
+  );
+}
+
+function KnowledgeCheck({
+  section,
+  feedback,
+  submitting,
+  onAnswer,
+  checksComplete,
+}: {
+  section: TrainingSection;
+  feedback: Record<number, string>;
+  submitting: number | null;
+  onAnswer: (question: FormativeQuestion, optionId: number) => Promise<void>;
+  checksComplete: boolean;
+}) {
+  return (
+    <section
+      className="knowledge-check"
+      aria-labelledby="understanding-heading"
+    >
+      <div className="knowledge-check-heading">
+        <div>
+          <p className="content-kicker">Practice check</p>
+          <h3 id="understanding-heading">Check your understanding</h3>
+        </div>
+        <span>
+          {
+            section.formativeQuestions.filter(
+              (question) => question.answeredCorrectly,
+            ).length
+          }{' '}
+          of {section.formativeQuestions.length} correct
+        </span>
+      </div>
+      {section.formativeQuestions.map((question, index) => (
+        <div className="question-card" key={question.id}>
+          <p className="question-number">
+            Question {index + 1} of {section.formativeQuestions.length}
+          </p>
+          <h4>{question.questionText}</h4>
+          <div className="answer-options">
+            {question.options.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`${question.selectedOptionId === option.id ? (question.answeredCorrectly ? 'selected-correct' : 'selected-wrong') : ''}`}
+                onClick={() => void onAnswer(question, option.id)}
+                disabled={submitting !== null || question.answeredCorrectly}
+              >
+                {option.optionText}
+              </button>
+            ))}
+          </div>
+          {feedback[question.id] ? (
+            <p
+              className={`answer-feedback ${question.answeredCorrectly ? 'correct' : 'incorrect'}`}
+              role="status"
+            >
+              {question.answeredCorrectly ? '✓ ' : 'Try again: '}
+              {feedback[question.id]}
+            </p>
+          ) : null}
+        </div>
+      ))}
+      {checksComplete ? (
+        <p className="check-complete" role="status">
+          ✓ Both answers are correct. Section completed.
+        </p>
+      ) : null}
+    </section>
   );
 }
 
@@ -336,8 +443,8 @@ function SectionBody({ section }: { section: TrainingSection }) {
         <h3>What is manual handling?</h3>
         <p>{section.body}</p>
         <div className="info-panel">
-          Manual handling is not just about lifting. It also includes pushing,
-          pulling, carrying and holding.
+          Manual handling includes pushing, pulling, carrying and holding, not
+          only lifting.
         </div>
       </>
     );
@@ -345,12 +452,12 @@ function SectionBody({ section }: { section: TrainingSection }) {
     return (
       <>
         <h3>Common injuries from manual handling</h3>
-        <p>Poor manual handling can cause a range of injuries, including:</p>
+        <p>Poor manual handling can cause:</p>
         <ul>
-          <li>Back pain and slipped discs</li>
-          <li>Muscle strains</li>
-          <li>Joint injuries</li>
-          <li>Musculoskeletal injuries</li>
+          <li>Back pain</li>
+          <li>Muscle strain</li>
+          <li>Joint injury</li>
+          <li>Musculoskeletal injury</li>
         </ul>
         <div className="warning-panel">
           <strong>Take care with every lift.</strong>
@@ -358,19 +465,31 @@ function SectionBody({ section }: { section: TrainingSection }) {
         </div>
       </>
     );
+  if (section.title === 'Assessing the Task and Load')
+    return (
+      <>
+        <h3>Assess before you move</h3>
+        <p>{section.body}</p>
+        <ul>
+          <li>Check the load and route.</li>
+          <li>Identify obstacles and the destination.</li>
+          <li>Consider your capability, assistance and equipment.</li>
+        </ul>
+      </>
+    );
   if (section.title === 'Safe Lifting Techniques')
     return (
       <>
         <h3>The key steps to safe lifting</h3>
-        <p>Follow these steps to lift safely:</p>
+        <p>Follow these steps:</p>
         <ol className="technique-list">
           {[
-            'Plan the lift and assess your route.',
-            'Assess the load, its weight and stability.',
-            'Set stable footing before you move.',
-            'Bend your knees, not your back.',
+            'Plan the lift.',
+            'Assess the load and route.',
+            'Set stable footing.',
+            'Bend your knees.',
             'Secure a firm grip.',
-            'Keep the load close to your body.',
+            'Keep the load close.',
             'Lift smoothly and avoid twisting.',
             'Ask for assistance or use equipment when needed.',
           ].map((step, stepIndex) => (
@@ -386,24 +505,21 @@ function SectionBody({ section }: { section: TrainingSection }) {
     <>
       <h3>Safe and unsafe lifting</h3>
       <p>
-        Compare the examples below and choose the technique that protects your
-        body.
+        Compare the examples and choose the technique that protects your body.
       </p>
       <div className="example-grid">
         <div className="example-card unsafe">
           <span>× Unsafe</span>
           <strong>Bending from the waist</strong>
           <small>
-            Twisting or reaching while carrying a load can put strain on your
-            back.
+            Twisting or carrying a load that blocks your view can cause harm.
           </small>
         </div>
         <div className="example-card safe">
           <span>✓ Safe</span>
           <strong>Bending your knees</strong>
           <small>
-            Keep your back steady, hold the load close and ask for help when
-            needed.
+            Keep your back steady, hold the load close and ask for help.
           </small>
         </div>
       </div>
@@ -419,11 +535,17 @@ function CompletionState() {
       </span>
       <p className="content-kicker">Manual Handling</p>
       <h2>Learning content complete</h2>
-      <p>You have completed the Manual Handling learning sections.</p>
+      <p>
+        You have completed all Manual Handling learning sections and knowledge
+        checks.
+      </p>
+      <p className="completion-progress">
+        5 of 5 sections completed · 100% learning progress
+      </p>
       <div className="next-stage">
         <strong>Next stage</strong>
-        <span>Interactive warehouse safety scenario</span>
-        <small>Coming next. The scenario is not available yet.</small>
+        <span>Interactive Warehouse Safety Scenario</span>
+        <small>Coming next</small>
       </div>
       <Link className="dashboard-action" to="/trainee/dashboard">
         Return to Dashboard
@@ -431,7 +553,6 @@ function CompletionState() {
     </section>
   );
 }
-
 function TrainingState({
   title,
   detail,

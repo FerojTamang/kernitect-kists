@@ -16,6 +16,12 @@ export class TraineeService {
         0,
         Math.min(100, Number(row.percentage) || 0),
       );
+      const learningCompletedSections =
+        Number(row.learningCompletedSections) || 0;
+      const learningTotalSections = Number(row.learningTotalSections) || 0;
+      const learningProgressPercentage = learningTotalSections
+        ? Math.round((learningCompletedSections / learningTotalSections) * 100)
+        : 0;
       const status: AssignmentPresentationStatus =
         row.completedAt || progressPercentage >= 100
           ? 'completed'
@@ -36,6 +42,9 @@ export class TraineeService {
         required: row.required,
         status,
         progressPercentage,
+        learningProgressPercentage,
+        learningCompletedSections,
+        learningTotalSections,
         assignedAt: row.assignedAt.toISOString(),
         dueAt: row.dueAt?.toISOString() ?? null,
         nextAction,

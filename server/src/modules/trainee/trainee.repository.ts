@@ -17,6 +17,8 @@ interface DashboardRow {
   percentage: string;
   startedAt: Date | null;
   completedAt: Date | null;
+  learningCompletedSections: string;
+  learningTotalSections: string;
 }
 
 export class TraineeRepository {
@@ -29,7 +31,15 @@ export class TraineeRepository {
         a.id AS "assignmentId", m.id AS "moduleId", m.title, m.description,
         a.required, a.assigned_at AS "assignedAt", a.due_at AS "dueAt",
         COALESCE(p.percentage, 0)::text AS percentage,
-        p.started_at AS "startedAt", p.completed_at AS "completedAt"
+        p.started_at AS "startedAt", p.completed_at AS "completedAt",
+        (SELECT count(*) FROM training_content c
+         WHERE c.training_module_id = m.id AND c.is_active
+           AND EXISTS (
+             SELECT 1 FROM training_content_completion cc
+             WHERE cc.training_assignment_id = a.id AND cc.training_content_id = c.id
+           ))::text AS "learningCompletedSections",
+        (SELECT count(*) FROM training_content c
+         WHERE c.training_module_id = m.id AND c.is_active)::text AS "learningTotalSections"
       FROM users u
       JOIN system_roles r ON r.id = u.system_role_id
       LEFT JOIN job_roles j ON j.id = u.job_role_id

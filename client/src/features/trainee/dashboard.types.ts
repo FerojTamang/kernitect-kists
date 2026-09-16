@@ -11,6 +11,9 @@ export interface DashboardAssignment {
   required: boolean;
   status: AssignmentStatus;
   progressPercentage: number;
+  learningProgressPercentage: number;
+  learningCompletedSections: number;
+  learningTotalSections: number;
   assignedAt: string;
   dueAt: string | null;
   nextAction: NextAction;

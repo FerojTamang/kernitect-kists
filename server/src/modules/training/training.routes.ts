@@ -28,6 +28,10 @@ export function createTrainingRouter(
     '/:assignmentId/content/:contentId/complete',
     controller.completeContent,
   );
+  router.post(
+    '/:assignmentId/content/:contentId/questions/:questionId/answer',
+    controller.answerFormativeQuestion,
+  );
 
   return router;
 }

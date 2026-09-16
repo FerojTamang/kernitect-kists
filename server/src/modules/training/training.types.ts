@@ -12,6 +12,22 @@ export interface TrainingSection {
   sequenceOrder: number;
   isActive: boolean;
   completedAt: string | null;
+  formativeQuestions: FormativeQuestion[];
+}
+
+export interface FormativeQuestion {
+  id: number;
+  questionText: string;
+  sequenceOrder: number;
+  options: FormativeOption[];
+  selectedOptionId: number | null;
+  answeredCorrectly: boolean;
+}
+
+export interface FormativeOption {
+  id: number;
+  optionText: string;
+  sequenceOrder: number;
 }
 
 export interface TrainingProgressSnapshot {
@@ -32,4 +48,13 @@ export interface TrainingModuleDetail {
   progress: TrainingProgressSnapshot;
   sections: TrainingSection[];
   resumeSectionIndex: number;
+}
+
+export interface FormativeAnswerResult {
+  questionId: number;
+  selectedOptionId: number;
+  correct: boolean;
+  feedback: string;
+  sectionComplete: boolean;
+  module: TrainingModuleDetail;
 }

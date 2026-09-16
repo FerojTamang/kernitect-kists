@@ -102,7 +102,10 @@ test('trainee login reaches the database-backed dashboard, persists on reload, a
     page.getByText('Forklift and Pedestrian Safety', { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText('60% complete', { exact: true }).first(),
+    page.getByText('Learning progress 0%', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('0 of 5 sections complete', { exact: true }),
   ).toBeVisible();
   await page.reload();
   await expect(
@@ -294,7 +297,7 @@ test('mobile login remains usable without horizontal overflow', async ({
   });
 });
 
-test('trainee completes the four-section Manual Handling learning journey and resumes safely', async ({
+test('trainee completes the five-section Manual Handling learning journey with formative checks', async ({
   page,
 }) => {
   await signIn(page);
@@ -303,64 +306,106 @@ test('trainee completes the four-section Manual Handling learning journey and re
     .first()
     .click();
   await expect(page).toHaveURL(/\/trainee\/training\/\d+$/);
-  await expect(
-    page.getByRole('heading', { name: 'Manual Handling' }).first(),
-  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'My Training' })).toHaveClass(
+    /active/,
+  );
   const sectionList = page.getByRole('list').last();
-  await expect(
-    sectionList.getByText('Introduction', { exact: true }),
-  ).toBeVisible();
-  await expect(
-    sectionList.getByText('Risks and Injuries', { exact: true }),
-  ).toBeVisible();
-  await expect(
-    sectionList.getByText('Safe Lifting Techniques', { exact: true }),
-  ).toBeVisible();
-  await expect(
-    sectionList.getByText('Practical Examples', { exact: true }),
-  ).toBeVisible();
+  for (const title of [
+    'Introduction',
+    'Risks and Injuries',
+    'Assessing the Task and Load',
+    'Safe Lifting Techniques',
+    'Practical Examples',
+  ])
+    await expect(sectionList.getByText(title, { exact: true })).toBeVisible();
 
   await expect(
     page.getByRole('heading', { name: 'What is manual handling?' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+  const answer = async (question: string, option: string) => {
+    await page
+      .getByText(question, { exact: true })
+      .locator('..')
+      .getByRole('button', { name: option })
+      .click();
+  };
+  await answer(
+    'Which activity is included in manual handling?',
+    'Only lifting boxes',
+  );
+  await expect(page.getByText(/Try again:/)).toBeVisible();
+  await answer(
+    'Which activity is included in manual handling?',
+    'Lifting, pushing, pulling and carrying objects',
+  );
+  await answer(
+    'Why is safe manual handling important?',
+    'It helps reduce avoidable injury',
+  );
+  await expect(page.getByText('1 of 5 sections completed')).toBeVisible();
+  await expect(page.getByText('20% learning progress')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Common injuries from manual handling' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: /Previous/ }).click();
+  await page.reload();
   await expect(
-    page.getByRole('heading', { name: 'What is manual handling?' }),
+    page.getByRole('heading', { name: 'Common injuries from manual handling' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: /Next/ }).click();
+  await answer('Which is a common manual-handling injury?', 'Back pain');
+  await answer(
+    'Which practice increases handling risk?',
+    'Twisting while carrying a heavy load',
+  );
+  await expect(page.getByText('2 of 5 sections completed')).toBeVisible();
+  await expect(page.getByText('40% learning progress')).toBeVisible();
   await expect(
-    page.getByText('Back pain and slipped discs', { exact: true }),
+    page.getByRole('heading', { name: 'Assess before you move' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+  await answer(
+    'What should you check before moving a load?',
+    'Size, shape, stability, weight and route',
+  );
+  await answer(
+    'When should handling equipment or help be considered?',
+    'When the load or route exceeds safe capability',
+  );
   await expect(
     page.getByRole('heading', { name: 'The key steps to safe lifting' }),
   ).toBeVisible();
-  await expect(page.getByText(/Plan the lift/i)).toBeVisible();
-  await page.getByRole('button', { name: /Mark as Complete/ }).click();
+  await answer(
+    'What should you do before lifting?',
+    'Plan the lift and assess the route',
+  );
+  await answer(
+    'How should you carry a load?',
+    'Keep it close and avoid twisting',
+  );
   await expect(
     page.getByRole('heading', { name: 'Safe and unsafe lifting' }),
   ).toBeVisible();
-  await expect(page.getByText('× Unsafe', { exact: true })).toBeVisible();
-  await expect(page.getByText('✓ Safe', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /Mark as Complete/ }).click();
-
+  await answer(
+    'Which is the safer warehouse handling example?',
+    'Bend your knees and keep the load close',
+  );
+  await answer(
+    'What is the safest action when a load blocks your view?',
+    'Stop, make the route safe and get help if needed',
+  );
+  await expect(page.getByText('100% learning progress')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
   ).toBeVisible();
   await expect(
-    page.getByText('You have completed the Manual Handling learning sections.'),
+    page.getByText(
+      'You have completed all Manual Handling learning sections and knowledge checks.',
+    ),
   ).toBeVisible();
   await expect(
-    page.getByText('Interactive warehouse safety scenario'),
+    page.getByText('Interactive Warehouse Safety Scenario'),
   ).toBeVisible();
   await expect(
     page.getByRole('main').getByText(/certificate|assessment|pass|score/i),
   ).toHaveCount(0);
-
   await page.reload();
   await expect(
     page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
@@ -371,8 +416,6 @@ test('trainee completes the four-section Manual Handling learning journey and re
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  await page.setViewportSize({ width: 1536, height: 900 });
-
   await page.goto('/trainee/training/999999');
   await expect(
     page.getByRole('heading', { name: 'Training module unavailable' }),
