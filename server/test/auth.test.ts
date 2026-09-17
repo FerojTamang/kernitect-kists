@@ -677,7 +677,7 @@ test('manual handling scenario is learning-gated, assignment-bound and persists 
   assert.equal(body.assignmentId, assignmentId);
   assert.equal(
     body.scenario.resourceReference,
-    'prototype://manual-handling-warehouse',
+    'asset://scenarios/manual-handling/manual-handling-warehouse.jpg',
   );
   assert.equal(body.progress.completedHazards, 0);
   assert.equal(body.progress.totalHazards, 5);

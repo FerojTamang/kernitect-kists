@@ -5,13 +5,13 @@ export const adminNavigation: NavigationItem[] = [
     path: 'dashboard',
     label: 'Dashboard',
     description:
-      'An overview of workforce training and safety learning will appear here.',
+      'Review workforce training, completion, assessment and certification activity.',
   },
   {
     path: 'users',
     label: 'Users',
     description:
-      'Administrator tools for managing trainees, system roles and job roles will appear here.',
+      'Create and manage trainee accounts, workplace job roles and account status.',
   },
   {
     path: 'training',
@@ -23,12 +23,12 @@ export const adminNavigation: NavigationItem[] = [
     path: 'assignments',
     label: 'Assignments',
     description:
-      'Tools for assigning required training by trainee job role will appear here.',
+      'Assign required or optional training modules to trainee accounts.',
   },
   {
     path: 'progress',
     label: 'Progress & results',
     description:
-      'Tools for monitoring trainee progress and assessment results will appear here.',
+      'Monitor trainee learning, 360° scenario completion, assessment results and certification status.',
   },
 ];

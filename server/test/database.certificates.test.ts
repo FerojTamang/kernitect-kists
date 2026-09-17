@@ -38,7 +38,7 @@ test('certification requires passing every active associated assessment', async 
     );
     const second = (
       await client.query<{ id: number }>(
-        "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order, is_active) VALUES ($1, 'TEST: Second', 50, 2, true) RETURNING id",
+        "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order, is_active) VALUES ($1, 'TEST: Second', 50, 3, true) RETURNING id",
         [f.manual],
       )
     ).rows[0]!.id;
@@ -80,6 +80,7 @@ test('optional, cancelled and unassigned modules do not block certification', as
       false,
     );
     await complete(client, required);
+    await attempt(client, required, f.assessment, 100);
     await client.query(
       "INSERT INTO training_modules (title, slug) VALUES ('TEST: Unassigned', 'test-unassigned')",
     );
@@ -138,6 +139,7 @@ test('certificates preserve issuance evidence when a new required assignment is 
     const f = await fixture(client);
     const required = await assign(client, f.trainee, f.manual, f.admin);
     await complete(client, required);
+    await attempt(client, required, f.assessment, 100);
     const cert = (
       await client.query<{ id: number }>(
         "INSERT INTO certificates (trainee_id, certificate_number) VALUES ($1, 'TEST-HISTORY') RETURNING id",
@@ -224,6 +226,7 @@ test('certificate evidence cannot be inserted directly or rewritten', async () =
     const f = await fixture(client);
     const assignment = await assign(client, f.trainee, f.manual, f.admin);
     await complete(client, assignment);
+    await attempt(client, assignment, f.assessment, 100);
     const cert = (
       await client.query<{ id: number }>(
         "INSERT INTO certificates (trainee_id, certificate_number) VALUES ($1, 'TEST-EVIDENCE') RETURNING id",
@@ -255,6 +258,7 @@ test('only one issued certificate per trainee; revocation allows a new issuance'
     const f = await fixture(client);
     const assignment = await assign(client, f.trainee, f.manual, f.admin);
     await complete(client, assignment);
+    await attempt(client, assignment, f.assessment, 100);
     const cert = (
       await client.query<{ id: number }>(
         "INSERT INTO certificates (trainee_id, certificate_number) VALUES ($1, 'TEST-CURRENT') RETURNING id",

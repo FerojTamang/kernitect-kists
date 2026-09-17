@@ -142,3 +142,417 @@
     padding: 22px;
   }
 }
+
+/* Step 10B-1: My Training visual polish */
+.assigned-training-page {
+  min-height: 100vh;
+  max-width: 1540px;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(99, 102, 241, 0.07), transparent 27%),
+    linear-gradient(180deg, #f8faff 0%, #f4f7fb 100%);
+}
+
+.assigned-training-header {
+  position: relative;
+  overflow: hidden;
+  padding: 24px 26px;
+  border: 1px solid #e1e7f0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.06);
+}
+
+.assigned-training-header::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.07);
+  pointer-events: none;
+}
+
+.assigned-training-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.assigned-training-header .eyebrow {
+  margin-bottom: 10px;
+  color: #4f46e5;
+}
+
+.assigned-training-header h1 {
+  margin-bottom: 8px;
+  color: #101828;
+  font-size: clamp(2rem, 3vw, 2.7rem);
+}
+
+.assigned-training-header .lead {
+  color: #59687a;
+}
+
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dfe4ee;
+  border-radius: 10px;
+  color: #4f46e5;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.035);
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.secondary-link:hover {
+  transform: translateY(-1px);
+  border-color: #c7d2fe;
+  background: #f7f8ff;
+}
+
+.assigned-training-summary {
+  position: relative;
+  overflow: hidden;
+  gap: 34px;
+  padding: 20px 24px;
+  border-color: #e1e7f0;
+  border-radius: 16px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.assigned-training-summary::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #4f46e5, #7c3aed);
+}
+
+.assigned-training-summary .summary-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #4f46e5;
+  background: linear-gradient(145deg, #eef2ff, #e0e7ff);
+}
+
+.assigned-training-summary > div {
+  border-color: #e5eaf1;
+}
+
+.assigned-training-summary strong {
+  color: #111827;
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.assigned-training-summary span:not(.summary-icon) {
+  color: #667085;
+}
+
+.assigned-module-list {
+  gap: 20px;
+}
+
+.assigned-module-card {
+  position: relative;
+  border-color: #e1e7f0;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.055);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.assigned-module-card:hover {
+  transform: translateY(-2px);
+  border-color: #d5dce8;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.085);
+}
+
+.assigned-module-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.assigned-module-image {
+  min-height: 245px;
+  filter: saturate(0.93) contrast(1.03);
+}
+
+.assigned-module-content {
+  gap: 13px;
+  padding: 30px 32px;
+}
+
+.module-order {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #4f46e5;
+  background: #eef2ff;
+  letter-spacing: 0.1em;
+}
+
+.assigned-module-content h2 {
+  color: #121a2b;
+  font-size: clamp(1.35rem, 2vw, 1.72rem);
+  letter-spacing: -0.035em;
+}
+
+.assigned-module-content p {
+  max-width: 760px;
+  color: #59687a;
+}
+
+.assigned-module-meta {
+  gap: 10px 18px;
+  color: #667085;
+}
+
+.module-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+}
+
+.module-state.in_progress {
+  color: #4338ca;
+  background: #eef2ff;
+}
+
+.module-state.not_started {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.module-state.completed {
+  color: #047857;
+  background: #ecfdf5;
+}
+
+.assigned-learning-track {
+  height: 9px;
+  max-width: 620px;
+  background: #e8edf4;
+}
+
+.module-coming-soon {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 10px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 9px;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.training-empty-state {
+  min-height: 100vh;
+  padding: 40px 24px;
+  background: linear-gradient(180deg, #f8faff, #f4f7fb);
+}
+
+.training-empty-state .card {
+  max-width: 620px;
+  margin: 12vh auto 0;
+  border-color: #e1e7f0;
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.07);
+}
+
+@media (max-width: 700px) {
+  .assigned-training-page {
+    gap: 18px;
+    padding: 18px 14px 28px;
+  }
+
+  .assigned-training-header {
+    gap: 14px;
+    padding: 20px;
+  }
+
+  .secondary-link {
+    justify-self: start;
+  }
+
+  .assigned-training-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 16px 18px 16px 22px;
+  }
+
+  .assigned-training-summary > div {
+    padding: 10px 0 0;
+    border-left: 0;
+    border-top: 1px solid #e5eaf1;
+  }
+
+  .assigned-training-summary > div:first-of-type {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .assigned-module-card {
+    border-radius: 16px;
+  }
+
+  .assigned-module-image {
+    height: 195px;
+  }
+
+  .assigned-module-content {
+    padding: 22px 20px 24px;
+  }
+}
+
+/* Step 10C-2: My Training responsive hardening */
+.assigned-training-page,
+.assigned-training-header,
+.assigned-training-summary,
+.assigned-module-list,
+.assigned-module-card,
+.assigned-module-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.assigned-training-page {
+  width: 100%;
+}
+
+.assigned-training-header > div,
+.assigned-training-summary > div,
+.assigned-module-content > * {
+  min-width: 0;
+}
+
+.assigned-module-content,
+.assigned-module-content p,
+.module-coming-soon {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1024px) and (min-width: 861px) {
+  .assigned-training-page {
+    gap: 20px;
+    padding: 22px 20px 30px;
+  }
+
+  .assigned-training-header {
+    gap: 16px;
+    padding: 22px;
+  }
+
+  .assigned-training-summary {
+    gap: 20px;
+    padding: 18px 20px;
+  }
+
+  .assigned-training-summary > div {
+    padding-left: 20px;
+  }
+
+  .assigned-module-card {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .assigned-module-image {
+    min-height: 220px;
+  }
+
+  .assigned-module-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 860px) {
+  .assigned-training-page {
+    padding: 22px 18px 30px;
+  }
+
+  .assigned-training-header {
+    flex-wrap: wrap;
+  }
+
+  .secondary-link {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .assigned-training-header {
+    grid-template-columns: 1fr;
+  }
+
+  .assigned-training-summary {
+    width: 100%;
+  }
+
+  .assigned-module-image {
+    width: 100%;
+    object-position: center;
+  }
+
+  .assigned-learning-track {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .assigned-training-page {
+    padding: 14px 10px 24px;
+  }
+
+  .assigned-training-header {
+    padding: 18px 16px;
+    border-radius: 15px;
+  }
+
+  .assigned-training-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .secondary-link,
+  .assigned-module-content .dashboard-action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .assigned-training-summary {
+    padding: 15px 15px 15px 19px;
+  }
+
+  .assigned-module-image {
+    height: 170px;
+  }
+
+  .assigned-module-content {
+    padding: 19px 16px 21px;
+  }
+
+  .assigned-module-meta {
+    display: grid;
+    gap: 8px;
+  }
+
+  .module-coming-soon {
+    width: 100%;
+  }
+}
+

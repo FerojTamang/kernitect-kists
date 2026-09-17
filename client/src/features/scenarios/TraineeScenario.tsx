@@ -178,52 +178,11 @@ export function TraineeScenario() {
 
   const selectHazardById = useCallback(
     (hazardId: number) => {
-      if (!scenario) return;
-
-      const hazard = scenario.hazards.find((item) => item.id === hazardId);
-      if (!hazard) return;
-
-      const currentIncomplete = scenario.hazards.find(
-        (item) => !item.answeredCorrectly,
-      );
-
-      const unlocked =
-        hazard.answeredCorrectly || hazard.id === currentIncomplete?.id;
-
-      if (unlocked) {
-        openHazard(hazard);
-      }
+      const hazard = scenario?.hazards.find((item) => item.id === hazardId);
+      if (hazard) openHazard(hazard);
     },
     [openHazard, scenario],
   );
-
-  const closeTrainingDialog = useCallback(() => {
-    setHazardDialogOpen(false);
-
-    if (!scenario || activeHazardId === null) {
-      return;
-    }
-
-    const active = scenario.hazards.find(
-      (hazard) => hazard.id === activeHazardId,
-    );
-
-    if (!active?.answeredCorrectly) {
-      return;
-    }
-
-    const nextIncomplete = scenario.hazards.find(
-      (hazard) => !hazard.answeredCorrectly,
-    );
-
-    if (!nextIncomplete) {
-      return;
-    }
-
-    setActiveHazardId(nextIncomplete.id);
-    setSelectedDecision('');
-    setFeedback(null);
-  }, [activeHazardId, scenario]);
 
   const loadScenario = useCallback(async () => {
     setLoading(true);
@@ -277,7 +236,7 @@ export function TraineeScenario() {
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeTrainingDialog();
+      if (event.key === 'Escape') setHazardDialogOpen(false);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -286,7 +245,7 @@ export function TraineeScenario() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [closeTrainingDialog, hazardDialogOpen]);
+  }, [hazardDialogOpen]);
 
   const activeHazard =
     scenario?.hazards.find((hazard) => hazard.id === activeHazardId) ?? null;
@@ -369,14 +328,6 @@ export function TraineeScenario() {
     );
   }
 
-  const currentIncompleteHazard =
-    scenario.hazards.find((hazard) => !hazard.answeredCorrectly) ?? null;
-
-  const viewerHazards = scenario.hazards.filter(
-    (hazard) =>
-      hazard.answeredCorrectly || hazard.id === currentIncompleteHazard?.id,
-  );
-
   const progressPercent = scenario.progress.totalHazards
     ? Math.round(
         (scenario.progress.completedHazards / scenario.progress.totalHazards) *
@@ -440,50 +391,32 @@ export function TraineeScenario() {
             </div>
 
             <ManualHandling360Viewer
-              hazards={viewerHazards}
+              hazards={scenario.hazards}
               activeHazardId={activeHazardId}
               onSelectHazard={selectHazardById}
             />
 
             <div className="scenario-point-strip" aria-label="Safety points">
-              {scenario.hazards.map((hazard) => {
-                const locked =
-                  !hazard.answeredCorrectly &&
-                  hazard.id !== currentIncompleteHazard?.id;
-
-                return (
-                  <button
-                    key={hazard.id}
-                    type="button"
-                    disabled={locked}
-                    aria-disabled={locked}
-                    className={`${activeHazardId === hazard.id ? 'active' : ''} ${
-                      hazard.answeredCorrectly ? 'complete' : ''
-                    } ${locked ? 'locked' : ''}`}
-                    onClick={() => {
-                      if (!locked) openHazard(hazard);
-                    }}
-                  >
-                    <span>
-                      {hazard.answeredCorrectly
-                        ? '✓'
-                        : locked
-                          ? '🔒'
-                          : hazard.sequenceOrder}
-                    </span>
-                    <span>
-                      Safety point {hazard.sequenceOrder}
-                      <small>
-                        {hazard.answeredCorrectly
-                          ? 'Completed'
-                          : locked
-                            ? 'Locked'
-                            : 'Current'}
-                      </small>
-                    </span>
-                  </button>
-                );
-              })}
+              {scenario.hazards.map((hazard) => (
+                <button
+                  key={hazard.id}
+                  type="button"
+                  className={`${activeHazardId === hazard.id ? 'active' : ''} ${
+                    hazard.answeredCorrectly ? 'complete' : ''
+                  }`}
+                  onClick={() => openHazard(hazard)}
+                >
+                  <span>
+                    {hazard.answeredCorrectly ? '✓' : hazard.sequenceOrder}
+                  </span>
+                  <span>
+                    Safety point {hazard.sequenceOrder}
+                    <small>
+                      {hazard.answeredCorrectly ? 'Completed' : 'Explore'}
+                    </small>
+                  </span>
+                </button>
+              ))}
             </div>
           </section>
 
@@ -527,9 +460,10 @@ export function TraineeScenario() {
                   onSubmit={() => void submitDecision()}
                   onRetry={retryDecision}
                   onFindNext={() => {
-                    if (currentIncompleteHazard) {
-                      openHazard(currentIncompleteHazard);
-                    }
+                    const next = scenario.hazards.find(
+                      (hazard) => !hazard.answeredCorrectly,
+                    );
+                    if (next) openHazard(next);
                   }}
                 />
               )
@@ -552,9 +486,8 @@ export function TraineeScenario() {
           className="scenario-training-dialog-backdrop"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeTrainingDialog();
-            }
+            if (event.target === event.currentTarget)
+              setHazardDialogOpen(false);
           }}
         >
           <section
@@ -579,7 +512,7 @@ export function TraineeScenario() {
                 type="button"
                 className="scenario-dialog-close"
                 aria-label="Close training activity and return to the 360 warehouse"
-                onClick={closeTrainingDialog}
+                onClick={() => setHazardDialogOpen(false)}
               >
                 ×
               </button>
@@ -624,9 +557,10 @@ export function TraineeScenario() {
                 onSubmit={() => void submitDecision()}
                 onRetry={retryDecision}
                 onFindNext={() => {
-                  if (currentIncompleteHazard) {
-                    openHazard(currentIncompleteHazard);
-                  }
+                  const next = scenario.hazards.find(
+                    (hazard) => !hazard.answeredCorrectly,
+                  );
+                  if (next) openHazard(next);
                 }}
               />
             </div>
@@ -639,7 +573,7 @@ export function TraineeScenario() {
               <button
                 type="button"
                 className="scenario-action secondary"
-                onClick={closeTrainingDialog}
+                onClick={() => setHazardDialogOpen(false)}
               >
                 Continue exploring 360° warehouse
               </button>
@@ -787,7 +721,7 @@ function ScenarioComplete({ assignmentId }: { assignmentId: number }) {
       <div className="scenario-next-stage">
         <strong>Next stage</strong>
         <span>Final Knowledge Assessment</span>
-        <small>Coming in Phase 7</small>
+        <small>Complete the graded assessment to finish Manual Handling.</small>
       </div>
       <div className="scenario-complete-actions">
         <Link
@@ -796,13 +730,16 @@ function ScenarioComplete({ assignmentId }: { assignmentId: number }) {
         >
           Review Manual Handling
         </Link>
-        <Link className="scenario-action primary" to="/trainee/assessments">
+        <Link
+          className="scenario-action primary"
+          to={`/trainee/training/${assignmentId}/assessment`}
+        >
           Continue to Final Assessment →
         </Link>
       </div>
       <p className="scenario-complete-note">
-        The final graded assessment is the next prototype stage and will be
-        implemented in Phase 7.
+        Your scenario result is saved. Continue to the final graded assessment
+        to complete this training module.
       </p>
     </section>
   );

@@ -20,7 +20,7 @@ before(async () => {
   assertLocalDevelopmentDatabase(env.databaseUrl);
   await inTransaction(pool, async (client) => {
     const applied = await migrate(client, schema);
-    assert.equal(applied.length, 11);
+    assert.equal(applied.length, 12);
     await seed(client, schema);
   });
   created = true;
@@ -96,7 +96,7 @@ async function fixture(client: PoolClient) {
   ).rows[0]!.id;
   const assessment = (
     await client.query<{ id: number }>(
-      'SELECT id FROM assessments WHERE training_module_id = $1 ORDER BY sequence_order',
+      'SELECT id FROM assessments WHERE training_module_id = $1 AND is_active ORDER BY sequence_order',
       [manual],
     )
   ).rows[0]!.id;

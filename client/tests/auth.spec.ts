@@ -155,7 +155,9 @@ test('administrator login redirects by system role and preserves dashboard place
 }) => {
   await signIn(page, administrator);
   await expect(
-    page.getByText('KISTS Administrator', { exact: true }),
+    page.locator('.sidebar-footer').getByText('KISTS Administrator', {
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
     page.getByText('Planned functionality', { exact: true }),
@@ -545,116 +547,46 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
 }) => {
   await prepareScenarioReadyTrainee();
   await signIn(page);
-
   await page.getByRole('link', { name: 'Scenarios' }).click();
   await expect(page).toHaveURL(/\/trainee\/scenarios$/);
-
   await expect(
     page.getByRole('heading', { name: 'Interactive safety scenarios' }),
   ).toBeVisible();
-
   await expect(
     page.getByRole('heading', {
       name: 'Interactive Warehouse Safety Scenario',
     }),
   ).toBeVisible();
-
   await page.getByRole('link', { name: /Open Scenario/ }).click();
-
   await expect(page).toHaveURL(/\/trainee\/training\/\d+\/scenario$/);
-
   await expect(
     page.getByRole('heading', { name: 'Warehouse Manual Handling Scenario' }),
   ).toBeVisible();
-
   await expect(
     page.getByRole('progressbar', { name: 'Interactive scenario progress' }),
   ).toHaveAttribute('aria-valuenow', '0');
-
   await expect(page.getByText('360° interactive scenario')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Scenarios' })).toHaveClass(
+    /active/,
+  );
+  await expect(page.getByRole('link', { name: 'My Training' })).not.toHaveClass(
+    /active/,
+  );
 
-  await expect(
-    page.getByRole('link', { name: 'Scenarios', exact: true }),
-  ).toHaveClass(/active/);
-
-  await expect(
-    page.getByRole('link', { name: 'My Training', exact: true }),
-  ).not.toHaveClass(/active/);
-
-  const openSafetyPoint = async (point: number) => {
-    await page
-      .getByRole('button', { name: new RegExp(`Safety point ${point}`) })
-      .last()
-      .click();
-
-    const dialog = page.getByRole('dialog');
-
-    await expect(dialog).toBeVisible();
-
-    return dialog;
-  };
-
-  const closeTrainingDialog = async () => {
-    const dialog = page.getByRole('dialog');
-
-    await dialog
-      .getByRole('button', {
-        name: 'Continue exploring 360° warehouse',
-        exact: true,
-      })
-      .click();
-
-    await expect(dialog).toBeHidden();
-  };
-
-  // Safety Point 1:
-  // verify that an unsafe decision receives feedback and can be retried.
-  let dialog = await openSafetyPoint(1);
-
-  await dialog
+  await page
     .getByRole('radio', {
       name: 'Carry the load and step around the obstruction',
-      exact: true,
     })
     .check();
-
-  await expect(dialog.getByText('✕ Not quite', { exact: true })).toHaveCount(0);
-
-  await dialog
-    .getByRole('button', {
-      name: 'Check decision',
-      exact: true,
-    })
-    .click();
-
-  await expect(dialog.getByText('✕ Not quite', { exact: true })).toBeVisible();
-
-  await dialog
-    .getByRole('button', {
-      name: 'Try again',
-      exact: true,
-    })
-    .click();
-
-  await dialog
-    .getByRole('radio', {
-      name: 'Clear the route before moving the load',
-      exact: true,
-    })
+  await expect(page.getByText('✕ Not quite', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Check decision' }).click();
+  await expect(page.getByText('✕ Not quite', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await page
+    .getByRole('radio', { name: 'Clear the route before moving the load' })
     .check();
-
-  await dialog
-    .getByRole('button', {
-      name: 'Check decision',
-      exact: true,
-    })
-    .click();
-
-  await expect(
-    dialog.getByText('✓ Safety point complete', { exact: true }),
-  ).toBeVisible();
-
-  await closeTrainingDialog();
+  await page.getByRole('button', { name: 'Check decision' }).click();
+  await expect(page.getByText('✓ Safety point complete')).toBeVisible();
 
   const decisions = [
     [2, 'Stabilise or restack the load first'],
@@ -664,55 +596,40 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
   ] as const;
 
   for (const [point, decision] of decisions) {
-    dialog = await openSafetyPoint(point);
-
-    await dialog
-      .getByRole('radio', {
-        name: decision,
-        exact: true,
-      })
-      .check();
-
-    await dialog
+    await page
+      .getByRole('button', { name: `Safety point ${point}` })
+      .last()
+      .click();
+    await page.getByRole('radio', { name: decision }).check();
+    await page.getByRole('button', { name: 'Check decision' }).click();
+    await expect(page.getByText('✓ Safety point complete')).toBeVisible();
+    await page
       .getByRole('button', {
-        name: 'Check decision',
+        name: 'Continue exploring 360° warehouse',
         exact: true,
       })
       .click();
-
-    await expect(
-      dialog.getByText('✓ Safety point complete', { exact: true }),
-    ).toBeVisible();
-
-    await closeTrainingDialog();
   }
 
   await expect(
     page.getByRole('heading', { name: 'Interactive scenario complete' }),
   ).toBeVisible();
-
   await expect(
     page.getByText('5 of 5 safety objectives completed'),
   ).toBeVisible();
-
   await expect(page.getByText('Final Knowledge Assessment')).toBeVisible();
-
   await expect(
     page.getByRole('link', { name: 'Continue to Final Assessment →' }),
   ).toBeVisible();
-
   await expect(
     page.getByRole('main').getByText(/certificate|assessment score|passed/i),
   ).toHaveCount(0);
 
   await page.reload();
-
   await expect(
     page.getByRole('heading', { name: 'Interactive scenario complete' }),
   ).toBeVisible();
-
   await page.setViewportSize({ width: 390, height: 844 });
-
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

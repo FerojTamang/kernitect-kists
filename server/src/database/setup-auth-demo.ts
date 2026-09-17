@@ -127,6 +127,77 @@ try {
        )`,
       [trainee.rows[0].id],
     );
+    // Phase 8 demo certificate reset.
+    // Certificate evidence is immutable in normal use, so this local-only reset
+    // temporarily disables only the evidence protection triggers, removes Alex's
+    // certificate evidence, and then removes the certificate itself before Phase 7
+    // resets the assessment attempts referenced by that evidence.
+    await client.query(
+      'ALTER TABLE certificate_assessment_attempts DISABLE TRIGGER protect_certificate_attempts',
+    );
+    await client.query(
+      'ALTER TABLE certificate_assignments DISABLE TRIGGER protect_certificate_assignments',
+    );
+    await client.query(
+      `DELETE FROM certificate_assessment_attempts
+       WHERE certificate_id IN (
+         SELECT id FROM certificates WHERE trainee_id = $1
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      `DELETE FROM certificate_assignments
+       WHERE certificate_id IN (
+         SELECT id FROM certificates WHERE trainee_id = $1
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      'ALTER TABLE certificate_assignments ENABLE TRIGGER protect_certificate_assignments',
+    );
+    await client.query(
+      'ALTER TABLE certificate_assessment_attempts ENABLE TRIGGER protect_certificate_attempts',
+    );
+    await client.query('DELETE FROM certificates WHERE trainee_id = $1', [
+      trainee.rows[0].id,
+    ]);
+    // Phase 7 demo assessment reset.
+    // Submitted assessment attempts are intentionally immutable in normal application use.
+    // This local-only demo reset temporarily disables the two protection triggers inside
+    // the existing transaction, deletes only Alex Morgan's Manual Handling assessment data,
+    // and then immediately re-enables the triggers. If the transaction fails, PostgreSQL
+    // rolls the trigger-state changes back with the rest of the reset.
+    await client.query(
+      'ALTER TABLE assessment_responses DISABLE TRIGGER validate_response',
+    );
+    await client.query(
+      'ALTER TABLE assessment_attempts DISABLE TRIGGER protect_attempt_result',
+    );
+    await client.query(
+      `DELETE FROM assessment_responses
+       WHERE assessment_attempt_id IN (
+         SELECT aa.id FROM assessment_attempts aa
+         JOIN training_assignments a ON a.id = aa.training_assignment_id
+         JOIN training_modules m ON m.id = a.training_module_id
+         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      `DELETE FROM assessment_attempts
+       WHERE training_assignment_id IN (
+         SELECT a.id FROM training_assignments a
+         JOIN training_modules m ON m.id = a.training_module_id
+         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+       )`,
+      [trainee.rows[0].id],
+    );
+    await client.query(
+      'ALTER TABLE assessment_attempts ENABLE TRIGGER protect_attempt_result',
+    );
+    await client.query(
+      'ALTER TABLE assessment_responses ENABLE TRIGGER validate_response',
+    );
     await client.query(
       `UPDATE progress p SET percentage = 60,
         started_at = COALESCE(p.started_at, clock_timestamp() - interval '45 minutes'),

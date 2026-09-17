@@ -737,3 +737,737 @@
     flex-direction: column;
   }
 }
+
+/* =========================================================
+   Step 10B-2 — Manual Handling learning module polish
+   Presentation-only overrides. Existing layout and breakpoints
+   above remain the source of responsive behavior.
+   ========================================================= */
+
+body .trainee-shell .training-module-page {
+  --learning-indigo: #4f46e5;
+  --learning-indigo-strong: #4338ca;
+  --learning-violet: #7c3aed;
+  --learning-navy: #14233b;
+  --learning-muted: #5f6f84;
+  --learning-border: #e1e7ef;
+  --learning-surface: #ffffff;
+  --learning-soft: #f7f9fc;
+  position: relative;
+  gap: 22px;
+  background:
+    radial-gradient(circle at 94% 2%, rgba(99, 102, 241, 0.07), transparent 24rem),
+    linear-gradient(180deg, #f8faff 0%, #f6f8fc 52%, #f8f9fc 100%);
+}
+
+body .trainee-shell .training-module-header {
+  align-items: center;
+  padding-bottom: 4px;
+}
+
+body .trainee-shell .training-module-header .eyebrow,
+body .trainee-shell .training-module-page .content-kicker {
+  color: #4f46e5;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+}
+
+body .trainee-shell .training-module-header h1 {
+  color: #111c2f;
+  letter-spacing: -0.035em;
+}
+
+body .trainee-shell .training-module-page .secondary-link {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid #dde3ec;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #4f46e5;
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.04);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+body .trainee-shell .training-module-page .secondary-link:hover {
+  transform: translateY(-1px);
+  border-color: #c9c6f7;
+  background: #faf9ff;
+}
+
+body .trainee-shell .module-overview.card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 212px;
+  border: 1px solid rgba(129, 140, 248, 0.18);
+  border-radius: 20px;
+  padding: 28px 30px;
+  background:
+    linear-gradient(105deg, rgba(13, 30, 54, 0.98) 0%, rgba(23, 43, 76, 0.96) 58%, rgba(43, 46, 104, 0.9) 100%);
+  box-shadow: 0 18px 42px rgba(15, 38, 69, 0.14);
+}
+
+body .trainee-shell .module-overview.card::before {
+  position: absolute;
+  z-index: -1;
+  top: -110px;
+  right: 80px;
+  width: 310px;
+  height: 310px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.22), transparent 68%);
+  content: '';
+}
+
+body .trainee-shell .module-overview.card::after {
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  bottom: 0;
+  width: 44%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.035));
+  content: '';
+}
+
+body .trainee-shell .module-overview .overview-copy {
+  position: relative;
+  z-index: 1;
+}
+
+body .trainee-shell .module-overview .status-badge {
+  border: 1px solid rgba(199, 210, 254, 0.18);
+  background: rgba(129, 140, 248, 0.15);
+  color: #dbe4ff;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+body .trainee-shell .module-overview .overview-copy > p,
+body .trainee-shell .module-overview .module-facts {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+body .trainee-shell .module-overview .module-facts strong {
+  color: #ffffff;
+}
+
+body .trainee-shell .module-overview .module-facts span {
+  position: relative;
+  padding-left: 15px;
+}
+
+body .trainee-shell .module-overview .module-facts span::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a5b4fc;
+  content: '';
+  transform: translateY(-50%);
+}
+
+body .trainee-shell .module-overview .dashboard-action {
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  box-shadow: 0 9px 22px rgba(67, 56, 202, 0.3);
+}
+
+body .trainee-shell .module-hero-image {
+  position: relative;
+  z-index: 1;
+  max-height: 176px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.2);
+}
+
+body .trainee-shell .learning-progress.card {
+  border: 1px solid var(--learning-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 9px 26px rgba(15, 23, 42, 0.05);
+}
+
+body .trainee-shell .learning-progress .progress-header {
+  margin-bottom: 14px;
+}
+
+body .trainee-shell .learning-progress .progress-header span {
+  color: var(--learning-muted);
+  font-weight: 600;
+}
+
+body .trainee-shell .learning-progress .progress-header strong {
+  color: var(--learning-navy);
+  letter-spacing: -0.02em;
+}
+
+body .trainee-shell .training-module-page .progress-track {
+  height: 9px;
+  background: #e8edf5;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+body .trainee-shell .training-module-page .progress-track span {
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.22);
+}
+
+body .trainee-shell .module-section-list.card,
+body .trainee-shell .section-content.card {
+  border: 1px solid var(--learning-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.055);
+}
+
+body .trainee-shell .module-section-list.card {
+  padding: 18px 14px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading {
+  padding: 2px 8px 4px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading h2,
+body .trainee-shell .section-content-heading h2,
+body .trainee-shell .knowledge-check-heading h3,
+body .trainee-shell .section-copy h3 {
+  color: var(--learning-navy);
+  letter-spacing: -0.018em;
+}
+
+body .trainee-shell .module-section-list li button {
+  position: relative;
+  border-color: #e4e9f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.025);
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+body .trainee-shell .module-section-list li button:hover {
+  transform: translateY(-1px);
+  border-color: #d5d8f3;
+  background: #fbfbff;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.05);
+}
+
+body .trainee-shell .module-section-list li.active button {
+  border-color: #aaa3f1;
+  background: linear-gradient(135deg, #f4f3ff, #faf9ff);
+  box-shadow:
+    inset 3px 0 #5b55d9,
+    0 8px 18px rgba(79, 70, 229, 0.08);
+}
+
+body .trainee-shell .module-section-list li.complete:not(.active) button {
+  border-color: #d6ecdf;
+  background: #fbfefc;
+}
+
+body .trainee-shell .section-number {
+  border: 1px solid #e4e8ef;
+  background: #f5f7fa;
+  color: #718096;
+}
+
+body .trainee-shell .complete .section-number {
+  border-color: #bfe8cf;
+  background: #ecfdf3;
+  color: #05834f;
+}
+
+body .trainee-shell .active .section-number {
+  border-color: transparent;
+  background: linear-gradient(135deg, #4f46e5, #7065dd);
+  box-shadow: 0 5px 12px rgba(79, 70, 229, 0.2);
+}
+
+body .trainee-shell .section-summary strong {
+  color: #26344a;
+}
+
+body .trainee-shell .section-content.card {
+  padding: clamp(22px, 2.3vw, 32px);
+}
+
+body .trainee-shell .section-content-heading {
+  padding-bottom: 20px;
+  border-bottom-color: #e8ecf2;
+}
+
+body .trainee-shell .section-state-pill {
+  border: 1px solid #e1def8;
+  background: #f5f3ff;
+  color: #5b50c9;
+}
+
+body .trainee-shell .section-state-pill.completed {
+  border-color: #c8ead4;
+  background: #ecfdf3;
+  color: #087a4b;
+}
+
+body .trainee-shell .section-content-grid {
+  gap: clamp(24px, 3vw, 38px);
+  padding: 28px 0;
+}
+
+body .trainee-shell .section-copy p,
+body .trainee-shell .section-copy li {
+  color: #5b6a7e;
+}
+
+body .trainee-shell .section-copy p {
+  font-size: 0.96rem;
+}
+
+body .trainee-shell .section-image {
+  overflow: hidden;
+  border: 1px solid #e2e7ef;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.065);
+}
+
+body .trainee-shell .task-checklist {
+  gap: 12px;
+}
+
+body .trainee-shell .task-checklist > div {
+  border-color: #e2e7ef;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fbfcfe, #f7f9fc);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.028);
+}
+
+body .trainee-shell .task-checklist strong {
+  color: #24344c;
+}
+
+body .trainee-shell .info-panel,
+body .trainee-shell .warning-panel {
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+body .trainee-shell .info-panel {
+  border: 1px solid #dfddfb;
+  background: linear-gradient(135deg, #f5f3ff, #f8f7ff);
+  color: #3c3978;
+}
+
+body .trainee-shell .warning-panel {
+  border: 1px solid #f7d7a6;
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(135deg, #fff8e9, #fffaf2);
+}
+
+body .trainee-shell .lifting-comparison {
+  gap: 18px;
+}
+
+body .trainee-shell .lifting-card {
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.045);
+}
+
+body .trainee-shell .lifting-card.safer {
+  border-color: #bfe5ce;
+  background: #f7fdf9;
+}
+
+body .trainee-shell .lifting-card.unsafe {
+  border-color: #f2c8c8;
+  background: #fff9f9;
+}
+
+body .trainee-shell .lifting-card h4 {
+  padding: 15px 18px;
+}
+
+body .trainee-shell .knowledge-check {
+  gap: 18px;
+  padding: 26px 0 24px;
+  border-top-color: #e8ecf2;
+}
+
+body .trainee-shell .knowledge-check-heading > span {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border: 1px solid #e2e0f7;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #f7f6ff;
+  color: #5c56a8;
+  font-weight: 700;
+}
+
+body .trainee-shell .question-card {
+  gap: 14px;
+  border-color: #e1e6ee;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfcfe, #f8fafc);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+}
+
+body .trainee-shell .question-card h4 {
+  color: #1f2d43;
+  font-size: 1.02rem;
+}
+
+body .trainee-shell .answer-options label {
+  min-height: 54px;
+  border-color: #dfe5ed;
+  border-radius: 11px;
+  background: #ffffff;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease;
+}
+
+body .trainee-shell .answer-options label:hover:not(:has(input:disabled)) {
+  transform: translateY(-1px);
+  border-color: #bcb7f3;
+  background: #faf9ff;
+}
+
+body .trainee-shell .answer-options label:focus-within {
+  border-color: #938bf0;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.11);
+}
+
+body .trainee-shell .answer-options label:has(input:checked) {
+  border-color: #9690ec;
+  background: #f4f3ff;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+body .trainee-shell .answer-options label.selected-correct,
+body .trainee-shell .answer-options label.selected-correct:has(input:checked) {
+  border-color: #9ed8b5;
+  background: #edfdf3;
+}
+
+body .trainee-shell .answer-options label.selected-wrong {
+  border-color: #efb6b6;
+  background: #fff3f3;
+}
+
+body .trainee-shell .check-answer-button,
+body .trainee-shell .training-module-page .dashboard-action:not(.ghost) {
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f46e5, #6d5ce8);
+  box-shadow: 0 7px 17px rgba(79, 70, 229, 0.18);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    filter 150ms ease;
+}
+
+body .trainee-shell .check-answer-button:hover:not(:disabled),
+body .trainee-shell .training-module-page .dashboard-action:not(.ghost):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.23);
+  filter: saturate(1.06);
+}
+
+body .trainee-shell .training-module-page .dashboard-action.ghost {
+  border-color: #dce2ea;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #2b3a50;
+}
+
+body .trainee-shell .training-module-page .dashboard-action.ghost:hover:not(:disabled) {
+  border-color: #c9c6ee;
+  background: #faf9ff;
+}
+
+body .trainee-shell .answer-feedback {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 13px 14px;
+}
+
+body .trainee-shell .answer-feedback.correct {
+  border-color: #c4ead2;
+  background: #ecfdf3;
+}
+
+body .trainee-shell .answer-feedback.incorrect {
+  border-color: #f5c5c5;
+  background: #fff2f2;
+}
+
+body .trainee-shell .check-complete {
+  border: 1px solid #bde5cc;
+  border-radius: 13px;
+  padding: 18px;
+  background: linear-gradient(135deg, #ecfdf3, #f5fff8);
+  box-shadow: 0 7px 20px rgba(5, 131, 79, 0.07);
+}
+
+body .trainee-shell .section-actions {
+  align-items: center;
+  padding-top: 20px;
+  border-top-color: #e8ecf2;
+}
+
+body .trainee-shell .completion-hint {
+  max-width: 390px;
+  border: 1px solid #e4e7ed;
+  border-radius: 9px;
+  padding: 8px 11px;
+  background: #f8fafc;
+  color: #66768a;
+}
+
+body .trainee-shell .completion-state.card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #dfe4ec;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.09), transparent 15rem),
+    linear-gradient(180deg, #ffffff, #fbfdfc);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+body .trainee-shell .completion-check {
+  width: 76px;
+  height: 76px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 10px 24px rgba(5, 150, 105, 0.22);
+}
+
+body .trainee-shell .completion-state h2 {
+  color: #122338;
+  letter-spacing: -0.025em;
+}
+
+body .trainee-shell .completion-progress {
+  color: #4f46e5 !important;
+}
+
+body .trainee-shell .next-stage {
+  border-color: #ddd9f8;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f5f3ff, #faf9ff);
+}
+
+body .trainee-shell .training-empty-state .card {
+  border: 1px solid var(--learning-border);
+  border-radius: 18px;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+}
+
+body .trainee-shell .training-module-page :is(
+    button,
+    a,
+    input
+  ):focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.28);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1000px) {
+  body .trainee-shell .module-overview.card {
+    min-height: 0;
+    background: linear-gradient(135deg, #10223c, #252b68);
+  }
+
+  body .trainee-shell .module-overview.card::after {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  body .trainee-shell .training-module-page {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  body .trainee-shell .training-module-header {
+    gap: 12px;
+  }
+
+  body .trainee-shell .training-module-page .secondary-link {
+    width: fit-content;
+  }
+
+  body .trainee-shell .module-overview.card {
+    border-radius: 16px;
+    padding: 22px 18px;
+  }
+
+  body .trainee-shell .module-overview .module-facts {
+    gap: 10px 18px;
+  }
+
+  body .trainee-shell .learning-progress.card,
+  body .trainee-shell .section-content.card {
+    padding: 18px;
+  }
+
+  body .trainee-shell .module-section-list.card,
+  body .trainee-shell .section-content.card {
+    border-radius: 15px;
+  }
+
+  body .trainee-shell .section-content-grid {
+    padding: 22px 0;
+  }
+
+  body .trainee-shell .section-actions {
+    align-items: stretch;
+  }
+
+  body .trainee-shell .section-actions .dashboard-action {
+    flex: 1 1 auto;
+  }
+
+  body .trainee-shell .completion-hint {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .trainee-shell .training-module-page .secondary-link,
+  body .trainee-shell .module-section-list li button,
+  body .trainee-shell .answer-options label,
+  body .trainee-shell .check-answer-button,
+  body .trainee-shell .training-module-page .dashboard-action {
+    transition: none;
+  }
+}
+
+/* Step 10C-3: learning module responsive hardening */
+body .trainee-shell .training-module-page,
+body .trainee-shell .training-module-header,
+body .trainee-shell .module-overview,
+body .trainee-shell .learning-progress,
+body .trainee-shell .module-learning-layout,
+body .trainee-shell .module-section-list,
+body .trainee-shell .section-content,
+body .trainee-shell .section-content-grid,
+body .trainee-shell .section-actions,
+body .trainee-shell .completion-state {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body .trainee-shell .training-module-page img {
+  max-width: 100%;
+}
+
+body .trainee-shell .section-content,
+body .trainee-shell .section-content p,
+body .trainee-shell .section-content li,
+body .trainee-shell .module-section-list button {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) and (min-width: 861px) {
+  body .trainee-shell .training-module-page {
+    padding: 22px 20px 30px;
+  }
+
+  body .trainee-shell .module-learning-layout {
+    grid-template-columns: minmax(210px, 0.34fr) minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  body .trainee-shell .module-section-list.card {
+    padding: 16px;
+  }
+
+  body .trainee-shell .module-section-list li button {
+    padding: 12px;
+  }
+
+  body .trainee-shell .section-content.card {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 860px) {
+  body .trainee-shell .training-module-page {
+    width: 100%;
+  }
+
+  body .trainee-shell .module-learning-layout {
+    grid-template-columns: 1fr;
+  }
+
+  body .trainee-shell .module-section-list.card {
+    position: static;
+  }
+
+  body .trainee-shell .module-section-list ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body .trainee-shell .section-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body .trainee-shell .training-module-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 620px) {
+  body .trainee-shell .module-section-list ol {
+    grid-template-columns: 1fr;
+  }
+
+  body .trainee-shell .training-module-page {
+    padding-inline: 12px;
+  }
+
+  body .trainee-shell .training-module-header h1 {
+    font-size: clamp(1.75rem, 9vw, 2.2rem);
+  }
+
+  body .trainee-shell .module-overview .module-facts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  body .trainee-shell .section-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  body .trainee-shell .section-actions .dashboard-action,
+  body .trainee-shell .training-module-page .secondary-link {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+  }
+
+  body .trainee-shell .answer-options label {
+    min-width: 0;
+  }
+}
+

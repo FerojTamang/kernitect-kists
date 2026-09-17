@@ -1,0 +1,770 @@
+.admin-workflow-nav {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1rem;
+  border: 1px solid rgba(112, 86, 187, 0.16);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 28px rgba(42, 31, 78, 0.06);
+}
+
+.admin-workflow-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.admin-workflow-heading > span {
+  font-weight: 800;
+  color: #302650;
+}
+
+.admin-workflow-heading small {
+  color: #716b80;
+  text-align: right;
+}
+
+.admin-workflow-nav ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.admin-workflow-nav li {
+  min-width: 0;
+}
+
+.admin-workflow-nav a {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  border: 1px solid #e7e3ef;
+  border-radius: 14px;
+  color: #373042;
+  text-decoration: none;
+  background: #ffffff;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.admin-workflow-nav a:hover {
+  border-color: #b8abd9;
+  background: #faf8ff;
+  transform: translateY(-1px);
+}
+
+.admin-workflow-nav a.is-current {
+  border-color: #7659b5;
+  background: #f3effc;
+}
+
+.admin-workflow-step {
+  display: grid;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 10px;
+  background: #eee9f7;
+  color: #60479a;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-workflow-nav a.is-current .admin-workflow-step {
+  background: #6f51ad;
+  color: #ffffff;
+}
+
+.admin-workflow-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.admin-workflow-copy strong,
+.admin-workflow-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-workflow-copy strong {
+  font-size: 0.88rem;
+}
+
+.admin-workflow-copy small {
+  color: #777080;
+  font-size: 0.72rem;
+}
+
+.admin-workflow-arrow {
+  margin-left: auto;
+  color: #7a65a7;
+}
+
+@media (max-width: 900px) {
+  .admin-workflow-nav ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-workflow-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .admin-workflow-heading small {
+    text-align: left;
+  }
+
+  .admin-workflow-nav ol {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-workflow-copy strong,
+  .admin-workflow-copy small {
+    white-space: normal;
+  }
+}
+
+
+/* Step 10A — presentation polish. Keep the workflow compact, scannable and brand-consistent. */
+.admin-workflow-nav {
+  margin: 0 0 18px;
+  padding: 15px;
+  border-color: rgba(101, 78, 168, 0.14);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(249, 247, 255, 0.96));
+  box-shadow: 0 14px 34px rgba(35, 28, 66, 0.07);
+}
+
+.admin-workflow-heading > span {
+  color: #201936;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.admin-workflow-heading small {
+  max-width: 560px;
+  color: #777184;
+  line-height: 1.45;
+}
+
+.admin-workflow-nav a {
+  position: relative;
+  min-height: 64px;
+  border-color: #e7e3ef;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 10px rgba(42, 31, 78, 0.025);
+}
+
+.admin-workflow-nav a:hover {
+  border-color: #c8bde4;
+  background: #fbfaff;
+  box-shadow: 0 8px 18px rgba(72, 53, 118, 0.08);
+}
+
+.admin-workflow-nav a:focus-visible {
+  outline: 3px solid rgba(108, 92, 231, 0.2);
+  outline-offset: 2px;
+}
+
+.admin-workflow-nav a.is-current {
+  border-color: rgba(108, 92, 231, 0.55);
+  background: linear-gradient(135deg, #f4f1ff, #fbfaff);
+  box-shadow: inset 0 0 0 1px rgba(108, 92, 231, 0.06);
+}
+
+.admin-workflow-nav a.is-current::after {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  left: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6657dc, #8a72ee);
+  content: '';
+}
+
+.admin-workflow-step {
+  border: 1px solid #e0daf0;
+  background: #f3effb;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.admin-workflow-nav a.is-current .admin-workflow-step {
+  border-color: transparent;
+  background: linear-gradient(135deg, #5f55db, #7659b5);
+  box-shadow: 0 6px 14px rgba(108, 92, 231, 0.24);
+}
+
+.admin-workflow-copy strong {
+  color: #2f2940;
+  letter-spacing: -0.01em;
+}
+
+.admin-workflow-arrow {
+  color: #8775b2;
+  font-size: 1.05rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-workflow-nav a {
+    transition: none;
+  }
+}
+
+/* Step 10A-2 — shared administrator shell + dashboard visual polish.
+   Presentation-only overrides. The responsive containment rules in
+   admin-dashboard.css remain untouched. */
+
+body .administrator-shell {
+  background: #f4f7fb;
+}
+
+body .administrator-shell .sidebar {
+  border-right: 1px solid rgba(148, 163, 184, 0.12);
+  background:
+    radial-gradient(circle at 16% 8%, rgba(82, 118, 255, 0.18), transparent 26%),
+    radial-gradient(circle at 82% 72%, rgba(108, 92, 231, 0.14), transparent 32%),
+    linear-gradient(180deg, #101f36 0%, #0b1728 52%, #091321 100%);
+  box-shadow: 12px 0 34px rgba(15, 23, 42, 0.08);
+}
+
+body .administrator-shell .brand-logo {
+  filter: brightness(0) invert(1) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.12));
+}
+
+body .administrator-shell .brand-tagline {
+  color: rgba(148, 194, 255, 0.92);
+}
+
+body .administrator-shell .brand-divider {
+  border-color: rgba(148, 194, 255, 0.2);
+}
+
+body .administrator-shell .nav-item {
+  position: relative;
+  border: 1px solid transparent;
+  color: rgba(226, 232, 240, 0.88);
+}
+
+body .administrator-shell .nav-item:hover {
+  border-color: rgba(148, 194, 255, 0.1);
+  background: rgba(148, 194, 255, 0.08);
+  color: #ffffff;
+}
+
+body .administrator-shell .nav-item.active {
+  border-color: rgba(147, 197, 253, 0.18);
+  background: linear-gradient(135deg, #2563c9 0%, #4f46c7 100%);
+  box-shadow:
+    0 10px 24px rgba(37, 99, 201, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+body .administrator-shell .nav-item.active::before {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: -1px;
+  width: 3px;
+  border-radius: 999px;
+  background: #93c5fd;
+  content: '';
+}
+
+body .administrator-shell .nav-icon {
+  display: grid;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #bfdbfe;
+  font-size: 0.86rem;
+}
+
+body .administrator-shell .nav-item.active .nav-icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+body .administrator-shell .sidebar-footer {
+  border-top: 1px solid rgba(148, 194, 255, 0.12);
+}
+
+body .administrator-shell .sidebar-message {
+  color: rgba(226, 232, 240, 0.72);
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+body .administrator-shell .sidebar-user {
+  color: #f8fafc;
+}
+
+body .administrator-shell .sidebar-signout {
+  width: 100%;
+  justify-content: center;
+  border: 1px solid rgba(147, 197, 253, 0.15);
+  background: rgba(148, 194, 255, 0.08);
+  box-shadow: none;
+  color: #e0ecff;
+}
+
+body .administrator-shell .sidebar-signout:hover {
+  border-color: rgba(147, 197, 253, 0.28);
+  background: rgba(148, 194, 255, 0.13);
+}
+
+body .administrator-shell .admin-dashboard {
+  background:
+    radial-gradient(circle at 92% 2%, rgba(59, 130, 246, 0.07), transparent 22rem),
+    linear-gradient(180deg, #f8fbff 0%, #f5f7fb 45%, #f7f8fc 100%);
+}
+
+body .administrator-shell .admin-top-row {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+body .administrator-shell .admin-context-label {
+  color: #52709c;
+}
+
+body .administrator-shell .admin-profile {
+  border-color: rgba(148, 163, 184, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+}
+
+body .administrator-shell .admin-profile-avatar,
+body .administrator-shell .admin-trainee-identity > span {
+  background: linear-gradient(135deg, #2563c9, #6557d8);
+  box-shadow: 0 6px 16px rgba(79, 70, 199, 0.18);
+}
+
+body .administrator-shell .admin-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: rgba(147, 197, 253, 0.16);
+  border-radius: 20px;
+  background:
+    linear-gradient(90deg, rgba(5, 21, 43, 0.96) 0%, rgba(10, 35, 67, 0.92) 44%, rgba(10, 40, 75, 0.68) 100%),
+    url('../../assets/images/dashboard/dashboard-hero.jpg') center 43% / cover no-repeat;
+  box-shadow: 0 18px 42px rgba(15, 38, 69, 0.14);
+}
+
+body .administrator-shell .admin-hero::after {
+  position: absolute;
+  z-index: -1;
+  top: -90px;
+  right: -30px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.18), transparent 68%);
+  content: '';
+}
+
+body .administrator-shell .admin-hero h1 {
+  color: #ffffff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.12);
+}
+
+body .administrator-shell .admin-eyebrow {
+  color: #93c5fd;
+}
+
+body .administrator-shell .admin-hero > div:first-child > p:last-child {
+  color: rgba(226, 232, 240, 0.86);
+}
+
+body .administrator-shell .admin-hero-status {
+  border-color: rgba(191, 219, 254, 0.16);
+  background: rgba(7, 24, 48, 0.64);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+body .administrator-shell .admin-hero-status > span,
+body .administrator-shell .admin-hero-status small {
+  color: rgba(226, 232, 240, 0.76);
+}
+
+body .administrator-shell .admin-hero-status > strong {
+  color: #ffffff;
+}
+
+body .administrator-shell .admin-progress-track {
+  background: rgba(226, 232, 240, 0.18);
+}
+
+body .administrator-shell .admin-progress-track > span {
+  background: linear-gradient(90deg, #60a5fa, #818cf8);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.26);
+}
+
+body .administrator-shell .admin-summary-card,
+body .administrator-shell .admin-panel,
+body .administrator-shell .admin-state-card {
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.045);
+}
+
+body .administrator-shell .admin-summary-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+body .administrator-shell .admin-summary-card::after {
+  position: absolute;
+  right: -22px;
+  bottom: -34px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.045);
+  content: '';
+}
+
+body .administrator-shell .admin-summary-card:nth-child(2)::after {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+body .administrator-shell .admin-summary-card:nth-child(3)::after {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+body .administrator-shell .admin-summary-card:nth-child(4)::after {
+  background: rgba(14, 165, 233, 0.05);
+}
+
+body .administrator-shell .admin-summary-icon {
+  border: 1px solid rgba(96, 165, 250, 0.12);
+  background: #eef6ff;
+  color: #2563c9;
+}
+
+body .administrator-shell .admin-summary-card:nth-child(2) .admin-summary-icon {
+  border-color: rgba(99, 102, 241, 0.12);
+  background: #f0efff;
+  color: #5146c7;
+}
+
+body .administrator-shell .admin-summary-card:nth-child(3) .admin-summary-icon {
+  border-color: rgba(16, 185, 129, 0.12);
+  background: #ecfdf5;
+  color: #059669;
+}
+
+body .administrator-shell .admin-summary-card:nth-child(4) .admin-summary-icon {
+  border-color: rgba(14, 165, 233, 0.12);
+  background: #eefaff;
+  color: #0284c7;
+}
+
+body .administrator-shell .admin-panel {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+body .administrator-shell .admin-panel-kicker {
+  color: #52709c;
+}
+
+body .administrator-shell .admin-panel-heading h2 {
+  color: #152238;
+}
+
+body .administrator-shell .admin-panel-heading a {
+  color: #315fc0;
+}
+
+body .administrator-shell .admin-module-row {
+  border-color: #e8eef7;
+  background: linear-gradient(180deg, #fbfdff, #f8faff);
+}
+
+body .administrator-shell .admin-module-icon {
+  border: 1px solid #dce8fb;
+  background: #edf5ff;
+  color: #315fc0;
+}
+
+body .administrator-shell .admin-module-progress > span {
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+}
+
+body .administrator-shell .admin-attention-panel {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.14)) border-box;
+}
+
+body .administrator-shell .admin-quick-actions a {
+  border: 1px solid #e0e9f8;
+  background: #f3f8ff;
+  color: #315fc0;
+}
+
+body .administrator-shell .admin-quick-actions a:hover {
+  border-color: #c6d8f3;
+  background: #edf5ff;
+}
+
+body .administrator-shell .admin-table-wrap {
+  border: 1px solid #edf1f6;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+body .administrator-shell .admin-table th {
+  border-bottom-color: #e7edf5;
+  background: #f6f9fd;
+  color: #58708f;
+}
+
+body .administrator-shell .admin-table tbody tr {
+  transition: background 140ms ease;
+}
+
+body .administrator-shell .admin-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+body .administrator-shell .admin-primary-button {
+  background: linear-gradient(135deg, #2563c9, #5146c7);
+  box-shadow: 0 8px 20px rgba(49, 95, 192, 0.2);
+}
+
+body .administrator-shell .admin-primary-button:hover {
+  filter: brightness(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .administrator-shell .admin-table tbody tr {
+    transition: none;
+  }
+}
+
+/* Step 10C-1 — administrator responsive hardening.
+   These rules only adjust layout at constrained viewport widths; they do not
+   change admin behavior, routes, data, or desktop presentation. */
+@media (min-width: 761px) and (max-width: 1200px) {
+  body .administrator-shell .workspace main {
+    padding-inline: 24px;
+  }
+
+  body .administrator-shell .admin-dashboard,
+  body .administrator-shell .admin-users,
+  body .administrator-shell .admin-assignments,
+  body .administrator-shell .admin-progress {
+    padding-inline: 22px;
+  }
+
+  body .administrator-shell .admin-users-toolbar,
+  body .administrator-shell .admin-assignments-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body .administrator-shell .admin-users-search,
+  body .administrator-shell .admin-assignments-search {
+    grid-column: 1 / -1;
+  }
+
+  body .administrator-shell .admin-users-toolbar select,
+  body .administrator-shell .admin-assignments-toolbar select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 900px) {
+  body .administrator-shell .admin-top-row,
+  body .administrator-shell .admin-users-header,
+  body .administrator-shell .admin-assignments-header,
+  body .administrator-shell .admin-progress-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body .administrator-shell .admin-profile,
+  body .administrator-shell .admin-progress-readonly {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body .administrator-shell .admin-users-header .admin-users-primary,
+  body .administrator-shell .admin-assignments-header .admin-assignments-primary {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  body .administrator-shell .admin-workflow-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  body .administrator-shell .admin-workflow-heading small {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (min-width: 561px) and (max-width: 760px) {
+  body .administrator-shell .sidebar {
+    padding: 24px 18px 20px;
+  }
+
+  body .administrator-shell .sidebar-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body .administrator-shell .nav-item {
+    min-width: 0;
+  }
+
+  body .administrator-shell .nav-item > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body .administrator-shell .sidebar-footer {
+    padding-top: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  body .administrator-shell .workspace main,
+  body .administrator-shell .admin-dashboard,
+  body .administrator-shell .admin-users,
+  body .administrator-shell .admin-assignments,
+  body .administrator-shell .admin-progress,
+  body .administrator-shell .admin-workflow-nav,
+  body .administrator-shell .admin-users-panel,
+  body .administrator-shell .admin-role-panel,
+  body .administrator-shell .admin-assignments-panel,
+  body .administrator-shell .admin-progress-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body .administrator-shell .workspace main {
+    padding-inline: 16px;
+  }
+
+  body .administrator-shell .admin-dashboard,
+  body .administrator-shell .admin-users,
+  body .administrator-shell .admin-assignments,
+  body .administrator-shell .admin-progress {
+    padding-inline: 0;
+  }
+
+  body .administrator-shell .admin-workflow-nav {
+    overflow: hidden;
+  }
+
+  body .administrator-shell .admin-users-overlay,
+  body .administrator-shell .admin-assignments-overlay {
+    max-width: 100vw;
+  }
+
+  body .administrator-shell .admin-users-drawer,
+  body .administrator-shell .admin-assignments-drawer {
+    width: min(100vw, 460px);
+    max-width: 100vw;
+  }
+}
+
+@media (max-width: 560px) {
+  body .administrator-shell .sidebar {
+    padding-inline: 16px;
+  }
+
+  body .administrator-shell .sidebar-nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body .administrator-shell .topbar {
+    align-items: flex-start;
+  }
+
+  body .administrator-shell .admin-workflow-nav {
+    padding: 12px;
+    border-radius: 15px;
+  }
+
+  body .administrator-shell .admin-workflow-nav a {
+    min-height: 58px;
+    padding: 0.68rem;
+  }
+
+  body .administrator-shell .admin-workflow-step {
+    flex-basis: 1.85rem;
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+}
+
+/* Step 10C-1 hotfix — contain administrator workspace overflow at the shell.
+   Wide management tables keep their own horizontal scroll containers; they
+   must not increase the document's scroll width. */
+body .administrator-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+body .administrator-shell .workspace,
+body .administrator-shell .workspace main,
+body .administrator-shell .admin-dashboard,
+body .administrator-shell .admin-users,
+body .administrator-shell .admin-assignments,
+body .administrator-shell .admin-progress {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body .administrator-shell .workspace,
+body .administrator-shell .workspace main,
+body .administrator-shell .admin-dashboard,
+body .administrator-shell .admin-assignments {
+  overflow-x: clip;
+}
+
+body .administrator-shell .admin-table-wrap,
+body .administrator-shell .admin-users-table-wrap,
+body .administrator-shell .admin-assignments-table-wrap,
+body .administrator-shell .admin-progress-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+

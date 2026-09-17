@@ -1,0 +1,751 @@
+.admin-progress {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  padding: 24px 34px 44px;
+  overflow-x: clip;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.admin-progress * {
+  box-sizing: border-box;
+}
+
+.admin-progress-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  min-width: 0;
+  margin-bottom: 20px;
+}
+
+.admin-progress-header > div:first-child {
+  min-width: 0;
+}
+
+.admin-progress-header h1 {
+  margin: 0;
+}
+
+.admin-progress-header > div:first-child > p:last-child {
+  max-width: 760px;
+  color: #64748b;
+}
+
+.admin-progress-eyebrow {
+  margin: 0 0 5px;
+  color: #6c5ce7;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-progress-readonly {
+  display: grid;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1px solid #ddd6fe;
+  border-radius: 11px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-size: 0.78rem;
+}
+
+.admin-progress-readonly span {
+  color: #7c3aed;
+  font-size: 0.7rem;
+}
+
+.admin-progress-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.admin-progress-summary article {
+  min-width: 0;
+  padding: 16px 17px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+}
+
+.admin-progress-summary span,
+.admin-progress-summary small {
+  display: block;
+  color: #64748b;
+}
+
+.admin-progress-summary span {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.admin-progress-summary strong {
+  display: block;
+  margin: 5px 0 3px;
+  color: #111827;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.admin-progress-summary small {
+  font-size: 0.69rem;
+}
+
+.admin-progress-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.6fr) repeat(4, minmax(140px, 1fr));
+  gap: 11px;
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-progress-filters label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-progress-filters label > span {
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.admin-progress-filters input,
+.admin-progress-filters select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid #d9dee7;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.admin-progress-filters input:focus,
+.admin-progress-filters select:focus {
+  border-color: #8b7cf6;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+}
+
+.admin-progress-filter-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding-top: 2px;
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.admin-progress-filter-meta button,
+.admin-progress-empty button {
+  border: 0;
+  background: transparent;
+  color: #5b5dea;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-progress-panel {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+.admin-progress-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-progress table {
+  width: 100%;
+  min-width: 1060px;
+  border-collapse: collapse;
+}
+
+.admin-progress th {
+  padding: 12px 14px;
+  background: #f8fafc;
+  color: #64748b;
+  text-align: left;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-progress td {
+  padding: 14px;
+  border-top: 1px solid #edf0f5;
+  vertical-align: top;
+  font-size: 0.82rem;
+}
+
+.admin-progress td strong,
+.admin-progress td small {
+  display: block;
+}
+
+.admin-progress td small {
+  margin-top: 4px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.admin-progress-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.admin-progress-meter > span,
+.admin-progress-card-meter > span {
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9edf3;
+}
+
+.admin-progress-meter > span {
+  width: 82px;
+  height: 7px;
+}
+
+.admin-progress-meter i,
+.admin-progress-card-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #6c5ce7;
+}
+
+.admin-progress-meter b {
+  font-size: 0.74rem;
+}
+
+.admin-progress-badge {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.admin-progress-badge--complete,
+.admin-progress-badge--passed,
+.admin-progress-badge--issued {
+  background: #ecfdf3;
+  color: #16794a;
+}
+
+.admin-progress-badge--in-progress {
+  background: #eef2ff;
+  color: #5145cd;
+}
+
+.admin-progress-badge--not-passed {
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.admin-progress-badge--not-attempted,
+.admin-progress-badge--not-started,
+.admin-progress-badge--not-required,
+.admin-progress-badge--pending {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.admin-progress-cards {
+  display: none;
+}
+
+.admin-progress-card {
+  min-width: 0;
+  padding: 16px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.admin-progress-card:last-child {
+  border-bottom: 0;
+}
+
+.admin-progress-card > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.admin-progress-card > header > div {
+  min-width: 0;
+}
+
+.admin-progress-card > header strong,
+.admin-progress-card > header small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.admin-progress-card > header small {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.admin-progress-card-training {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 0.76rem;
+}
+
+.admin-progress-card-training span {
+  flex: 0 0 auto;
+  color: #64748b;
+}
+
+.admin-progress-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin: 0;
+}
+
+.admin-progress-card dl > div {
+  min-width: 0;
+}
+
+.admin-progress-card dt {
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-progress-card dd {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.admin-progress-card dd small {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 0.67rem;
+  font-weight: 500;
+}
+
+.admin-progress-card-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.admin-progress-card-meter > span {
+  height: 8px;
+}
+
+.admin-progress-card-meter strong {
+  font-size: 0.7rem;
+}
+
+.admin-progress-empty {
+  margin: 0;
+  padding: 34px 20px;
+  color: #64748b;
+  text-align: center;
+}
+
+.admin-progress-empty strong,
+.admin-progress-empty p {
+  display: block;
+}
+
+.admin-progress-empty strong {
+  color: #334155;
+}
+
+.admin-progress-empty p {
+  margin: 6px 0 10px;
+}
+
+.admin-progress-primary {
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b5dea, #6c5ce7);
+  color: #fff;
+  padding: 11px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-progress-state {
+  max-width: 560px;
+  margin: 18vh auto;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .admin-progress-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-progress-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-progress-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-progress {
+    padding: 18px 16px 32px;
+  }
+
+  .admin-progress-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-progress-readonly {
+    width: fit-content;
+    max-width: 100%;
+  }
+
+  .admin-progress-table-wrap {
+    display: none;
+  }
+
+  .admin-progress-cards {
+    display: block;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-progress {
+    padding-inline: 12px;
+  }
+
+  .admin-progress-summary,
+  .admin-progress-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-progress-search,
+  .admin-progress-filter-meta {
+    grid-column: auto;
+  }
+
+  .admin-progress-filter-meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-progress-card > header,
+  .admin-progress-card-training {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-progress-card dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+/* Step 10A — admin presentation polish. Monitoring behavior remains unchanged. */
+.admin-progress {
+  --admin-accent: #6c5ce7;
+  --admin-ink: #172033;
+  --admin-border: #e4e8f0;
+  background:
+    radial-gradient(circle at 92% 2%, rgba(108, 92, 231, 0.08), transparent 30rem),
+    linear-gradient(180deg, #fafbfe 0%, #f6f8fc 100%);
+}
+
+.admin-progress-header {
+  margin-bottom: 18px;
+}
+
+.admin-progress-header h1 {
+  color: var(--admin-ink);
+  font-size: clamp(1.8rem, 2.5vw, 2.2rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.admin-progress-header > div:first-child > p:last-child {
+  line-height: 1.55;
+}
+
+.admin-progress-eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #e5e0fb;
+  border-radius: 999px;
+  background: #f5f2ff;
+  color: #6554ce;
+}
+
+.admin-progress-readonly {
+  border-color: #e1daf9;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8f5ff, #f2efff);
+  box-shadow: 0 5px 16px rgba(76, 58, 127, 0.05);
+}
+
+.admin-progress-summary article {
+  position: relative;
+  overflow: hidden;
+  min-height: 94px;
+  border-color: var(--admin-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.admin-progress-summary article::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 16px 0 0 16px;
+  background: linear-gradient(180deg, #6c5ce7, #9487ef);
+  content: '';
+}
+
+.admin-progress-summary article:hover {
+  transform: translateY(-1px);
+  border-color: #ddd8f2;
+  box-shadow: 0 12px 28px rgba(28, 24, 53, 0.07);
+}
+
+.admin-progress-summary strong {
+  color: #192237;
+  font-size: 1.7rem;
+  letter-spacing: -0.03em;
+}
+
+.admin-progress-filters {
+  padding: 15px;
+  border-color: var(--admin-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
+  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.035);
+}
+
+.admin-progress-filters input,
+.admin-progress-filters select {
+  height: 42px;
+  border-color: #dfe4ec;
+  border-radius: 10px;
+}
+
+.admin-progress-filters input:focus,
+.admin-progress-filters select:focus {
+  border-color: #978bef;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+.admin-progress-filter-meta {
+  border-top: 1px solid #edf0f5;
+  padding-top: 10px;
+}
+
+.admin-progress-filter-meta button,
+.admin-progress-empty button {
+  padding: 5px 7px;
+  border-radius: 7px;
+  transition: background 120ms ease;
+}
+
+.admin-progress-filter-meta button:hover,
+.admin-progress-empty button:hover {
+  background: #f4f1ff;
+}
+
+.admin-progress-filter-meta button:focus-visible,
+.admin-progress-empty button:focus-visible,
+.admin-progress-primary:focus-visible {
+  outline: 3px solid rgba(108, 92, 231, 0.2);
+  outline-offset: 2px;
+}
+
+.admin-progress-panel {
+  border-color: var(--admin-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.admin-progress th {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #e9edf3;
+  background: #f7f9fc;
+  color: #687386;
+  font-size: 0.68rem;
+  letter-spacing: 0.055em;
+}
+
+.admin-progress tbody tr {
+  transition: background 120ms ease;
+}
+
+.admin-progress tbody tr:hover {
+  background: #fbfbfe;
+}
+
+.admin-progress td {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  color: #334155;
+}
+
+.admin-progress td strong {
+  color: #172033;
+}
+
+.admin-progress-meter > span,
+.admin-progress-card-meter > span {
+  background: #edf0f5;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.admin-progress-meter i,
+.admin-progress-card-meter i {
+  background: linear-gradient(90deg, #5c55d8, #8876ed);
+}
+
+.admin-progress-badge {
+  border: 1px solid transparent;
+  padding: 5px 9px;
+}
+
+.admin-progress-badge--complete,
+.admin-progress-badge--passed,
+.admin-progress-badge--issued {
+  border-color: #c7f0d5;
+  background: #ecfdf3;
+}
+
+.admin-progress-badge--in-progress {
+  border-color: #ddd6fe;
+  background: #f1efff;
+  color: #5846bd;
+}
+
+.admin-progress-badge--not-passed {
+  border-color: #fecdd3;
+}
+
+.admin-progress-badge--not-attempted,
+.admin-progress-badge--not-started,
+.admin-progress-badge--not-required,
+.admin-progress-badge--pending {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+}
+
+.admin-progress-card {
+  background: #fff;
+}
+
+.admin-progress-card > header strong,
+.admin-progress-card-training strong {
+  color: #172033;
+}
+
+.admin-progress-card-training {
+  border-radius: 10px;
+  background: #f8f8fc;
+}
+
+.admin-progress-empty {
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
+}
+
+.admin-progress-primary {
+  min-height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5d57dd, #7659d6);
+  box-shadow: 0 8px 18px rgba(91, 83, 210, 0.18);
+}
+
+.admin-progress-state {
+  border-color: var(--admin-border);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-progress-summary article {
+    transition: none;
+  }
+}
+
+
+/* Step 10C-1 tablet hotfix: use the existing progress card view before the
+   1060px desktop monitoring table can exceed the reduced workspace width. */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .admin-progress-table-wrap {
+    display: none;
+  }
+
+  .admin-progress-cards {
+    display: block;
+  }
+}

@@ -21,15 +21,55 @@ const sidebarItems = [
   'Settings',
 ];
 
+function traineeSectionIsActive(label: string, pathname: string): boolean {
+  if (label === 'My Training') {
+    return (
+      pathname === '/trainee/training' ||
+      /^\/trainee\/training\/\d+$/.test(pathname)
+    );
+  }
+
+  if (label === 'Scenarios') {
+    return (
+      pathname === '/trainee/scenarios' ||
+      /^\/trainee\/training\/\d+\/scenario$/.test(pathname)
+    );
+  }
+
+  if (label === 'Assessments') {
+    return (
+      pathname === '/trainee/assessments' ||
+      /^\/trainee\/training\/\d+\/assessment$/.test(pathname)
+    );
+  }
+
+  return false;
+}
+
+function navigationIcon(label: string): string {
+  const icons: Record<string, string> = {
+    Dashboard: '▣',
+    'My Training': '◫',
+    Scenarios: '◧',
+    Assessments: '▤',
+    Certificates: '◨',
+    Progress: '▥',
+    Resources: '◫',
+    Settings: '⚙',
+    Users: '◉',
+    'Training content': '◫',
+    Assignments: '▤',
+    'Progress & results': '▥',
+  };
+
+  return icons[label] ?? '•';
+}
+
 export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
-
-  const traineeScenarioActive =
-    audience === 'Trainee' &&
-    /^\/trainee\/training\/[^/]+\/scenario(?:\/|$)/.test(location.pathname);
 
   const items =
     audience === 'Trainee'
@@ -44,23 +84,25 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
             6: 'resources',
             7: 'settings',
           };
-          const to = `${basePath}/${pathMap[index]}`;
+
           return {
             label,
-            to,
-            active: false,
+            to: `${basePath}/${pathMap[index]}`,
+            active: traineeSectionIsActive(label, location.pathname),
           };
         })
       : navigation.map((item) => ({
           label: item.label,
           to: `${basePath}/${item.path}`,
-          active: item.path === 'dashboard',
+          active: false,
         }));
 
   async function signOut() {
     if (signingOut) return;
+
     setSigningOut(true);
     setLogoutError(null);
+
     try {
       await logout();
     } catch (error) {
@@ -79,6 +121,7 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
+
       <aside className="sidebar">
         <div className="brand-block">
           <BrandLogo variant="dark" />
@@ -99,29 +142,13 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
             <NavLink
               key={label}
               to={to}
-              end={label === 'Dashboard'}
-              className={({ isActive }) => {
-                const scenarioNavActive =
-                  traineeScenarioActive && label === 'Scenarios';
-                const nestedTrainingShouldYieldToScenario =
-                  traineeScenarioActive && label === 'My Training';
-                return `nav-item ${
-                  scenarioNavActive ||
-                  (!nestedTrainingShouldYieldToScenario && (isActive || active))
-                    ? 'active'
-                    : ''
-                }`;
-              }}
+              end={audience === 'Trainee' || label === 'Dashboard'}
+              className={({ isActive }) =>
+                `nav-item ${isActive || active ? 'active' : ''}`
+              }
             >
               <span className="nav-icon" aria-hidden="true">
-                {label === 'Dashboard' && '▣'}
-                {label === 'My Training' && '◫'}
-                {label === 'Scenarios' && '◧'}
-                {label === 'Assessments' && '▤'}
-                {label === 'Certificates' && '◨'}
-                {label === 'Progress' && '▥'}
-                {label === 'Resources' && '◫'}
-                {label === 'Settings' && '⚙'}
+                {navigationIcon(label)}
               </span>
               <span>{label}</span>
             </NavLink>
@@ -150,6 +177,7 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
           </div>
         </div>
       </aside>
+
       <div className="workspace">
         <header className="topbar">
           <span>Interactive Safety Training System</span>

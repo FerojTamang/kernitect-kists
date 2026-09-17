@@ -11,6 +11,12 @@ import { TraineeTrainingModule } from './features/training/TraineeTrainingModule
 import { TraineeTraining } from './features/trainee/TraineeTraining';
 import { TraineeScenario } from './features/scenarios/TraineeScenario';
 import { TraineeScenarios } from './features/trainee/TraineeScenarios';
+import { TraineeAssessment } from './features/assessments/TraineeAssessment';
+import { TraineeCertificates } from './features/certificates/TraineeCertificates';
+import { AdminDashboard } from './features/admin/AdminDashboard';
+import { AdminUsers } from './features/admin/AdminUsers';
+import { AdminAssignments } from './features/admin/AdminAssignments';
+import { AdminProgress } from './features/admin/AdminProgress';
 
 export function App() {
   return (
@@ -31,6 +37,7 @@ export function App() {
           <Route path="dashboard" element={<TraineeDashboard />} />
           <Route path="training" element={<TraineeTraining />} />
           <Route path="scenarios" element={<TraineeScenarios />} />
+          <Route path="certificates" element={<TraineeCertificates />} />
           <Route
             path="training/:assignmentId"
             element={<TraineeTrainingModule />}
@@ -39,11 +46,16 @@ export function App() {
             path="training/:assignmentId/scenario"
             element={<TraineeScenario />}
           />
+          <Route
+            path="training/:assignmentId/assessment"
+            element={<TraineeAssessment />}
+          />
           {traineeNavigation.map(
             (item) =>
               item.path !== 'dashboard' &&
               item.path !== 'training' &&
-              item.path !== 'scenarios' && (
+              item.path !== 'scenarios' &&
+              item.path !== 'certificates' && (
                 <Route
                   key={item.path}
                   path={item.path}
@@ -61,7 +73,7 @@ export function App() {
             element={
               <PlaceholderPage
                 title="Assessments"
-                description="Final graded assessments will become available after the required learning and scenario stages are complete."
+                description="Open an assigned training module and complete its required learning and scenario stages to access the final assessment."
               />
             }
           />
@@ -85,6 +97,7 @@ export function App() {
           />
         </Route>
       </Route>
+
       <Route element={<ProtectedRoute role="administrator" />}>
         <Route
           path="/admin"
@@ -97,20 +110,31 @@ export function App() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
-          {adminNavigation.map((item) => (
-            <Route
-              key={item.path}
-              path={item.path}
-              element={
-                <PlaceholderPage
-                  title={item.label}
-                  description={item.description}
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="assignments" element={<AdminAssignments />} />
+          <Route path="progress" element={<AdminProgress />} />
+          {adminNavigation.map(
+            (item) =>
+              item.path !== 'dashboard' &&
+              item.path !== 'users' &&
+              item.path !== 'assignments' &&
+              item.path !== 'progress' && (
+                <Route
+                  key={item.path}
+                  path={item.path}
+                  element={
+                    <PlaceholderPage
+                      title={item.label}
+                      description={item.description}
+                    />
+                  }
                 />
-              }
-            />
-          ))}
+              ),
+          )}
         </Route>
       </Route>
+
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

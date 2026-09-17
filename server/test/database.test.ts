@@ -70,7 +70,7 @@ test('development seed is repeatable and preserves disabled account hashes', asy
     assert.equal(scenario.rows[0]?.isActive, true);
     assert.equal(
       scenario.rows[0]?.resourceReference,
-      'prototype://manual-handling-warehouse',
+      'asset://scenarios/manual-handling/manual-handling-warehouse.jpg',
     );
     assert.equal(scenario.rows[0]?.hazards, 5);
   }));

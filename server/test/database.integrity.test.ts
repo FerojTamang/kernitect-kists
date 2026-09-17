@@ -117,7 +117,7 @@ test('one module supports multiple scenarios and assessments', async () =>
       [f.manual],
     );
     await client.query(
-      "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order) VALUES ($1, 'TEST: Second assessment', 60, 2)",
+      "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order) VALUES ($1, 'TEST: Second assessment', 60, 3)",
       [f.manual],
     );
     assert.equal(
@@ -136,7 +136,7 @@ test('one module supports multiple scenarios and assessments', async () =>
           [f.manual],
         )
       ).rowCount,
-      2,
+      3,
     );
   }));
 
@@ -238,7 +238,7 @@ test('responses enforce attempt/assessment/question/option membership', async ()
     ).rows[0]!.id;
     const otherAssessment = (
       await client.query<{ id: number }>(
-        "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order) VALUES ($1, 'TEST', 50, 2) RETURNING id",
+        "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order) VALUES ($1, 'TEST', 50, 3) RETURNING id",
         [f.manual],
       )
     ).rows[0]!.id;

@@ -1,0 +1,807 @@
+.admin-assignments {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100vh;
+  padding: 24px 34px 44px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.admin-assignments-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.admin-assignments-header h1,
+.admin-assignments-drawer h2 {
+  margin: 0;
+}
+
+.admin-assignments-header > div > p:last-child,
+.admin-assignments-drawer > p,
+.admin-assignments-note p {
+  color: #64748b;
+}
+
+.admin-assignments-eyebrow {
+  margin: 0 0 5px;
+  color: #6c5ce7;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-assignments-primary {
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b5dea, #6c5ce7);
+  color: #fff;
+  padding: 12px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(108, 92, 231, 0.2);
+}
+
+.admin-assignments-primary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.admin-assignments-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-assignments-stats article {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+}
+
+.admin-assignments-stats article > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: #f0edff;
+  color: #5b5dea;
+  font-weight: 800;
+}
+
+.admin-assignments-stats strong {
+  font-size: 1.45rem;
+}
+
+.admin-assignments-stats p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.admin-assignments-panel {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+.admin-assignments-toolbar {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 220px 190px 160px;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.admin-assignments-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid #dce2ea;
+  border-radius: 9px;
+}
+
+.admin-assignments-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+}
+
+.admin-assignments-toolbar select,
+.admin-assignments-drawer select {
+  min-width: 0;
+  border: 1px solid #dce2ea;
+  border-radius: 9px;
+  background: #fff;
+  padding: 11px 12px;
+  color: #1e293b;
+}
+
+.admin-assignments-table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-assignments table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+}
+
+.admin-assignments th {
+  padding: 12px 16px;
+  background: #f8fafc;
+  color: #64748b;
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-assignments td {
+  padding: 14px 16px;
+  border-top: 1px solid #edf0f5;
+  vertical-align: middle;
+  font-size: 0.86rem;
+}
+
+.admin-assignments td strong,
+.admin-assignments td small {
+  display: block;
+}
+
+.admin-assignments td small {
+  margin-top: 3px;
+  color: #64748b;
+}
+
+.admin-assignment-requirement,
+.admin-assignment-status {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-assignment-requirement.required {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.admin-assignment-requirement.optional {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.admin-assignment-status.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.admin-assignment-status.cancelled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.admin-assignment-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-assignment-progress > span {
+  width: 90px;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9edf3;
+}
+
+.admin-assignment-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #6c5ce7;
+}
+
+.admin-assignment-progress b {
+  font-size: 0.76rem;
+}
+
+.admin-assignments-empty {
+  margin: 0;
+  padding: 28px;
+  color: #64748b;
+  text-align: center;
+}
+
+.admin-assignments-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.admin-assignments-note > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.admin-assignments-note > div > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #f0edff;
+  color: #5b5dea;
+  font-weight: 900;
+}
+
+.admin-assignments-note p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+}
+
+.admin-assignments-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.admin-assignments-drawer {
+  position: relative;
+  width: min(460px, 100%);
+  height: 100%;
+  overflow: auto;
+  padding: 30px;
+  background: #fff;
+  box-shadow: -14px 0 40px rgba(15, 23, 42, 0.15);
+}
+
+.admin-assignments-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  border: 0;
+  background: none;
+  color: #64748b;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.admin-assignments-info {
+  display: grid;
+  gap: 4px;
+  margin: 18px 0;
+  padding: 13px;
+  border-radius: 10px;
+  background: #f0edff;
+  color: #4338ca;
+  font-size: 0.8rem;
+}
+
+.admin-assignments-info span {
+  color: #6366a8;
+}
+
+.admin-assignments-drawer form {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-assignments-drawer form > label,
+.admin-assignments-drawer fieldset {
+  display: grid;
+  gap: 6px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-assignments-drawer fieldset {
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.admin-assignments-drawer legend {
+  padding: 0 4px;
+}
+
+.admin-assignment-choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid #e7e8f3;
+  border-radius: 9px;
+  background: #fafaff;
+  cursor: pointer;
+}
+
+.admin-assignment-choice input {
+  margin-top: 3px;
+}
+
+.admin-assignment-choice strong,
+.admin-assignment-choice small {
+  display: block;
+}
+
+.admin-assignment-choice small {
+  margin-top: 3px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.admin-assignments-secondary {
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+  background: #fff;
+  padding: 11px;
+  color: #475569;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-assignments-form-error {
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.8rem;
+}
+
+.admin-assignments-state {
+  max-width: 560px;
+  margin: 18vh auto;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+}
+
+@media (max-width: 1120px) {
+  .admin-assignments-toolbar {
+    grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 0.6fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-assignments-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-assignments-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-assignments-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-assignments {
+    padding: 18px 16px 32px;
+  }
+
+  .admin-assignments-header,
+  .admin-assignments-note {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-assignments-toolbar,
+  .admin-assignments-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-assignments-search {
+    grid-column: auto;
+  }
+
+  .admin-assignments-drawer {
+    width: 100%;
+    padding: 26px 18px;
+  }
+}
+
+
+/* Step 10A — admin presentation polish. No assignment behavior changes. */
+.admin-assignments {
+  --admin-accent: #6c5ce7;
+  --admin-ink: #172033;
+  --admin-border: #e4e8f0;
+  background:
+    radial-gradient(circle at 92% 2%, rgba(108, 92, 231, 0.08), transparent 30rem),
+    linear-gradient(180deg, #fafbfe 0%, #f6f8fc 100%);
+}
+
+.admin-assignments-header {
+  margin-bottom: 18px;
+}
+
+.admin-assignments-header h1 {
+  color: var(--admin-ink);
+  font-size: clamp(1.8rem, 2.5vw, 2.2rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.admin-assignments-header > div > p:last-child {
+  max-width: 740px;
+  line-height: 1.55;
+}
+
+.admin-assignments-eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #e5e0fb;
+  border-radius: 999px;
+  background: #f5f2ff;
+  color: #6554ce;
+}
+
+.admin-assignments-primary {
+  min-height: 44px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #5d57dd, #7659d6);
+  box-shadow: 0 9px 22px rgba(91, 83, 210, 0.2);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    filter 140ms ease;
+}
+
+.admin-assignments-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(91, 83, 210, 0.26);
+  filter: saturate(1.06);
+}
+
+.admin-assignments-primary:focus-visible,
+.admin-assignments-secondary:focus-visible,
+.admin-assignments-close:focus-visible {
+  outline: 3px solid rgba(108, 92, 231, 0.2);
+  outline-offset: 2px;
+}
+
+.admin-assignments-stats article {
+  position: relative;
+  overflow: hidden;
+  min-height: 88px;
+  border-color: var(--admin-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.045);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.admin-assignments-stats article::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 16px 0 0 16px;
+  background: linear-gradient(180deg, #6c5ce7, #9487ef);
+  content: '';
+}
+
+.admin-assignments-stats article:hover {
+  transform: translateY(-1px);
+  border-color: #ddd8f2;
+  box-shadow: 0 12px 28px rgba(28, 24, 53, 0.07);
+}
+
+.admin-assignments-stats article > span {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #e6e0fb;
+  background: linear-gradient(145deg, #f6f3ff, #ede9ff);
+  color: #6554ce;
+}
+
+.admin-assignments-stats strong {
+  color: #192237;
+  font-size: 1.55rem;
+  letter-spacing: -0.025em;
+}
+
+.admin-assignments-panel {
+  border-color: var(--admin-border);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.admin-assignments-toolbar {
+  padding: 15px;
+  border-bottom-color: #eaedf3;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(180deg, #ffffff, #fbfcfe);
+}
+
+.admin-assignments-search,
+.admin-assignments-toolbar select,
+.admin-assignments-drawer select {
+  min-height: 42px;
+  border-color: #dfe4ec;
+  border-radius: 10px;
+  background: #fff;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.admin-assignments-search:focus-within,
+.admin-assignments-toolbar select:focus,
+.admin-assignments-drawer select:focus {
+  border-color: #978bef;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+  outline: none;
+}
+
+.admin-assignments th {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #e9edf3;
+  background: #f7f9fc;
+  color: #687386;
+  font-size: 0.69rem;
+  letter-spacing: 0.055em;
+}
+
+.admin-assignments tbody tr {
+  transition: background 120ms ease;
+}
+
+.admin-assignments tbody tr:hover {
+  background: #fbfbfe;
+}
+
+.admin-assignments td {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  color: #334155;
+}
+
+.admin-assignments td strong {
+  color: #172033;
+}
+
+.admin-assignment-requirement,
+.admin-assignment-status {
+  border: 1px solid transparent;
+  padding: 5px 10px;
+}
+
+.admin-assignment-requirement.required {
+  border-color: #ddd6fe;
+  background: #f3efff;
+  color: #5b35b0;
+}
+
+.admin-assignment-requirement.optional {
+  border-color: #cceafb;
+  background: #eff9ff;
+  color: #096b94;
+}
+
+.admin-assignment-status.active {
+  border-color: #c7f0d5;
+  background: #ecfdf3;
+  color: #16794a;
+}
+
+.admin-assignment-progress > span {
+  background: #edf0f5;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.admin-assignment-progress i {
+  background: linear-gradient(90deg, #5c55d8, #8876ed);
+}
+
+.admin-assignments-note {
+  border-color: #e4e8f0;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #ffffff, #fcfbff);
+  box-shadow: 0 7px 20px rgba(15, 23, 42, 0.035);
+}
+
+.admin-assignments-note > div > span {
+  border: 1px solid #e6e0fb;
+  background: #f5f2ff;
+}
+
+.admin-assignments-overlay {
+  backdrop-filter: blur(3px);
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.admin-assignments-drawer {
+  border-left: 1px solid #e4e8f0;
+  background: linear-gradient(180deg, #ffffff, #fbfcff);
+  box-shadow: -22px 0 50px rgba(15, 23, 42, 0.18);
+}
+
+.admin-assignments-info {
+  border: 1px solid #e4ddff;
+  background: linear-gradient(135deg, #f7f4ff, #f1efff);
+}
+
+.admin-assignment-choice {
+  border-color: #e1e5ec;
+  background: #fff;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.admin-assignment-choice:hover {
+  transform: translateY(-1px);
+  border-color: #cbc4e9;
+  background: #fbfaff;
+}
+
+.admin-assignments-secondary {
+  min-height: 42px;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.admin-assignments-secondary:hover {
+  border-color: #cfd5df;
+  background: #f8fafc;
+}
+
+.admin-assignments-state {
+  border-color: var(--admin-border);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-assignments-primary,
+  .admin-assignments-stats article,
+  .admin-assignment-choice {
+    transition: none;
+  }
+}
+
+
+/* Step 10C-1 tablet hotfix: render assignment records as cards while the
+   administrator sidebar leaves insufficient room for the 980px desktop table. */
+@media (max-width: 1100px) {
+  .admin-assignments-table-wrap {
+    overflow: visible;
+  }
+
+  .admin-assignments table,
+  .admin-assignments tbody,
+  .admin-assignments tr,
+  .admin-assignments td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-assignments table {
+    min-width: 0;
+  }
+
+  .admin-assignments thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .admin-assignments tbody {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .admin-assignments tbody tr {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .admin-assignments td {
+    display: grid;
+    grid-template-columns: minmax(0, 132px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-assignments td::before {
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .admin-assignments td:nth-child(1)::before { content: 'Trainee'; }
+  .admin-assignments td:nth-child(2)::before { content: 'Training module'; }
+  .admin-assignments td:nth-child(3)::before { content: 'Requirement'; }
+  .admin-assignments td:nth-child(4)::before { content: 'Status'; }
+  .admin-assignments td:nth-child(5)::before { content: 'Progress'; }
+  .admin-assignments td:nth-child(6)::before { content: 'Assigned'; }
+
+  .admin-assignment-progress {
+    min-width: 0;
+  }
+
+  .admin-assignment-progress > span {
+    width: min(100%, 120px);
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-assignments td {
+    grid-template-columns: minmax(0, 112px) minmax(0, 1fr);
+  }
+}
