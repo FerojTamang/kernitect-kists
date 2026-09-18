@@ -70,6 +70,8 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const isTrainee = audience === 'Trainee';
+  const isCoursePlayer =
+    isTrainee && /^\/trainee\/training\/\d+$/.test(location.pathname);
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
@@ -116,6 +118,19 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
     } finally {
       setSigningOut(false);
     }
+  }
+
+  if (isCoursePlayer) {
+    return (
+      <div className="course-route-shell">
+        <a className="skip-link" href="#main-content">
+          Skip to lesson content
+        </a>
+        <main id="main-content" tabIndex={-1}>
+          <Outlet />
+        </main>
+      </div>
+    );
   }
 
   return (

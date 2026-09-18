@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { BrandLogo } from '../../components/BrandLogo';
 import heroImage from '../../assets/training/manual-handling/manual-handling-hero.png';
 import correctLiftingImage from '../../assets/training/manual-handling/correct-lifting-posture.png';
 import incorrectLiftingImage from '../../assets/training/manual-handling/incorrect-lifting-posture.png';
@@ -60,8 +67,16 @@ export function TraineeTrainingModule() {
     Record<number, number>
   >({});
   const [submitting, setSubmitting] = useState<number | null>(null);
+  const [pathCollapsed, setPathCollapsed] = useState(false);
+  const [pathOpen, setPathOpen] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [completionNoticeSectionId, setCompletionNoticeSectionId] = useState<
+    number | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lessonContentRef = useRef<HTMLElement>(null);
+  const previousProgressRef = useRef<number | null>(null);
 
   const loadModule = useCallback(async () => {
     setLoading(true);
@@ -85,6 +100,47 @@ export function TraineeTrainingModule() {
     const timer = window.setTimeout(() => void loadModule(), 0);
     return () => window.clearTimeout(timer);
   }, [loadModule]);
+
+  useEffect(() => {
+    lessonContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeIndex]);
+
+  useEffect(() => {
+    if (!pathOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPathOpen(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [pathOpen]);
+
+  useEffect(() => {
+    const percentage = module?.progress.learningProgressPercentage;
+    if (percentage === undefined) return;
+
+    const previous = previousProgressRef.current;
+    previousProgressRef.current = percentage;
+    if (previous === null || previous >= 100 || percentage < 100) return;
+
+    setShowCelebration(true);
+    const timer = window.setTimeout(() => setShowCelebration(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [module?.progress.learningProgressPercentage]);
+
+  useEffect(() => {
+    if (completionNoticeSectionId === null) return;
+    const timer = window.setTimeout(
+      () => setCompletionNoticeSectionId(null),
+      6500,
+    );
+    return () => window.clearTimeout(timer);
+  }, [completionNoticeSectionId]);
+
+  function goToSection(index: number) {
+    setCompletionNoticeSectionId(null);
+    setActiveIndex(index);
+    setPathOpen(false);
+  }
 
   function selectOption(questionId: number, optionId: number) {
     setSelectedOptions((current) => ({ ...current, [questionId]: optionId }));
@@ -110,6 +166,9 @@ export function TraineeTrainingModule() {
         { method: 'POST', body: JSON.stringify({ optionId }) },
       );
       setModule(result.module);
+      if (result.sectionComplete && !section.completedAt) {
+        setCompletionNoticeSectionId(section.id);
+      }
       setFeedback((current) => ({
         ...current,
         [question.id]: result.feedback,
@@ -151,147 +210,165 @@ export function TraineeTrainingModule() {
     module.progress.learningProgressPercentage === 100 &&
     module.sections.length > 0;
   return (
-    <div className="training-module-page">
-      <header className="training-module-header">
-        <div>
-          <p className="eyebrow">My Training / Manual Handling</p>
+    <div
+      className={`training-module-page course-player${pathCollapsed ? ' path-collapsed' : ''}${pathOpen ? ' path-open' : ''}`}
+    >
+      <header className="course-player-header">
+        <button
+          className="course-mobile-path-button"
+          type="button"
+          aria-expanded={pathOpen}
+          aria-controls="course-learning-path"
+          onClick={() => setPathOpen(true)}
+        >
+          Learning Path
+        </button>
+        <div className="course-header-title">
+          <span>Safety Training Module</span>
           <h1>
             {allComplete ? 'Learning content complete' : module.moduleTitle}
           </h1>
         </div>
-        <Link className="secondary-link" to="/trainee/training">
-          ← Back to My Training
-        </Link>
-      </header>
-      {allComplete ? (
-        <CompletionState assignmentId={module.assignmentId} />
-      ) : (
-        <>
-          <section className="module-overview card">
-            <div className="overview-copy">
-              <span className="status-badge">
-                {module.status === 'in_progress'
-                  ? 'In progress'
-                  : 'Not started'}
-              </span>
-              <h2>Manual Handling</h2>
-              <p>
-                Learn how to assess handling tasks, reduce risk and use safer
-                handling techniques in warehouse environments.
-              </p>
-              <p className="module-facts">
-                <strong>{module.progress.totalSections} sections</strong>
-                <span>Learning content</span>
-                <span>Scenario follows</span>
-              </p>
-              <a className="dashboard-action compact" href="#section-content">
-                {module.progress.completedSections
-                  ? 'Continue learning'
-                  : 'Start learning'}{' '}
-                <span aria-hidden="true">→</span>
-              </a>
-            </div>
-            <img
-              className="module-hero-image"
-              src={heroImage}
-              alt="Warehouse worker lifting a box safely"
-            />
-          </section>
-          <section
-            className="learning-progress card"
-            aria-label="Learning progress"
+        <div className="course-header-progress">
+          <span>
+            Section {activeIndex + 1} of {module.sections.length}
+          </span>
+          <strong>
+            {module.progress.learningProgressPercentage}%
+            {!allComplete && (
+              <span className="course-progress-words"> learning progress</span>
+            )}
+          </strong>
+          <div
+            className="course-progress-track"
+            role="progressbar"
+            aria-label="Learning content progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={module.progress.learningProgressPercentage}
           >
-            <div className="progress-header">
-              <span>
-                {module.progress.completedSections} of{' '}
-                {module.progress.totalSections} sections completed
-              </span>
-              <strong>
-                {module.progress.learningProgressPercentage}% learning progress
-              </strong>
+            <span
+              style={{
+                width: `${module.progress.learningProgressPercentage}%`,
+              }}
+            />
+          </div>
+        </div>
+      </header>
+
+      <div className="course-player-body">
+        <button
+          className="course-drawer-backdrop"
+          type="button"
+          aria-label="Close learning path"
+          onClick={() => setPathOpen(false)}
+        />
+        <aside className="course-learning-sidebar" id="course-learning-path">
+          <div className="course-brand-row">
+            <div className="course-brand-logo">
+              <BrandLogo variant="dark" />
             </div>
-            <div
-              className="progress-track"
-              role="progressbar"
-              aria-label="Learning content progress"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={module.progress.learningProgressPercentage}
+            <button
+              className="course-path-collapse"
+              type="button"
+              aria-label={
+                pathCollapsed
+                  ? 'Expand learning path'
+                  : 'Collapse learning path'
+              }
+              onClick={() => setPathCollapsed((current) => !current)}
             >
+              <span aria-hidden="true">{pathCollapsed ? '›' : '‹'}</span>
+            </button>
+            <button
+              className="course-path-close"
+              type="button"
+              aria-label="Close learning path"
+              onClick={() => setPathOpen(false)}
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+
+          <div className="course-module-summary">
+            <span>Safety Training Module</span>
+            <h2>Manual Handling</h2>
+            <p>
+              {module.progress.completedSections} of{' '}
+              {module.progress.totalSections} sections completed
+            </p>
+            <div className="course-sidebar-progress" aria-hidden="true">
               <span
                 style={{
                   width: `${module.progress.learningProgressPercentage}%`,
                 }}
               />
             </div>
-          </section>
-          <div className="module-learning-layout">
-            <nav
-              className="module-section-list card"
-              aria-labelledby="section-list-heading"
-            >
-              <div className="section-list-heading">
-                <div>
-                  <p className="content-kicker">Learning path</p>
-                  <h2 id="section-list-heading">Complete each section</h2>
-                </div>
-                <span>
-                  {module.progress.completedSections} of{' '}
-                  {module.progress.totalSections} complete
-                </span>
-              </div>
-              <label className="mobile-section-picker">
-                <span>
-                  Section {activeIndex + 1} of {module.sections.length}
-                </span>
-                <select
-                  aria-label="Current learning section"
-                  value={activeIndex}
-                  onChange={(event) =>
-                    setActiveIndex(Number(event.currentTarget.value))
-                  }
+          </div>
+
+          <nav
+            className="module-section-list"
+            aria-label="Complete each section"
+          >
+            <div className="section-list-heading">
+              <p className="content-kicker" id="section-list-heading">
+                Learning Path
+              </p>
+            </div>
+            <ol>
+              {module.sections.map((section, index) => (
+                <li
+                  key={section.id}
+                  className={`${index === activeIndex ? 'active' : ''} ${section.completedAt ? 'complete' : ''}`}
                 >
-                  {module.sections.map((section, index) => (
-                    <option key={section.id} value={index}>
-                      {String(index + 1).padStart(2, '0')} {section.title}
-                      {section.completedAt ? ' — Completed' : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <ol>
-                {module.sections.map((section, index) => (
-                  <li
-                    key={section.id}
-                    className={`${index === activeIndex ? 'active' : ''} ${section.completedAt ? 'complete' : ''}`}
+                  <button
+                    type="button"
+                    aria-current={index === activeIndex ? 'step' : undefined}
+                    title={pathCollapsed ? section.title : undefined}
+                    onClick={() => goToSection(index)}
                   >
-                    <button
-                      type="button"
-                      aria-current={index === activeIndex ? 'step' : undefined}
-                      onClick={() => setActiveIndex(index)}
-                    >
-                      <span className="section-number">
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                      <span className="section-summary">
-                        <strong>
-                          {section.title === 'Introduction'
-                            ? 'Introduction to Manual Handling'
-                            : section.title}
-                        </strong>
-                        <small>
-                          {index === activeIndex
-                            ? '→ Current'
-                            : section.completedAt
-                              ? '✓ Completed'
-                              : '○ Not started'}
-                        </small>
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </nav>
+                    <span className="section-number">
+                      {section.completedAt
+                        ? '✓'
+                        : String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span className="section-summary">
+                      <strong>
+                        {section.title === 'Introduction'
+                          ? 'Introduction to Manual Handling'
+                          : section.title}
+                      </strong>
+                      <small>
+                        {index === activeIndex
+                          ? 'Current section'
+                          : section.completedAt
+                            ? 'Completed'
+                            : 'Not started'}
+                      </small>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
+
+          <Link
+            className="course-back-link active"
+            aria-label="My Training"
+            to="/trainee/training"
+          >
+            <span aria-hidden="true">←</span>
+            <span className="course-back-label">Back to My Training</span>
+          </Link>
+        </aside>
+
+        <main className="course-lesson-scroll" ref={lessonContentRef}>
+          {allComplete ? (
+            <CompletionState
+              assignmentId={module.assignmentId}
+              celebrating={showCelebration}
+            />
+          ) : (
             <SectionContent
               section={module.sections[activeIndex]}
               index={activeIndex}
@@ -301,25 +378,21 @@ export function TraineeTrainingModule() {
               feedback={feedback}
               submitting={submitting}
               selectedOptions={selectedOptions}
-              onPrevious={() =>
-                setActiveIndex((index) => Math.max(0, index - 1))
+              showCompletionNotice={
+                completionNoticeSectionId === module.sections[activeIndex]?.id
               }
+              onPrevious={() => goToSection(Math.max(0, activeIndex - 1))}
               onNext={() =>
-                setActiveIndex((index) =>
-                  Math.min(module.sections.length - 1, index + 1),
+                goToSection(
+                  Math.min(module.sections.length - 1, activeIndex + 1),
                 )
               }
               onSelect={selectOption}
               onAnswer={answerQuestion}
-              onContinue={() =>
-                setActiveIndex((index) =>
-                  Math.min(module.sections.length - 1, index + 1),
-                )
-              }
             />
-          </div>
-        </>
-      )}
+          )}
+        </main>
+      </div>
     </div>
   );
 }
@@ -333,11 +406,11 @@ function SectionContent({
   feedback,
   submitting,
   selectedOptions,
+  showCompletionNotice,
   onPrevious,
   onNext,
   onSelect,
   onAnswer,
-  onContinue,
 }: {
   section?: TrainingSection;
   index: number;
@@ -347,11 +420,11 @@ function SectionContent({
   feedback: Record<number, string>;
   submitting: number | null;
   selectedOptions: Record<number, number>;
+  showCompletionNotice: boolean;
   onPrevious: () => void;
   onNext: () => void;
   onSelect: (questionId: number, optionId: number) => void;
   onAnswer: (question: FormativeQuestion) => Promise<void>;
-  onContinue: () => void;
 }) {
   if (!section) return null;
   const checksComplete =
@@ -389,14 +462,13 @@ function SectionContent({
       <KnowledgeCheck
         section={section}
         progress={progress}
-        nextTitle={nextTitle}
         feedback={feedback}
         submitting={submitting}
         selectedOptions={selectedOptions}
         onSelect={onSelect}
         onAnswer={onAnswer}
         checksComplete={checksComplete}
-        onContinue={onContinue}
+        showCompletionNotice={showCompletionNotice}
       />
       <div className="section-actions">
         <button
@@ -413,6 +485,7 @@ function SectionContent({
             type="button"
             onClick={onNext}
             disabled={index === total - 1}
+            aria-label={nextTitle ? `Continue to ${nextTitle}` : 'Next'}
           >
             Next <span aria-hidden="true">→</span>
           </button>
@@ -429,25 +502,23 @@ function SectionContent({
 function KnowledgeCheck({
   section,
   progress,
-  nextTitle,
   feedback,
   submitting,
   selectedOptions,
   onSelect,
   onAnswer,
   checksComplete,
-  onContinue,
+  showCompletionNotice,
 }: {
   section: TrainingSection;
   progress: TrainingModuleResponse['progress'];
-  nextTitle?: string;
   feedback: Record<number, string>;
   submitting: number | null;
   selectedOptions: Record<number, number>;
   onSelect: (questionId: number, optionId: number) => void;
   onAnswer: (question: FormativeQuestion) => Promise<void>;
   checksComplete: boolean;
-  onContinue: () => void;
+  showCompletionNotice: boolean;
 }) {
   return (
     <section
@@ -536,23 +607,14 @@ function KnowledgeCheck({
           ) : null}
         </div>
       ))}
-      {checksComplete ? (
-        <div className="check-complete" role="status">
+      {checksComplete && showCompletionNotice ? (
+        <div className="check-complete completion-notice" role="status">
           <strong>✓ Section Complete</strong>
           <span>{section.title} completed</span>
           <span>
             {progress.completedSections} / {progress.totalSections} sections ·
             Learning progress {progress.learningProgressPercentage}%
           </span>
-          {nextTitle ? (
-            <button
-              className="dashboard-action compact"
-              type="button"
-              onClick={onContinue}
-            >
-              Continue to {nextTitle} <span aria-hidden="true">→</span>
-            </button>
-          ) : null}
         </div>
       ) : null}
     </section>
@@ -732,13 +794,31 @@ function sectionImageAlt(title: string): string {
   return 'Worker using safe handling equipment in a warehouse';
 }
 
-function CompletionState({ assignmentId }: { assignmentId: number }) {
+function CompletionState({
+  assignmentId,
+  celebrating,
+}: {
+  assignmentId: number;
+  celebrating: boolean;
+}) {
   return (
-    <section className="completion-state card">
+    <section
+      className={`completion-state card${celebrating ? ' is-celebrating' : ''}`}
+    >
+      {celebrating && (
+        <div className="completion-confetti" aria-hidden="true">
+          {Array.from({ length: 16 }, (_, index) => (
+            <span key={index} />
+          ))}
+        </div>
+      )}
       <span className="completion-check" aria-hidden="true">
         ✓
       </span>
       <p className="content-kicker">Manual Handling</p>
+      {celebrating && (
+        <strong className="celebration-title">Congratulations!</strong>
+      )}
       <h2>Learning content complete</h2>
       <p>
         You have completed all Manual Handling learning sections and knowledge
