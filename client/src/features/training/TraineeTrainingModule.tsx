@@ -3,8 +3,10 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useParams } from 'react-router-dom';
 import { BrandLogo } from '../../components/BrandLogo';
 import heroImage from '../../assets/training/manual-handling/manual-handling-hero.png';
@@ -805,25 +807,39 @@ function CompletionState({
     <section
       className={`completion-state card${celebrating ? ' is-celebrating' : ''}`}
     >
+      {celebrating &&
+        createPortal(
+          <div className="completion-confetti" aria-hidden="true">
+            {Array.from({ length: 60 }, (_, index) => (
+              <span
+                className={`confetti-piece confetti-piece--${index % 4}`}
+                key={index}
+                style={getConfettiStyle(index)}
+              />
+            ))}
+          </div>,
+          document.body,
+        )}
       {celebrating && (
-        <div className="completion-confetti" aria-hidden="true">
-          {Array.from({ length: 16 }, (_, index) => (
-            <span key={index} />
-          ))}
+        <div className="completion-celebration-overlay" role="status">
+          <div className="completion-celebration-message">
+            <span className="completion-celebration-icon" aria-hidden="true">
+              ✓
+            </span>
+            <strong>Congratulations!</strong>
+            <span>
+              You&apos;ve completed the Manual Handling learning content.
+            </span>
+            <small>Next step: Interactive safety scenario</small>
+          </div>
         </div>
       )}
       <span className="completion-check" aria-hidden="true">
         ✓
       </span>
       <p className="content-kicker">Manual Handling</p>
-      {celebrating && (
-        <strong className="celebration-title">Congratulations!</strong>
-      )}
       <h2>Learning content complete</h2>
-      <p>
-        You have completed all Manual Handling learning sections and knowledge
-        checks.
-      </p>
+      <p>You&apos;ve completed the Manual Handling learning content.</p>
       <p className="completion-progress">
         5 of 5 sections completed · 100% learning progress
       </p>
@@ -847,6 +863,37 @@ function CompletionState({
       </div>
     </section>
   );
+}
+
+function getConfettiStyle(index: number): CSSProperties {
+  const group = index % 4;
+  const spread = (index * 37) % 96;
+  const direction = index % 2 === 0 ? 1 : -1;
+  const startX = group === 1 ? -2 : group === 2 ? 102 : 2 + spread;
+  const startY =
+    group === 0
+      ? -3
+      : group === 3
+        ? 42 + ((index * 11) % 22)
+        : 18 + spread * 0.62;
+  const burstX =
+    group === 1
+      ? 22 + (index % 7) * 5
+      : group === 2
+        ? -(22 + (index % 7) * 5)
+        : direction * (8 + (index % 6) * 4);
+  const endX = burstX + direction * (4 + (index % 5) * 3);
+  const endY = group === 0 ? 108 : group === 3 ? 54 : 72;
+
+  return {
+    '--confetti-start-x': `${startX}vw`,
+    '--confetti-start-y': `${startY}vh`,
+    '--confetti-burst-x': `${burstX}vw`,
+    '--confetti-end-x': `${endX}vw`,
+    '--confetti-end-y': `${endY}vh`,
+    '--confetti-delay': `${(index % 12) * 32}ms`,
+    '--confetti-rotation': `${540 + (index % 6) * 90}deg`,
+  } as CSSProperties;
 }
 function TrainingState({
   title,

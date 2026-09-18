@@ -505,14 +505,30 @@ test('trainee completes the five-section Manual Handling learning journey with f
     'What is the safest action when a load blocks your view?',
     'Stop, make the route safe and get help if needed',
   );
+  const celebration = page.getByRole('status');
+  const confetti = page.locator('.completion-confetti');
+
+  await expect(celebration.getByText('Congratulations!')).toBeVisible();
+  await expect(
+    celebration.getByText(
+      "You've completed the Manual Handling learning content.",
+    ),
+  ).toBeVisible();
+  await expect(confetti).toBeVisible();
+  expect(
+    await confetti.evaluate((element) => ({
+      pointerEvents: window.getComputedStyle(element).pointerEvents,
+      position: window.getComputedStyle(element).position,
+    })),
+  ).toEqual({ pointerEvents: 'none', position: 'fixed' });
   await expect(page.getByText('100% learning progress')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
   ).toBeVisible();
   await expect(
-    page.getByText(
-      'You have completed all Manual Handling learning sections and knowledge checks.',
-    ),
+    page.locator('.completion-state > p').filter({
+      hasText: "You've completed the Manual Handling learning content.",
+    }),
   ).toBeVisible();
   await expect(
     page.getByText('Interactive Warehouse Safety Scenario'),
