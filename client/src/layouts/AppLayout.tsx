@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BrandLogo } from '../components/BrandLogo';
 import { useAuth } from '../features/auth/auth.context';
 import type { NavigationItem } from '../types/navigation';
+import { DashboardIcon } from '../features/trainee/DashboardIcon';
 
 interface AppLayoutProps {
   audience: string;
@@ -68,6 +69,7 @@ function navigationIcon(label: string): string {
 export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const isTrainee = audience === 'Trainee';
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
@@ -117,14 +119,22 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   }
 
   return (
-    <div className={`app-shell ${audience.toLowerCase()}-shell`}>
+    <div
+      className={`app-shell ${audience.toLowerCase()}-shell${isTrainee ? ' trainee-dashboard-shell' : ''}`}
+    >
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
 
       <aside className="sidebar">
         <div className="brand-block">
-          <BrandLogo variant="dark" />
+          {isTrainee ? (
+            <div className="dashboard-logo-frame">
+              <BrandLogo variant="dark" />
+            </div>
+          ) : (
+            <BrandLogo variant="dark" />
+          )}
           <div className="brand-tagline">PEOPLE | SAFETY | PROGRESS</div>
           <div className="brand-copy">
             <div className="brand-name">KISTS</div>
@@ -148,7 +158,11 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
               }
             >
               <span className="nav-icon" aria-hidden="true">
-                {navigationIcon(label)}
+                {isTrainee ? (
+                  <DashboardIcon name={label} />
+                ) : (
+                  navigationIcon(label)
+                )}
               </span>
               <span>{label}</span>
             </NavLink>

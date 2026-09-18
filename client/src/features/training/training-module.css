@@ -738,6 +738,157 @@
   }
 }
 
+/* Horizontal learning path: the section state and navigation logic remain unchanged. */
+body .trainee-shell .module-learning-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+body .trainee-shell .module-section-list.card {
+  position: static;
+  top: auto;
+  padding: 16px 18px 18px;
+  border-radius: 14px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading {
+  display: flex;
+  align-items: end;
+  padding: 0 2px 12px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading h2 {
+  font-size: 0.95rem;
+}
+
+body .trainee-shell .module-section-list .section-list-heading .content-kicker {
+  margin: 0;
+}
+
+body .trainee-shell .module-section-list ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+}
+
+body .trainee-shell .module-section-list li {
+  position: relative;
+  min-width: 0;
+}
+
+body .trainee-shell .module-section-list li:not(:last-child)::after {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: -10px;
+  width: 10px;
+  height: 2px;
+  content: '';
+  background: #dce1eb;
+}
+
+body .trainee-shell .module-section-list li button {
+  grid-template-columns: 34px minmax(0, 1fr);
+  min-height: 72px;
+  height: 100%;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+body .trainee-shell .module-section-list li.active button {
+  box-shadow:
+    inset 0 3px #5b55d9,
+    0 6px 16px rgb(79 70 229 / 8%);
+}
+
+body .trainee-shell .module-section-list .section-summary strong {
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+body .trainee-shell .module-section-list .section-summary small {
+  margin-top: 3px;
+  font-size: 0.68rem;
+}
+
+body .trainee-shell .section-content.card {
+  width: 100%;
+}
+
+.mobile-section-picker {
+  display: none;
+}
+
+@media (max-width: 1180px) and (min-width: 621px) {
+  body .trainee-shell .module-section-list ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body .trainee-shell .module-section-list li::after {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  body .trainee-shell .module-section-list.card {
+    display: block;
+    padding: 15px;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading {
+    align-items: flex-start;
+    padding-bottom: 12px;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading > div {
+    display: block;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading h2 {
+    display: none;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading > span {
+    font-size: 0.75rem;
+  }
+
+  body .trainee-shell .module-section-list ol {
+    display: none;
+  }
+
+  .mobile-section-picker {
+    display: grid;
+    gap: 7px;
+  }
+
+  .mobile-section-picker > span {
+    color: #53627a;
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+
+  .mobile-section-picker select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 38px 0 12px;
+    border: 1px solid #dfe4ee;
+    border-radius: 9px;
+    color: #17233a;
+    background: white;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+}
+
 /* =========================================================
    Step 10B-2 — Manual Handling learning module polish
    Presentation-only overrides. Existing layout and breakpoints
@@ -756,7 +907,11 @@ body .trainee-shell .training-module-page {
   position: relative;
   gap: 22px;
   background:
-    radial-gradient(circle at 94% 2%, rgba(99, 102, 241, 0.07), transparent 24rem),
+    radial-gradient(
+      circle at 94% 2%,
+      rgba(99, 102, 241, 0.07),
+      transparent 24rem
+    ),
     linear-gradient(180deg, #f8faff 0%, #f6f8fc 52%, #f8f9fc 100%);
 }
 
@@ -807,8 +962,12 @@ body .trainee-shell .module-overview.card {
   border: 1px solid rgba(129, 140, 248, 0.18);
   border-radius: 20px;
   padding: 28px 30px;
-  background:
-    linear-gradient(105deg, rgba(13, 30, 54, 0.98) 0%, rgba(23, 43, 76, 0.96) 58%, rgba(43, 46, 104, 0.9) 100%);
+  background: linear-gradient(
+    105deg,
+    rgba(13, 30, 54, 0.98) 0%,
+    rgba(23, 43, 76, 0.96) 58%,
+    rgba(43, 46, 104, 0.9) 100%
+  );
   box-shadow: 0 18px 42px rgba(15, 38, 69, 0.14);
 }
 
@@ -820,7 +979,11 @@ body .trainee-shell .module-overview.card::before {
   width: 310px;
   height: 310px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(129, 140, 248, 0.22), transparent 68%);
+  background: radial-gradient(
+    circle,
+    rgba(129, 140, 248, 0.22),
+    transparent 68%
+  );
   content: '';
 }
 
@@ -1181,7 +1344,10 @@ body .trainee-shell .training-module-page .dashboard-action:not(.ghost) {
 }
 
 body .trainee-shell .check-answer-button:hover:not(:disabled),
-body .trainee-shell .training-module-page .dashboard-action:not(.ghost):hover:not(:disabled) {
+body
+  .trainee-shell
+  .training-module-page
+  .dashboard-action:not(.ghost):hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(79, 70, 229, 0.23);
   filter: saturate(1.06);
@@ -1194,7 +1360,10 @@ body .trainee-shell .training-module-page .dashboard-action.ghost {
   color: #2b3a50;
 }
 
-body .trainee-shell .training-module-page .dashboard-action.ghost:hover:not(:disabled) {
+body
+  .trainee-shell
+  .training-module-page
+  .dashboard-action.ghost:hover:not(:disabled) {
   border-color: #c9c6ee;
   background: #faf9ff;
 }
@@ -1244,7 +1413,11 @@ body .trainee-shell .completion-state.card {
   border: 1px solid #dfe4ec;
   border-radius: 20px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.09), transparent 15rem),
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(16, 185, 129, 0.09),
+      transparent 15rem
+    ),
     linear-gradient(180deg, #ffffff, #fbfdfc);
   box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
 }
@@ -1277,11 +1450,7 @@ body .trainee-shell .training-empty-state .card {
   box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
 }
 
-body .trainee-shell .training-module-page :is(
-    button,
-    a,
-    input
-  ):focus-visible {
+body .trainee-shell .training-module-page :is(button, a, input):focus-visible {
   outline: 3px solid rgba(99, 102, 241, 0.28);
   outline-offset: 3px;
 }
@@ -1471,3 +1640,128 @@ body .trainee-shell .module-section-list button {
   }
 }
 
+/* Final learning-path composition overrides the earlier two-column layout. */
+body .trainee-shell .module-learning-layout {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+body .trainee-shell .module-section-list.card {
+  position: static;
+  top: auto;
+  padding: 16px 18px 18px;
+  border-radius: 14px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading {
+  display: flex;
+  align-items: end;
+  padding: 0 2px 12px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+body .trainee-shell .module-section-list .section-list-heading h2 {
+  font-size: 0.95rem;
+}
+
+body .trainee-shell .module-section-list .section-list-heading .content-kicker {
+  margin: 0;
+}
+
+body .trainee-shell .module-section-list ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+}
+
+body .trainee-shell .module-section-list li {
+  position: relative;
+  min-width: 0;
+}
+
+body .trainee-shell .module-section-list li:not(:last-child)::after {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: -10px;
+  width: 10px;
+  height: 2px;
+  content: '';
+  background: #dce1eb;
+}
+
+body .trainee-shell .module-section-list li button {
+  grid-template-columns: 34px minmax(0, 1fr);
+  min-height: 72px;
+  height: 100%;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+body .trainee-shell .module-section-list li.active button {
+  box-shadow:
+    inset 0 3px #5b55d9,
+    0 6px 16px rgb(79 70 229 / 8%);
+}
+
+body .trainee-shell .module-section-list .section-summary strong {
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+body .trainee-shell .module-section-list .section-summary small {
+  margin-top: 3px;
+  font-size: 0.68rem;
+}
+
+body .trainee-shell .section-content.card {
+  width: 100%;
+}
+
+@media (max-width: 1180px) and (min-width: 621px) {
+  body .trainee-shell .module-learning-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body .trainee-shell .module-section-list ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body .trainee-shell .module-section-list li::after {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  body .trainee-shell .module-section-list.card {
+    padding: 15px;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading {
+    align-items: flex-start;
+    padding-bottom: 12px;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading > div {
+    display: block;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading h2,
+  body .trainee-shell .module-section-list ol {
+    display: none;
+  }
+
+  body .trainee-shell .module-section-list .section-list-heading > span {
+    font-size: 0.75rem;
+  }
+
+  .mobile-section-picker {
+    display: grid;
+  }
+}

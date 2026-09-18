@@ -240,6 +240,25 @@ export function TraineeTrainingModule() {
                   {module.progress.totalSections} complete
                 </span>
               </div>
+              <label className="mobile-section-picker">
+                <span>
+                  Section {activeIndex + 1} of {module.sections.length}
+                </span>
+                <select
+                  aria-label="Current learning section"
+                  value={activeIndex}
+                  onChange={(event) =>
+                    setActiveIndex(Number(event.currentTarget.value))
+                  }
+                >
+                  {module.sections.map((section, index) => (
+                    <option key={section.id} value={index}>
+                      {String(index + 1).padStart(2, '0')} {section.title}
+                      {section.completedAt ? ' — Completed' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <ol>
                 {module.sections.map((section, index) => (
                   <li

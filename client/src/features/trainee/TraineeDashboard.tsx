@@ -12,6 +12,7 @@ import type {
   TraineeDashboardData,
 } from './dashboard.types';
 import './trainee-dashboard.css';
+import { DashboardIcon } from './DashboardIcon';
 
 function statusLabel(status: AssignmentStatus): string {
   return status === 'in_progress'
@@ -38,20 +39,27 @@ function SummaryCard({
   value,
   detail,
   icon,
+  progress,
 }: {
   label: string;
   value: string | number;
   detail: string;
   icon: string;
+  progress?: number;
 }) {
   return (
     <article className="summary-card">
       <span className="summary-icon" aria-hidden="true">
-        {icon}
+        <DashboardIcon name={icon} />
       </span>
       <div className="summary-copy">
         <p>{label}</p>
         <strong>{value}</strong>
+        {progress !== undefined && (
+          <div className="summary-progress" aria-hidden="true">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+        )}
         <span>{detail}</span>
       </div>
     </article>
@@ -59,7 +67,6 @@ function SummaryCard({
 }
 
 type DisplayAssignment = DashboardAssignment & {
-  future?: boolean;
   image: string;
 };
 
@@ -83,11 +90,13 @@ function ContinueLearningCard({
     <article className="continue-learning-card">
       <div className="continue-learning-image-wrap" aria-hidden="true">
         <img src={getModuleImage(assignment.title)} alt="" />
-        <span className="training-status status-in_progress">In progress</span>
+        <span className={`training-status status-${assignment.status}`}>
+          {statusLabel(assignment.status)}
+        </span>
       </div>
 
       <div className="continue-learning-body">
-        <div className="continue-learning-kicker">Manual Handling</div>
+        <div className="continue-learning-kicker">{assignment.title}</div>
         <h3>{assignment.title}</h3>
         <p>{assignment.description}</p>
 
@@ -116,11 +125,11 @@ function ContinueLearningCard({
         <div className="continue-learning-meta">
           <span>
             <span className="meta-clock" aria-hidden="true">
-              ◔
+              <DashboardIcon name="clock" />
             </span>
             {assignment.dueAt
-              ? `Approx. ${Math.max(15, 60 - learningProgress)} mins remaining`
-              : 'On track'}
+              ? `Due ${new Date(assignment.dueAt).toLocaleDateString()}`
+              : statusLabel(assignment.status)}
           </span>
           <button
             className="dashboard-action compact"
@@ -129,7 +138,7 @@ function ContinueLearningCard({
               navigate(`/trainee/training/${assignment.assignmentId}`)
             }
           >
-            {actionLabel} <span aria-hidden="true">→</span>
+            {actionLabel} <DashboardIcon name="arrow" />
           </button>
         </div>
       </div>
@@ -154,12 +163,8 @@ function AssignedTrainingCard({
     <article className="mini-training-card">
       <div className="mini-training-art" aria-hidden="true">
         <img src={assignment.image} alt="" />
-        <span
-          className={`training-status ${assignment.future ? 'status-future' : `status-${assignment.status}`}`}
-        >
-          {assignment.future
-            ? 'Future training'
-            : statusLabel(assignment.status)}
+        <span className={`training-status status-${assignment.status}`}>
+          {statusLabel(assignment.status)}
         </span>
       </div>
       <div className="mini-training-body">
@@ -169,16 +174,12 @@ function AssignedTrainingCard({
         <div className="mini-training-meta">
           <div className="mini-metadata">
             <span>
-              <span aria-hidden="true">◔</span>
-              {assignment.future
-                ? 'Coming soon'
-                : `${Math.max(10, 45 - assignment.progressPercentage)} mins`}
+              <DashboardIcon name="clock" />
+              {assignment.required ? 'Required' : 'Optional'}
             </span>
             <span>
-              <span aria-hidden="true">▣</span>
-              {assignment.future
-                ? 'Not started'
-                : `${assignment.title.toLowerCase().includes('manual') ? assignment.learningProgressPercentage : assignment.progressPercentage}%`}
+              <DashboardIcon name="Progress" />
+              {`${assignment.title.toLowerCase().includes('manual') ? assignment.learningProgressPercentage : assignment.progressPercentage}%`}
             </span>
           </div>
           <button
@@ -189,7 +190,7 @@ function AssignedTrainingCard({
             }
           >
             {actionLabel}
-            <span aria-hidden="true">→</span>
+            <DashboardIcon name="arrow" />
           </button>
         </div>
       </div>
@@ -260,42 +261,6 @@ export function TraineeDashboard() {
       image: getModuleImage(assignment.title),
     }));
 
-  if (displayCards.length < 3) {
-    const futureCards = [
-      {
-        title: 'Fire Safety Basics',
-        description:
-          'Understand fire risks, prevention and emergency procedures.',
-      },
-      {
-        title: 'Working at Height',
-        description:
-          'Learn to identify risks and work safely when working at height.',
-      },
-    ];
-
-    for (const futureCard of futureCards) {
-      if (displayCards.length >= 3) break;
-      displayCards.push({
-        assignmentId: -displayCards.length - 1,
-        moduleId: 0,
-        title: futureCard.title,
-        description: futureCard.description,
-        required: false,
-        status: 'not_started',
-        progressPercentage: 0,
-        learningProgressPercentage: 0,
-        learningCompletedSections: 0,
-        learningTotalSections: 0,
-        assignedAt: new Date().toISOString(),
-        dueAt: null,
-        nextAction: 'start',
-        future: true,
-        image: getModuleImage(futureCard.title),
-      });
-    }
-  }
-
   return (
     <div className="trainee-dashboard">
       <div className="dashboard-top-row">
@@ -305,7 +270,7 @@ export function TraineeDashboard() {
             type="button"
             aria-label="Notifications"
           >
-            <span aria-hidden="true">🔔</span>
+            <DashboardIcon name="bell" />
           </button>
           <div className="profile-divider" aria-hidden="true" />
           <span className="profile-avatar" aria-hidden="true">
@@ -319,7 +284,7 @@ export function TraineeDashboard() {
             <small>Trainee</small>
           </div>
           <span className="chevron" aria-hidden="true">
-            ▾
+            <DashboardIcon name="chevron" />
           </span>
         </div>
       </div>
@@ -349,25 +314,26 @@ export function TraineeDashboard() {
           label="Assigned Training"
           value={summary.totalAssigned}
           detail={`${summary.inProgress} in progress`}
-          icon="▣"
+          icon="Resources"
         />
         <SummaryCard
           label="Completed Training"
           value={summary.completed}
           detail="Modules"
-          icon="✓"
+          icon="check"
         />
         <SummaryCard
           label="Overall Progress"
           value={`${summary.overallProgressPercentage}%`}
           detail="Across assigned training"
-          icon="▥"
+          icon="Progress"
+          progress={summary.overallProgressPercentage}
         />
         <SummaryCard
           label="Job Role"
           value={trainee.jobRole ?? 'Trainee'}
           detail="Current workplace role"
-          icon="◉"
+          icon="person"
         />
       </section>
 
@@ -390,13 +356,21 @@ export function TraineeDashboard() {
               <h2>Your Assigned Training</h2>
               <Link to="/trainee/training">View all →</Link>
             </div>
-            <div className="training-grid">
+            <div
+              className="training-grid"
+              style={
+                {
+                  '--training-columns': Math.max(1, displayCards.length),
+                } as React.CSSProperties
+              }
+            >
               {displayCards.map((assignment) => (
                 <AssignedTrainingCard
                   key={assignment.assignmentId}
                   assignment={assignment}
                 />
               ))}
+              {displayCards.length === 0 && <EmptyTrainingState />}
             </div>
           </section>
         </div>
@@ -409,7 +383,7 @@ export function TraineeDashboard() {
             </div>
             <div className="empty-support-state">
               <div className="support-badge" aria-hidden="true">
-                ⏱
+                <DashboardIcon name="calendar" />
               </div>
               <div className="support-copy">
                 <strong>No upcoming assessments.</strong>
@@ -425,19 +399,37 @@ export function TraineeDashboard() {
             </div>
             <div className="empty-support-state compact">
               <div className="activity-list">
-                <div className="empty-activity-row">
-                  <span className="activity-icon" aria-hidden="true">
-                    ✓
-                  </span>
-                  <span>Training progress is being tracked.</span>
-                </div>
+                {assignedTraining.length > 0 ? (
+                  assignedTraining.slice(0, 4).map((assignment) => (
+                    <div
+                      className={`empty-activity-row ${assignment.status}`}
+                      key={assignment.assignmentId}
+                    >
+                      <span className="activity-icon">
+                        <DashboardIcon
+                          name={
+                            assignment.status === 'completed'
+                              ? 'check'
+                              : 'Resources'
+                          }
+                        />
+                      </span>
+                      <span>
+                        {statusLabel(assignment.status)}: {assignment.title}
+                      </span>
+                      <small>{assignment.progressPercentage}%</small>
+                    </div>
+                  ))
+                ) : (
+                  <p>No training activity yet.</p>
+                )}
               </div>
             </div>
           </section>
 
           <section className="support-card">
             <div className="support-mark" aria-hidden="true">
-              ?
+              <DashboardIcon name="help" />
             </div>
             <div className="support-copy">
               <h2>Need help?</h2>

@@ -11,7 +11,8 @@
   },
   "scripts": {
     "dev:client": "npm run dev --workspace client",
-    "dev:server": "npm run dev --workspace server",
+    "db:local:start": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File database/scripts/start-local-postgres.ps1",
+    "dev:server": "npm run db:local:start && npm run dev --workspace server",
     "build": "npm run build --workspaces",
     "typecheck": "npm run typecheck --workspaces && tsc --project tsconfig.tools.json",
     "lint": "eslint .",

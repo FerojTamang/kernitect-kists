@@ -7,6 +7,7 @@ import type {
   DashboardAssignment,
   TraineeDashboardData,
 } from './dashboard.types';
+import { DashboardIcon } from './DashboardIcon';
 import './trainee-training.css';
 
 function learningLabel(assignment: DashboardAssignment): string {
@@ -16,6 +17,12 @@ function learningLabel(assignment: DashboardAssignment): string {
   return assignment.status === 'not_started'
     ? 'Not started'
     : 'Training in progress';
+}
+
+function statusLabel(status: DashboardAssignment['status']): string {
+  if (status === 'completed') return 'Completed';
+  if (status === 'in_progress') return 'In progress';
+  return 'Not started';
 }
 
 function TrainingCard({
@@ -28,15 +35,20 @@ function TrainingCard({
   const isManualHandling = assignment.title.toLowerCase().includes('manual');
   return (
     <article className="assigned-module-card">
-      <img
-        className="assigned-module-image"
-        src={isManualHandling ? manualHandlingImage : forkliftImage}
-        alt={
-          isManualHandling
-            ? 'Warehouse worker preparing a manual handling lift'
-            : 'Forklift operating near a warehouse pedestrian route'
-        }
-      />
+      <div className="assigned-module-visual">
+        <img
+          className="assigned-module-image"
+          src={isManualHandling ? manualHandlingImage : forkliftImage}
+          alt={
+            isManualHandling
+              ? 'Warehouse worker preparing a manual handling lift'
+              : 'Forklift operating near a warehouse pedestrian route'
+          }
+        />
+        <span className={`module-status-badge ${assignment.status}`}>
+          {statusLabel(assignment.status)}
+        </span>
+      </div>
       <div className="assigned-module-content">
         <span className="module-order">Module {order}</span>
         <h2>
@@ -156,23 +168,38 @@ export function TraineeTraining() {
         </Link>
       </header>
       <section
-        className="assigned-training-summary card"
+        className="assigned-training-summary"
         aria-label="Assigned training summary"
       >
-        <span className="summary-icon" aria-hidden="true">
-          ▣
-        </span>
-        <div>
-          <strong>{dashboard.summary.totalAssigned}</strong>
-          <span>assigned modules</span>
+        <div className="training-stat assigned">
+          <span className="training-stat-icon">
+            <DashboardIcon name="Resources" />
+          </span>
+          <span className="training-stat-copy">
+            <span className="training-stat-label">Assigned Training</span>
+            <strong>{dashboard.summary.totalAssigned}</strong>
+            <span>modules</span>
+          </span>
         </div>
-        <div>
-          <strong>{dashboard.summary.inProgress}</strong>
-          <span>in progress</span>
+        <div className="training-stat progress">
+          <span className="training-stat-icon">
+            <DashboardIcon name="clock" />
+          </span>
+          <span className="training-stat-copy">
+            <span className="training-stat-label">In Progress</span>
+            <strong>{dashboard.summary.inProgress}</strong>
+            <span>training</span>
+          </span>
         </div>
-        <div>
-          <strong>{dashboard.summary.notStarted}</strong>
-          <span>not started</span>
+        <div className="training-stat pending">
+          <span className="training-stat-icon">
+            <DashboardIcon name="arrow" />
+          </span>
+          <span className="training-stat-copy">
+            <span className="training-stat-label">Not Started</span>
+            <strong>{dashboard.summary.notStarted}</strong>
+            <span>training</span>
+          </span>
         </div>
       </section>
       <section
