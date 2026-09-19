@@ -44,6 +44,10 @@ function traineeSectionIsActive(label: string, pathname: string): boolean {
     );
   }
 
+  if (label === 'Certificates') {
+    return /^\/trainee\/certificates(?:\/\d+)?$/.test(pathname);
+  }
+
   return false;
 }
 
@@ -71,7 +75,10 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const location = useLocation();
   const isTrainee = audience === 'Trainee';
   const isCoursePlayer =
-    isTrainee && /^\/trainee\/training\/\d+$/.test(location.pathname);
+    isTrainee &&
+    /^\/trainee\/training\/\d+(?:\/(?:scenario|assessment))?$/.test(
+      location.pathname,
+    );
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
@@ -121,10 +128,24 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   }
 
   if (isCoursePlayer) {
+    const isScenarioPlayer = location.pathname.endsWith('/scenario');
+    const isAssessmentPlayer = location.pathname.endsWith('/assessment');
     return (
-      <div className="course-route-shell">
+      <div
+        className={
+          isScenarioPlayer
+            ? 'scenario-route-shell'
+            : isAssessmentPlayer
+              ? 'assessment-route-shell'
+              : 'course-route-shell'
+        }
+      >
         <a className="skip-link" href="#main-content">
-          Skip to lesson content
+          {isScenarioPlayer
+            ? 'Skip to scenario'
+            : isAssessmentPlayer
+              ? 'Skip to assessment'
+              : 'Skip to lesson content'}
         </a>
         <main id="main-content" tabIndex={-1}>
           <Outlet />

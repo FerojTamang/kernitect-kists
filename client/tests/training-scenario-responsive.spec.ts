@@ -62,9 +62,15 @@ test('Manual Handling 360 scenario remains responsive across key breakpoints', a
   await prepareScenarioReadyTrainee();
   await signIn(page);
   await page.getByRole('link', { name: 'Scenarios' }).click();
+  await expect(
+    page.getByRole('navigation', { name: 'Trainee navigation' }),
+  ).toBeVisible();
   await page.getByRole('link', { name: /Open Scenario/ }).click();
 
   await expect(page).toHaveURL(/\/trainee\/training\/\d+\/scenario$/);
+  await expect(
+    page.getByRole('navigation', { name: 'Trainee navigation' }),
+  ).toHaveCount(0);
 
   const viewports = [
     { width: 390, height: 844 },
@@ -83,8 +89,24 @@ test('Manual Handling 360 scenario remains responsive across key breakpoints', a
     await expectNoHorizontalOverflow(page);
   }
 
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const expandedSidebar = await page
+    .getByRole('complementary', { name: 'Scenario progress' })
+    .boundingBox();
+  await page
+    .getByRole('button', { name: 'Collapse scenario progress' })
+    .click();
+  const collapsedSidebar = await page
+    .getByRole('complementary', { name: 'Scenario progress' })
+    .boundingBox();
+  expect(collapsedSidebar?.width).toBeLessThan(expandedSidebar?.width ?? 0);
+  await page.getByRole('button', { name: 'Expand scenario progress' }).click();
+
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Safety point 1' }).last().click();
+  await page.getByRole('button', { name: 'Open safety points' }).click();
+  await page.getByRole('button', { name: /Safety point 1:/ }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.locator('.kists-360-hotspot').filter({ hasText: '1' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   const dialogBox = await dialog.boundingBox();

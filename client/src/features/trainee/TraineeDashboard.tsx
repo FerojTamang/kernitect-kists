@@ -13,6 +13,7 @@ import type {
 } from './dashboard.types';
 import './trainee-dashboard.css';
 import { DashboardIcon } from './DashboardIcon';
+import { useAuth } from '../auth/auth.context';
 
 function statusLabel(status: AssignmentStatus): string {
   return status === 'in_progress'
@@ -199,6 +200,7 @@ function AssignedTrainingCard({
 }
 
 export function TraineeDashboard() {
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState<TraineeDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -274,8 +276,14 @@ export function TraineeDashboard() {
           </button>
           <div className="profile-divider" aria-hidden="true" />
           <span className="profile-avatar" aria-hidden="true">
-            {trainee.firstName[0]}
-            {trainee.lastName[0]}
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" />
+            ) : (
+              <>
+                {trainee.firstName[0]}
+                {trainee.lastName[0]}
+              </>
+            )}
           </span>
           <div className="profile-meta">
             <strong>

@@ -231,6 +231,7 @@ test('valid trainee login returns only safe profile fields', async () => {
   assert.equal(body.user.systemRole, 'trainee');
   assert.equal(body.user.jobRole, 'Warehouse Operative');
   assert.deepEqual(Object.keys(body.user).sort(), [
+    'avatarUrl',
     'email',
     'firstName',
     'id',
@@ -1020,6 +1021,33 @@ test('credentialed CORS is limited to CLIENT_URL', async () => {
     headers: { Origin: 'https://untrusted.invalid' },
   });
   assert.equal(denied.headers.get('access-control-allow-origin'), null);
+});
+
+test('trainee can upload, read and remove a validated persistent avatar', async () => {
+  const cookie = cookieFrom(await login());
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const upload = await fetch(`${base}/api/trainee/settings/avatar`, { method: 'POST', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1', 'Content-Type': 'image/png' }, body: png });
+  assert.equal(upload.status, 200);
+  assert.equal((await me(cookie)).status, 200);
+  const avatar = await fetch(`${base}/api/trainee/settings/avatar`, { headers: { Cookie: cookie } });
+  assert.equal(avatar.status, 200);
+  assert.equal(avatar.headers.get('content-type'), 'image/png');
+  const invalid = await fetch(`${base}/api/trainee/settings/avatar`, { method: 'POST', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1', 'Content-Type': 'image/png' }, body: 'not an image' });
+  assert.equal(invalid.status, 400);
+  const remove = await fetch(`${base}/api/trainee/settings/avatar`, { method: 'DELETE', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1' } });
+  assert.equal(remove.status, 204);
+  assert.equal((await fetch(`${base}/api/trainee/settings/avatar`, { headers: { Cookie: cookie } })).status, 404);
+});
+
+test('trainee password change verifies the current password and preserves policy', async () => {
+  const cookie = cookieFrom(await login());
+  const request = (currentPassword: string, newPassword: string) => fetch(`${base}/api/trainee/settings/password`, { method: 'POST', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword, newPassword }) });
+  assert.equal((await request('incorrect-current-password', 'A-valid-new-password-123')).status, 400);
+  assert.equal((await request(password, 'short')).status, 400);
+  const nextPassword = 'A-valid-new-password-123';
+  assert.equal((await request(password, nextPassword)).status, 204);
+  assert.equal((await login(traineeEmail)).status, 401);
+  assert.equal((await login(traineeEmail, { password: nextPassword })).status, 200);
 });
 
 test('repeated failed login is rate-limited with a retry hint', async () => {

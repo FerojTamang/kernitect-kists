@@ -1,0 +1,570 @@
+.scenario-route-shell,
+.scenario-route-shell > main {
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+}
+
+.scenario-player {
+  display: grid;
+  grid-template:
+    'sidebar header' auto
+    'sidebar content' minmax(0, 1fr) /
+    278px minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #f4f6fb;
+}
+
+.scenario-player::before {
+  display: none;
+}
+
+.scenario-progress-sidebar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  grid-area: sidebar;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 18px 15px 16px;
+  overflow: hidden;
+  color: #dbe4f4;
+  background:
+    radial-gradient(circle at 0 0, rgb(102 84 237 / 26%), transparent 15rem),
+    linear-gradient(180deg, #111d3b, #09142c);
+  box-shadow: 8px 0 30px rgb(15 23 42 / 10%);
+  transition: padding 180ms ease;
+}
+
+.scenario-sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 66px;
+  border-bottom: 1px solid rgb(255 255 255 / 11%);
+}
+
+.scenario-brand-logo {
+  width: 190px;
+  max-width: calc(100% - 38px);
+  aspect-ratio: 2.3;
+  overflow: hidden;
+  mix-blend-mode: screen;
+}
+
+.scenario-brand-logo .brand-logo {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  filter: grayscale(1) brightness(4) contrast(1.5);
+  transform: translateY(-18.5%);
+}
+
+.scenario-progress-close,
+.scenario-progress-menu,
+.scenario-progress-collapse,
+.scenario-progress-backdrop {
+  border: 0;
+  cursor: pointer;
+}
+
+.scenario-progress-close {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  color: white;
+  background: rgb(255 255 255 / 9%);
+  font-size: 1.4rem;
+}
+
+.scenario-progress-collapse {
+  position: absolute;
+  z-index: 2;
+  top: 82px;
+  right: -1px;
+  display: grid;
+  width: 28px;
+  height: 34px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-right: 0;
+  border-radius: 9px 0 0 9px;
+  place-items: center;
+  color: #e6e7ff;
+  background: #26335a;
+  font-size: 1.45rem;
+}
+
+.scenario-module-summary {
+  padding: 20px 8px 16px;
+}
+
+.scenario-module-summary p,
+.scenario-safety-points > p {
+  margin: 0;
+  color: #a79dfd;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.scenario-module-summary h2 {
+  margin: 5px 0 9px;
+  color: white;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.scenario-module-summary > span {
+  color: #aab7cc;
+  font-size: 0.78rem;
+}
+
+.scenario-sidebar-progress {
+  height: 5px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 12%);
+}
+
+.scenario-sidebar-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7968f2, #23bda2);
+}
+
+.scenario-safety-points {
+  min-height: 0;
+  padding: 8px 0;
+  overflow: auto;
+}
+
+.scenario-safety-points > p {
+  padding: 0 8px 9px;
+}
+
+.scenario-safety-points ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scenario-safety-points button {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 9px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #cad4e6;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scenario-safety-points button:hover,
+.scenario-safety-points button:focus-visible {
+  border-color: rgb(167 157 253 / 28%);
+  background: rgb(255 255 255 / 7%);
+  outline: none;
+}
+
+.scenario-safety-points button.active {
+  border-color: rgb(167 157 253 / 38%);
+  color: white;
+  background: linear-gradient(
+    135deg,
+    rgb(102 84 237 / 34%),
+    rgb(83 65 180 / 22%)
+  );
+  box-shadow: inset 3px 0 #9487ff;
+}
+
+.scenario-point-number {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 9px;
+  place-items: center;
+  color: #ddd9ff;
+  background: rgb(255 255 255 / 7%);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.scenario-safety-points button.complete .scenario-point-number {
+  border-color: rgb(52 211 153 / 34%);
+  color: #8ff2ce;
+  background: rgb(16 185 129 / 15%);
+}
+
+.scenario-point-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.scenario-point-copy strong {
+  overflow: hidden;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scenario-point-copy small {
+  margin-top: 2px;
+  color: #8594ad;
+  font-size: 0.67rem;
+}
+
+.scenario-back-link {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-top: auto;
+  padding: 13px 9px 2px;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  color: #d8e0ee;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.scenario-page-header {
+  grid-area: header;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 20px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 24px;
+  border: 0;
+  border-bottom: 1px solid #e4e7f0;
+  border-radius: 0;
+  color: #16213e;
+  background:
+    linear-gradient(90deg, rgb(102 84 237 / 6%), transparent 34%), #fff;
+  box-shadow: 0 4px 16px rgb(30 41 59 / 6%);
+}
+
+.scenario-page-header::after {
+  display: none;
+}
+
+.scenario-page-header .eyebrow {
+  margin: 0 0 3px;
+  color: #6654ed;
+  font-size: 0.67rem;
+}
+
+.scenario-page-header h1 {
+  margin: 0;
+  color: #16213e;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  line-height: 1.25;
+}
+
+.scenario-page-header h1 + p {
+  display: none;
+}
+
+.scenario-header-status {
+  display: grid;
+  gap: 2px;
+  min-width: 110px;
+  color: #64748b;
+  text-align: right;
+  font-size: 0.72rem;
+}
+
+.scenario-header-status strong {
+  color: #4f46e5;
+  font-size: 1.05rem;
+}
+
+.scenario-page-header > .scenario-action.secondary {
+  color: #4338ca;
+  border-color: #d8d5fa;
+  background: #f8f7ff;
+}
+
+.scenario-progress-menu,
+.scenario-progress-backdrop {
+  display: none;
+}
+
+.scenario-summary,
+.scenario-point-strip {
+  display: none;
+}
+
+.scenario-workspace,
+.scenario-player > .scenario-complete {
+  grid-area: content;
+  min-width: 0;
+  min-height: 0;
+}
+
+.scenario-workspace {
+  display: block;
+  padding: 14px;
+  overflow: auto;
+}
+
+.scenario-viewer-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #dde2ec;
+  border-radius: 16px;
+  box-shadow: 0 16px 38px rgb(15 23 42 / 8%);
+}
+
+.scenario-viewer-heading {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e8ebf2;
+}
+
+.scenario-viewer-heading h2 {
+  margin: 2px 0 3px;
+  font-size: 1rem;
+}
+
+.scenario-viewer-heading p:last-child {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.scenario-360-frame,
+.scenario-360-stage {
+  min-height: 0;
+}
+
+.scenario-player .scenario-360-viewer {
+  height: clamp(470px, calc(100dvh - 238px), 760px);
+}
+
+.scenario-decision-panel {
+  display: none;
+}
+
+.scenario-player > .scenario-training-dialog-backdrop {
+  z-index: 100;
+}
+
+.scenario-player > .scenario-complete {
+  align-self: center;
+  width: min(760px, calc(100% - 32px));
+  margin: 16px auto;
+}
+
+.scenario-player.progress-collapsed {
+  grid-template-columns: 74px minmax(0, 1fr);
+}
+
+.scenario-player.progress-collapsed .scenario-progress-sidebar {
+  padding-inline: 9px;
+}
+
+.scenario-player.progress-collapsed .scenario-sidebar-brand {
+  justify-content: center;
+}
+
+.scenario-player.progress-collapsed .scenario-brand-logo {
+  display: grid;
+  width: 52px;
+  max-width: 52px;
+  height: 52px;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+}
+
+.scenario-player.progress-collapsed .scenario-brand-logo .brand-logo {
+  width: 52px;
+  max-width: 52px;
+  height: 52px;
+  object-fit: contain;
+  transform: none;
+}
+
+.scenario-player.progress-collapsed .scenario-module-summary,
+.scenario-player.progress-collapsed .scenario-safety-points > p,
+.scenario-player.progress-collapsed .scenario-point-copy,
+.scenario-player.progress-collapsed .scenario-back-link span:last-child {
+  display: none;
+}
+
+.scenario-player.progress-collapsed .scenario-safety-points {
+  padding-top: 32px;
+}
+
+.scenario-player.progress-collapsed .scenario-safety-points button {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 8px;
+}
+
+.scenario-player.progress-collapsed .scenario-back-link {
+  justify-content: center;
+}
+
+@media (max-width: 700px) {
+  .scenario-player,
+  .scenario-player.progress-collapsed {
+    grid-template:
+      'header' auto
+      'content' minmax(0, 1fr) /
+      minmax(0, 1fr);
+    height: 100dvh;
+  }
+
+  .scenario-progress-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(286px, calc(100vw - 48px));
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .scenario-player.progress-collapsed .scenario-brand-logo {
+    width: 190px;
+    max-width: calc(100% - 38px);
+    height: auto;
+    aspect-ratio: 2.3;
+  }
+
+  .scenario-player.progress-collapsed .scenario-brand-logo .brand-logo {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    transform: translateY(-18.5%);
+  }
+
+  .scenario-player.progress-open .scenario-progress-sidebar {
+    transform: translateX(0);
+  }
+
+  .scenario-progress-close,
+  .scenario-progress-menu,
+  .scenario-progress-backdrop {
+    display: block;
+  }
+
+  .scenario-progress-collapse {
+    display: none;
+  }
+
+  .scenario-progress-backdrop {
+    position: fixed;
+    z-index: 19;
+    inset: 0;
+    background: rgb(5 12 30 / 56%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .scenario-player.progress-open .scenario-progress-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .scenario-page-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .scenario-progress-menu {
+    padding: 8px 10px;
+    border-radius: 9px;
+    color: #4338ca;
+    background: #f0efff;
+    font-size: 0.72rem;
+    font-weight: 750;
+  }
+
+  .scenario-page-header .eyebrow,
+  .scenario-page-header > .scenario-action.secondary {
+    display: none;
+  }
+
+  .scenario-header-status {
+    min-width: auto;
+  }
+
+  .scenario-workspace {
+    padding: 10px;
+  }
+
+  .scenario-viewer-heading {
+    align-items: flex-start;
+    padding: 12px 14px;
+  }
+
+  .scenario-viewer-heading p:last-child {
+    display: none;
+  }
+
+  .scenario-player .scenario-360-viewer {
+    height: clamp(390px, calc(100dvh - 225px), 610px);
+  }
+}
+
+@media (max-width: 420px) {
+  .scenario-progress-menu {
+    width: 40px;
+    overflow: hidden;
+    color: transparent;
+    white-space: nowrap;
+  }
+
+  .scenario-progress-menu span {
+    color: #4338ca;
+  }
+
+  .scenario-page-header h1 {
+    font-size: 0.9rem;
+  }
+
+  .scenario-header-status span {
+    font-size: 0.65rem;
+  }
+
+  .scenario-player .scenario-360-viewer {
+    height: max(360px, calc(100dvh - 250px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scenario-progress-sidebar,
+  .scenario-progress-backdrop {
+    transition: none;
+  }
+}

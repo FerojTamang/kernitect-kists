@@ -1,6 +1,6 @@
 param(
   [string]$PostgresBin = 'C:\Program Files\PostgreSQL\16\bin',
-  [int]$Port = 55432
+  [int]$Port = 5433
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))

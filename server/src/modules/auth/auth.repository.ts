@@ -45,7 +45,8 @@ export class AuthRepository {
         AND s.expires_at > clock_timestamp() AND u.is_active
         AND r.name IN ('trainee', 'administrator')
       RETURNING u.id, u.first_name AS "firstName", u.last_name AS "lastName",
-        u.email, r.name AS "systemRole", j.name AS "jobRole"`,
+        u.email, r.name AS "systemRole", j.name AS "jobRole",
+        CASE WHEN u.avatar_filename IS NULL THEN NULL ELSE '/api/trainee/settings/avatar' END AS "avatarUrl"`,
         [tokenHash],
       )
     ).rows[0];

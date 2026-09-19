@@ -37,7 +37,7 @@ test('certificate page explains outstanding completion requirements', async ({
 
   await page.goto('/trainee/certificates');
   await expect(
-    page.getByRole('heading', { name: 'Certificate not available yet' }),
+    page.getByRole('heading', { name: 'No certificates yet' }),
   ).toBeVisible();
   await expect(page.getByText('1 / 2')).toBeVisible();
 });
@@ -86,8 +86,16 @@ test('issued digital certificate displays evidence and supports print or PDF sav
   );
 
   await page.goto('/trainee/certificates');
+  await expect(page.getByRole('heading', { name: 'My Certificates' })).toBeVisible();
+  await expect(page.getByText('Certificates earned')).toBeVisible();
+  await expect(page.getByText('Latest certificate')).toBeVisible();
+  const libraryCard = page.locator('.certificate-library-card');
+  await expect(libraryCard.getByText('17 September 2026')).toBeVisible();
+  await expect(libraryCard.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
+  await page.getByRole('link', { name: 'View Certificate' }).click();
+  await expect(page).toHaveURL(/\/trainee\/certificates\/700$/);
   await expect(
-    page.getByRole('heading', { name: 'Your digital certificate' }),
+    page.getByRole('heading', { name: 'Digital Certificate' }),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Certificate of Completion' }),
@@ -99,15 +107,30 @@ test('issued digital certificate displays evidence and supports print or PDF sav
     certificate.getByText('Alex Morgan', { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText('Manual Handling', { exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByText('Manual Handling Final Assessment', { exact: true }),
+    page.getByText('MANUAL HANDLING SAFETY TRAINING', { exact: true }),
   ).toBeVisible();
   await expect(page.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Print / Save as PDF' }),
+    page.getByRole('button', { name: 'Download certificate' }),
   ).toBeVisible();
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1536, height: 864 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const dimensions = await certificate.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const inner = element.querySelector('.certificate-document-inner')?.getBoundingClientRect();
+      return { width: box.width, height: box.height, bottom: box.bottom, innerHeight: inner?.height ?? 0 };
+    });
+    expect(dimensions.width).toBeGreaterThan(800);
+    expect(dimensions.height).toBeGreaterThan(450);
+    expect(dimensions.bottom).toBeLessThanOrEqual(viewport.height);
+    expect(dimensions.innerHeight).toBeLessThanOrEqual(dimensions.height);
+    expect(dimensions.width / dimensions.height).toBeCloseTo(297 / 210, 1);
+  }
 
   await page.setViewportSize({ width: 390, height: 844 });
   expect(

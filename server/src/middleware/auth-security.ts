@@ -5,7 +5,7 @@ import { env } from '../config/env.js';
 import { HttpError } from '../utils/http-error.js';
 
 // Origin + custom header protect login/logout against cross-site request forgery.
-export const requireTrustedMutation: RequestHandler = (req, _res, next) => {
+export const requireTrustedRequest: RequestHandler = (req, _res, next) => {
   if (
     req.get('origin') !== env.clientUrl ||
     req.get('X-KISTS-Request') !== '1'
@@ -16,13 +16,20 @@ export const requireTrustedMutation: RequestHandler = (req, _res, next) => {
       'UNTRUSTED_REQUEST',
     );
   }
-  if (!req.is('application/json'))
+  next();
+};
+
+export const requireTrustedMutation: RequestHandler = (req, res, next) => {
+  requireTrustedRequest(req, res, (error?: unknown) => {
+    if (error) return next(error);
+    if (!req.is('application/json'))
     throw new HttpError(
       415,
       'Use application/json for this request.',
       'UNSUPPORTED_MEDIA_TYPE',
     );
-  next();
+    next();
+  });
 };
 
 export function createLoginLimits() {

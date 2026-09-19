@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string;
   systemRole: SystemRole;
   jobRole: string | null;
+  avatarUrl: string | null;
 }
 
 export interface LoginInput {

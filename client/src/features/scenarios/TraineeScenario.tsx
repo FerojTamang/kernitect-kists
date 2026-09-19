@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { BrandLogo } from '../../components/BrandLogo';
 import { ApiError, apiRequest } from '../../services/api/request';
 import { ManualHandling360Viewer } from './ManualHandling360Viewer';
 import manualHandlingHeroImage from '../../assets/training/manual-handling/manual-handling-hero.png';
@@ -9,6 +10,7 @@ import correctLiftingImage from '../../assets/training/manual-handling/correct-l
 import handlingEquipmentImage from '../../assets/training/manual-handling/safe-handling-equipment.png';
 import assessLoadImage from '../../assets/training/manual-handling/assess-load-before-lifting.png';
 import './scenario.css';
+import './scenario-player.css';
 
 interface ScenarioDecisionOption {
   key: string;
@@ -162,6 +164,9 @@ export function TraineeScenario() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | undefined>();
+  const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
+  const [focusRequestKey, setFocusRequestKey] = useState(0);
 
   const openHazard = useCallback((hazard: ScenarioHazard) => {
     setActiveHazardId(hazard.id);
@@ -183,6 +188,13 @@ export function TraineeScenario() {
     },
     [openHazard, scenario],
   );
+
+  const focusHazard = useCallback((hazard: ScenarioHazard) => {
+    setActiveHazardId(hazard.id);
+    setHazardDialogOpen(false);
+    setProgressOpen(false);
+    setFocusRequestKey((current) => current + 1);
+  }, []);
 
   const loadScenario = useCallback(async () => {
     setLoading(true);
@@ -335,13 +347,129 @@ export function TraineeScenario() {
       )
     : 0;
 
+  const currentPoint = activeHazard?.sequenceOrder ?? 1;
+
   return (
-    <div className="scenario-page">
+    <div
+      className={`scenario-page scenario-player${progressCollapsed ? ' progress-collapsed' : ''}${progressOpen ? ' progress-open' : ''}`}
+    >
+      <aside
+        className="scenario-progress-sidebar"
+        aria-label="Scenario progress"
+      >
+        <div className="scenario-sidebar-brand">
+          <div className="scenario-brand-logo">
+            <BrandLogo variant="dark" />
+          </div>
+          <button
+            type="button"
+            className="scenario-progress-close"
+            aria-label="Close safety points"
+            onClick={() => setProgressOpen(false)}
+          >
+            ×
+          </button>
+        </div>
+        <button
+          type="button"
+          className="scenario-progress-collapse"
+          aria-label={
+            progressCollapsed
+              ? 'Expand scenario progress'
+              : 'Collapse scenario progress'
+          }
+          onClick={() => setProgressCollapsed((current) => !current)}
+        >
+          <span aria-hidden="true">{progressCollapsed ? '›' : '‹'}</span>
+        </button>
+        <div className="scenario-module-summary">
+          <p>Manual Handling</p>
+          <h2>Interactive Warehouse Scenario</h2>
+          <span>
+            {scenario.progress.completedHazards} of{' '}
+            {scenario.progress.totalHazards} complete
+          </span>
+          <div
+            className="scenario-sidebar-progress"
+            role="progressbar"
+            aria-label="Interactive scenario progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPercent}
+          >
+            <span style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
+        <nav className="scenario-safety-points" aria-label="Safety points">
+          <p>Safety points</p>
+          <ol>
+            {scenario.hazards.map((hazard) => {
+              const active = activeHazardId === hazard.id;
+              return (
+                <li key={hazard.id}>
+                  <button
+                    type="button"
+                    className={`${active ? 'active' : ''}${hazard.answeredCorrectly ? ' complete' : ''}`}
+                    aria-current={active ? 'step' : undefined}
+                    aria-label={`Safety point ${hazard.sequenceOrder}: ${hazard.title}${hazard.answeredCorrectly ? ', completed' : ''}`}
+                    onClick={() => focusHazard(hazard)}
+                  >
+                    <span className="scenario-point-number">
+                      {hazard.answeredCorrectly
+                        ? '✓'
+                        : String(hazard.sequenceOrder).padStart(2, '0')}
+                    </span>
+                    <span className="scenario-point-copy">
+                      <strong>{hazard.title}</strong>
+                      <small>
+                        {hazard.answeredCorrectly
+                          ? 'Completed'
+                          : active
+                            ? 'Current point'
+                            : 'Focus hotspot'}
+                      </small>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+        <Link
+          className="scenario-back-link"
+          to={`/trainee/training/${scenario.assignmentId}`}
+        >
+          <span aria-hidden="true">←</span>
+          <span>Back to Manual Handling</span>
+        </Link>
+      </aside>
+      <button
+        className="scenario-progress-backdrop"
+        type="button"
+        aria-label="Close safety points"
+        onClick={() => setProgressOpen(false)}
+      />
       <header className="scenario-page-header">
+        <button
+          type="button"
+          className="scenario-progress-menu"
+          aria-label="Open safety points"
+          aria-expanded={progressOpen}
+          onClick={() => setProgressOpen(true)}
+        >
+          <span aria-hidden="true">☰</span>
+          Safety Points
+        </button>
         <div>
           <p className="eyebrow">My Training / Manual Handling / Scenario</p>
           <h1>{scenario.scenario.title}</h1>
           <p>{scenario.scenario.description}</p>
+        </div>
+        <div className="scenario-header-status">
+          <span>
+            Safety Point {currentPoint} of {scenario.progress.totalHazards}
+          </span>
+          <strong>{progressPercent}%</strong>
         </div>
         <Link
           className="scenario-action secondary"
@@ -393,6 +521,7 @@ export function TraineeScenario() {
             <ManualHandling360Viewer
               hazards={scenario.hazards}
               activeHazardId={activeHazardId}
+              focusRequestKey={focusRequestKey}
               onSelectHazard={selectHazardById}
             />
 
@@ -404,7 +533,7 @@ export function TraineeScenario() {
                   className={`${activeHazardId === hazard.id ? 'active' : ''} ${
                     hazard.answeredCorrectly ? 'complete' : ''
                   }`}
-                  onClick={() => openHazard(hazard)}
+                  onClick={() => focusHazard(hazard)}
                 >
                   <span>
                     {hazard.answeredCorrectly ? '✓' : hazard.sequenceOrder}

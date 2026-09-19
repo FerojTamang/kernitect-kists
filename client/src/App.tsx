@@ -9,10 +9,17 @@ import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { TraineeDashboard } from './features/trainee/TraineeDashboard';
 import { TraineeTrainingModule } from './features/training/TraineeTrainingModule';
 import { TraineeTraining } from './features/trainee/TraineeTraining';
+import { TraineeProgress } from './features/trainee/TraineeProgress';
+import { TraineeResources } from './features/trainee/TraineeResources';
+import { TraineeSettings } from './features/trainee/TraineeSettings';
 import { TraineeScenario } from './features/scenarios/TraineeScenario';
 import { TraineeScenarios } from './features/trainee/TraineeScenarios';
 import { TraineeAssessment } from './features/assessments/TraineeAssessment';
-import { TraineeCertificates } from './features/certificates/TraineeCertificates';
+import { TraineeAssessments } from './features/assessments/TraineeAssessments';
+import {
+  TraineeCertificateDetail,
+  TraineeCertificates,
+} from './features/certificates/TraineeCertificates';
 import { AdminDashboard } from './features/admin/AdminDashboard';
 import { AdminUsers } from './features/admin/AdminUsers';
 import { AdminAssignments } from './features/admin/AdminAssignments';
@@ -36,8 +43,15 @@ export function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TraineeDashboard />} />
           <Route path="training" element={<TraineeTraining />} />
+          <Route path="progress" element={<TraineeProgress />} />
+          <Route path="resources" element={<TraineeResources />} />
+          <Route path="settings" element={<TraineeSettings />} />
           <Route path="scenarios" element={<TraineeScenarios />} />
           <Route path="certificates" element={<TraineeCertificates />} />
+          <Route
+            path="certificates/:certificateId"
+            element={<TraineeCertificateDetail />}
+          />
           <Route
             path="training/:assignmentId"
             element={<TraineeTrainingModule />}
@@ -55,7 +69,11 @@ export function App() {
               item.path !== 'dashboard' &&
               item.path !== 'training' &&
               item.path !== 'scenarios' &&
-              item.path !== 'certificates' && (
+              item.path !== 'progress' &&
+              item.path !== 'resources' &&
+              item.path !== 'settings' &&
+              item.path !== 'certificates' &&
+              item.path !== 'assessments' && (
                 <Route
                   key={item.path}
                   path={item.path}
@@ -70,30 +88,7 @@ export function App() {
           )}
           <Route
             path="assessments"
-            element={
-              <PlaceholderPage
-                title="Assessments"
-                description="Open an assigned training module and complete its required learning and scenario stages to access the final assessment."
-              />
-            }
-          />
-          <Route
-            path="resources"
-            element={
-              <PlaceholderPage
-                title="Resources"
-                description="Additional workplace safety resources will be added as the KISTS prototype develops."
-              />
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <PlaceholderPage
-                title="Settings"
-                description="Trainee preferences and account settings are outside the current prototype scope."
-              />
-            }
+            element={<TraineeAssessments />}
           />
         </Route>
       </Route>

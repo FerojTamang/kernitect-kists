@@ -70,6 +70,7 @@ interface PanoramaHazard {
 interface ManualHandling360ViewerProps {
   hazards: PanoramaHazard[];
   activeHazardId: number | null;
+  focusRequestKey: number;
   onSelectHazard: (hazardId: number) => void;
 }
 
@@ -153,6 +154,7 @@ function buildMarker(
 export function ManualHandling360Viewer({
   hazards,
   activeHazardId,
+  focusRequestKey,
   onSelectHazard,
 }: ManualHandling360ViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -403,7 +405,7 @@ export function ManualHandling360Viewer({
     }
 
     void markers.gotoMarker(markerId(activeHazardId), '10rpm');
-  }, [activeHazardId]);
+  }, [activeHazardId, focusRequestKey]);
 
   return (
     <div className="scenario-360-frame">

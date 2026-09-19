@@ -11,3 +11,4 @@ Thumbs.db
 .vscode/
 .local/
 /kists-source.zip
+server/uploads/

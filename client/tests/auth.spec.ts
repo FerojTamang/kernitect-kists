@@ -357,6 +357,8 @@ test('trainee My Training lists only assigned modules and opens Manual Handling'
 
   await expect(page).toHaveURL(/\/trainee\/training\/\d+$/);
 
+  await page.goto('/trainee/dashboard');
+
   await page
     .getByRole('button', {
       name: 'Sign out',
@@ -582,12 +584,15 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
     page.getByRole('progressbar', { name: 'Interactive scenario progress' }),
   ).toHaveAttribute('aria-valuenow', '0');
   await expect(page.getByText('360° interactive scenario')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Scenarios' })).toHaveClass(
-    /active/,
-  );
-  await expect(page.getByRole('link', { name: 'My Training' })).not.toHaveClass(
-    /active/,
-  );
+  await expect(
+    page.getByRole('navigation', { name: 'Safety points' }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Scenarios' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: /Safety point 1:/ }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.locator('.kists-360-hotspot').filter({ hasText: '1' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
 
   await page
     .getByRole('radio', {
@@ -603,6 +608,12 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
     .check();
   await page.getByRole('button', { name: 'Check decision' }).click();
   await expect(page.getByText('✓ Safety point complete')).toBeVisible();
+  await page
+    .getByRole('button', {
+      name: 'Continue exploring 360° warehouse',
+      exact: true,
+    })
+    .click();
 
   const decisions = [
     [2, 'Stabilise or restack the load first'],
@@ -613,9 +624,14 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
 
   for (const [point, decision] of decisions) {
     await page
-      .getByRole('button', { name: `Safety point ${point}` })
-      .last()
+      .getByRole('button', { name: new RegExp(`Safety point ${point}:`) })
       .click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page
+      .locator('.kists-360-hotspot')
+      .filter({ hasText: String(point) })
+      .click();
+    await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('radio', { name: decision }).check();
     await page.getByRole('button', { name: 'Check decision' }).click();
     await expect(page.getByText('✓ Safety point complete')).toBeVisible();

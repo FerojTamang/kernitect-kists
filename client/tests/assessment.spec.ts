@@ -41,6 +41,19 @@ function assessmentDetail(latestAttempt: unknown = null) {
   };
 }
 
+async function answerAllQuestions(page: Page) {
+  for (let question = 1; question <= 10; question += 1) {
+    await page
+      .getByRole('radio', { name: `Question ${question} option 1` })
+      .check();
+    await page
+      .getByRole('button', {
+        name: question === 10 ? 'Review answers' : 'Next →',
+      })
+      .click();
+  }
+}
+
 test('final assessment UI supports fail, retry, pass and persisted completion', async ({
   page,
 }) => {
@@ -55,6 +68,25 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   let submissions = 0;
 
   await signIn(page);
+
+  await page.route('**/api/trainee/certificates', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        eligible: true,
+        completion: { requiredAssignments: 1, completedAssignments: 1, requiredAssessments: 1, passedAssessments: 1 },
+        certificate: {
+          id: 700,
+          certificateNumber: 'KISTS-20260917-ABCDEF123456',
+          issuedAt: '2026-09-17T12:00:00.000Z',
+          traineeName: 'Alex Morgan',
+          status: 'issued',
+          training: [{ assignmentId, moduleTitle: 'Manual Handling', completedAt: '2026-09-17T11:59:00.000Z', assessments: [] }],
+        },
+      }),
+    }),
+  );
 
   await page.route(
     new RegExp(`/api/trainee/training/${assignmentId}/assessment(?:/submit)?$`),
@@ -103,44 +135,89 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   await expect(
     page.getByRole('heading', { name: 'Manual Handling Final Assessment' }),
   ).toBeVisible();
-  await expect(page.getByText('Prototype pass mark')).toBeVisible();
-  await expect(page.getByText('0 / 10')).toBeVisible();
+  await expect(
+    page.getByText('10 Questions · Prototype pass mark 75%'),
+  ).toBeVisible();
+  await expect(page.getByText('0 of 10 answered')).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Submit final assessment' }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
 
-  for (let question = 1; question <= 10; question += 1) {
+  await page.getByRole('radio', { name: 'Question 1 option 1' }).check();
+  await page.getByRole('button', { name: 'Next →' }).click();
+  await page.getByRole('button', { name: '← Previous' }).click();
+  await expect(
+    page.getByRole('radio', { name: 'Question 1 option 1' }),
+  ).toBeChecked();
+  await page.getByRole('button', { name: 'Next →' }).click();
+
+  for (let question = 2; question <= 10; question += 1) {
     await page
       .getByRole('radio', { name: `Question ${question} option 1` })
       .check();
+    await page
+      .getByRole('button', {
+        name: question === 10 ? 'Review answers' : 'Next →',
+      })
+      .click();
   }
 
-  await expect(page.getByText('10 / 10')).toBeVisible();
+  await expect(page.getByText('10 of 10 answered')).toBeVisible();
   await page.getByRole('button', { name: 'Submit final assessment' }).click();
   await expect(
     page.getByRole('heading', { name: 'Assessment not passed' }),
   ).toBeVisible();
-  await expect(page.getByText('50%')).toBeVisible();
+  await expect(page.locator('.assessment-result-score > strong')).toHaveText(
+    '50%',
+  );
+  await expect(page.locator('.assessment-pass-confetti')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Retry assessment' }).click();
   await expect(page.getByText('Previous attempt: 50%')).toBeVisible();
 
-  for (let question = 1; question <= 10; question += 1) {
-    await page
-      .getByRole('radio', { name: `Question ${question} option 1` })
-      .check();
-  }
+  await answerAllQuestions(page);
 
   await page.getByRole('button', { name: 'Submit final assessment' }).click();
   await expect(
     page.getByRole('heading', { name: 'Assessment passed' }),
   ).toBeVisible();
+  await expect(
+    page.getByText('Congratulations, Alex Morgan! You passed with 100%.'),
+  ).toBeVisible();
   await expect(page.getByText('Manual Handling complete')).toBeVisible();
-  await expect(page.getByText('100%')).toBeVisible();
+  await expect(page.locator('.assessment-result-score > strong')).toHaveText(
+    '100%',
+  );
+  await expect(page.locator('.assessment-pass-confetti')).toBeVisible();
+  await expect(page.locator('.assessment-pass-confetti')).toHaveCount(0, {
+    timeout: 4500,
+  });
+
+  const assessmentUrl = page.url();
+  const certificateButton = page.getByRole('button', { name: 'View digital certificate →' });
+  await certificateButton.click();
+  await expect(page).toHaveURL(assessmentUrl);
+  const dialog = page.getByRole('dialog', { name: 'Digital Certificate' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('Alex Morgan', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
+  await expect(dialog.getByText('17 September 2026')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Download certificate' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Assessment passed' })).toBeVisible();
+  await expect(certificateButton).toBeFocused();
+
+  await certificateButton.click();
+  await page.getByRole('button', { name: 'Close digital certificate' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page).toHaveURL(assessmentUrl);
 
   await page.reload();
   await expect(
     page.getByRole('heading', { name: 'Assessment passed' }),
   ).toBeVisible();
   await expect(page.getByText('Manual Handling complete')).toBeVisible();
+  await page.getByRole('link', { name: 'Return to Dashboard' }).click();
+  await expect(page).toHaveURL(/\/trainee\/dashboard$/);
 });
