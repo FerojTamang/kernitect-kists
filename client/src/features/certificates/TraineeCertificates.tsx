@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import kernitectLogo from '../../assets/branding/kernitect-logo-on-light.png';
 import { ApiError, apiRequest } from '../../services/api/request';
@@ -68,7 +69,7 @@ export function CertificatePreview({ certificate }: { certificate: TraineeCertif
   const courseTitle = certificate.training[0]?.moduleTitle ?? 'KISTS Safety Training';
   const issueDate = formatDate(certificate.issuedAt);
   return (
-    <div className="certificate-preview" role="region" aria-label="Certificate preview">
+    <div className="certificate-preview certificate-print-root" role="region" aria-label="Certificate preview">
       <article className="certificate-document" aria-label="KISTS digital certificate">
         <span className="certificate-corner certificate-corner-one" aria-hidden="true" /><span className="certificate-corner certificate-corner-two" aria-hidden="true" />
         <div className="certificate-document-inner">
@@ -133,7 +134,7 @@ export function CertificateModal({ certificate, onClose, returnFocusRef }: { cer
     };
   }, [onClose, returnFocusRef]);
 
-  return (
+  return createPortal(
     <div className="certificate-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="certificate-modal" role="dialog" aria-modal="true" aria-labelledby="certificate-modal-title">
         <header className="certificate-modal-header certificate-screen-only">
@@ -145,7 +146,8 @@ export function CertificateModal({ certificate, onClose, returnFocusRef }: { cer
         </header>
         <div className="certificate-modal-content"><CertificatePreview certificate={certificate} /></div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

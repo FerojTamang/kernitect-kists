@@ -268,7 +268,7 @@ export function TraineeTrainingModule() {
         <aside className="course-learning-sidebar" id="course-learning-path">
           <div className="course-brand-row">
             <div className="course-brand-logo">
-              <BrandLogo variant="dark" />
+              <BrandLogo variant="transparent-white" />
             </div>
             <button
               className="course-path-collapse"

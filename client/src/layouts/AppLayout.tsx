@@ -166,7 +166,7 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
         <div className="brand-block">
           {isTrainee ? (
             <div className="dashboard-logo-frame">
-              <BrandLogo variant="dark" />
+              <BrandLogo variant="transparent-white" />
             </div>
           ) : (
             <BrandLogo variant="dark" />

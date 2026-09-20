@@ -65,7 +65,7 @@ test('Manual Handling 360 scenario remains responsive across key breakpoints', a
   await expect(
     page.getByRole('navigation', { name: 'Trainee navigation' }),
   ).toBeVisible();
-  await page.getByRole('link', { name: /Open Scenario/ }).click();
+  await page.getByRole('link', { name: /Start Scenario/ }).click();
 
   await expect(page).toHaveURL(/\/trainee\/training\/\d+\/scenario$/);
   await expect(

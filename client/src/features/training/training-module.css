@@ -6,15 +6,6 @@
   margin: 0 auto;
   min-width: 0;
 }
-/* Keep the original logo visible against the training workspace's navy sidebar. */
-.trainee-shell:has(.training-module-page, .assigned-training-page)
-  .brand-block {
-  background: var(--navy);
-}
-.trainee-shell:has(.training-module-page, .assigned-training-page) .brand-logo {
-  filter: grayscale(1) brightness(4) contrast(1.5);
-  mix-blend-mode: screen;
-}
 .training-module-header,
 .section-list-heading,
 .section-content-heading,
@@ -3120,4 +3111,16 @@ body .trainee-shell .section-content.card {
   .course-player-header::after {
     left: 12px;
   }
+}
+
+/* The learning player reuses the approved transparent trainee logo. */
+.course-brand-logo { background: transparent; mix-blend-mode: normal; }
+.course-brand-logo .brand-logo,
+.course-player.path-collapsed .course-brand-logo .brand-logo {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: none;
+  filter: none;
 }

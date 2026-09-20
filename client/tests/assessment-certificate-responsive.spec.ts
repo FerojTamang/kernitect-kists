@@ -195,12 +195,49 @@ test('final assessment remains responsive across key breakpoints', async ({
 
   await page.getByRole('button', { name: 'View digital certificate →' }).click();
   const dialog = page.getByRole('dialog', { name: 'Digital Certificate' });
+  for (const viewport of [
+    { width: 1366, height: 768 },
+    { width: 1440, height: 900 },
+    { width: 1536, height: 864 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const modalBody = dialog.locator('.certificate-modal-content');
+    const certificate = dialog.getByRole('article', { name: 'KISTS digital certificate' });
+    const [bodyBox, certificateBox] = await Promise.all([modalBody.boundingBox(), certificate.boundingBox()]);
+    expect(bodyBox).not.toBeNull();
+    expect(certificateBox).not.toBeNull();
+    expect(certificateBox?.y ?? 0).toBeGreaterThanOrEqual((bodyBox?.y ?? 0) - 0.5);
+    expect((certificateBox?.y ?? 0) + (certificateBox?.height ?? 0)).toBeLessThanOrEqual((bodyBox?.y ?? 0) + (bodyBox?.height ?? 0) + 0.5);
+    expect(await modalBody.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+    await expect(certificate.getByText('Ram Kumar Tamang', { exact: true }).last()).toBeVisible();
+    await expect(certificate.getByLabel('Safer people, brighter tomorrow')).toBeVisible();
+  }
   for (const viewport of [...viewports, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('article', { name: 'KISTS digital certificate' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   }
+  await page.emulateMedia({ media: 'print' });
+  const modalPrintRoot = page.locator(
+    '.certificate-modal .certificate-print-root',
+  );
+  await expect(modalPrintRoot).toHaveCSS('visibility', 'visible');
+  await expect(page.locator('.certificate-modal-header')).toHaveCSS(
+    'display',
+    'none',
+  );
+  expect(await modalPrintRoot.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return box.width / box.height;
+  })).toBeCloseTo(297 / 210, 2);
+  const modalPdf = await page.pdf({
+    preferCSSPageSize: true,
+    printBackground: true,
+  });
+  expect(modalPdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+  await page.emulateMedia({ media: 'screen' });
 });
 
 test('issued certificate remains responsive across key breakpoints', async ({
@@ -258,6 +295,36 @@ test('issued certificate remains responsive across key breakpoints', async ({
   await expect(
     page.getByRole('heading', { name: 'Digital Certificate' }),
   ).toBeVisible();
+
+  await page.emulateMedia({ media: 'print' });
+  const detailPrintRoot = page.locator('.certificate-viewer-page .certificate-print-root');
+  await expect(detailPrintRoot).toHaveCSS('visibility', 'visible');
+  expect(await detailPrintRoot.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return box.width / box.height;
+  })).toBeCloseTo(297 / 210, 2);
+  const detailPdf = await page.pdf({
+    preferCSSPageSize: true,
+    printBackground: true,
+  });
+  expect(detailPdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+  await page.emulateMedia({ media: 'screen' });
+
+  for (const viewport of [
+    { width: 1366, height: 768 },
+    { width: 1440, height: 900 },
+    { width: 1536, height: 864 },
+    { width: 1920, height: 1080 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect(page.getByRole('link', { name: 'Back to Certificates' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download certificate' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
+    const desktopCertificate = page.getByRole('article', { name: 'KISTS digital certificate' });
+    const desktopBox = await desktopCertificate.boundingBox();
+    expect(desktopBox).not.toBeNull();
+    expect((desktopBox?.y ?? 0) + (desktopBox?.height ?? 0)).toBeLessThanOrEqual(viewport.height + 0.5);
+  }
 
   for (const viewport of viewports) {
     await page.setViewportSize(viewport);

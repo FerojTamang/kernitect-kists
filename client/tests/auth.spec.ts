@@ -568,14 +568,14 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
   await page.getByRole('link', { name: 'Scenarios' }).click();
   await expect(page).toHaveURL(/\/trainee\/scenarios$/);
   await expect(
-    page.getByRole('heading', { name: 'Interactive safety scenarios' }),
+    page.getByRole('heading', { name: 'Safety Scenarios' }),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', {
-      name: 'Interactive Warehouse Safety Scenario',
+      name: 'Warehouse Manual Handling Scenario',
     }),
   ).toBeVisible();
-  await page.getByRole('link', { name: /Open Scenario/ }).click();
+  await page.getByRole('link', { name: /Start Scenario/ }).click();
   await expect(page).toHaveURL(/\/trainee\/training\/\d+\/scenario$/);
   await expect(
     page.getByRole('heading', { name: 'Warehouse Manual Handling Scenario' }),
