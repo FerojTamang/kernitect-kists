@@ -9,6 +9,9 @@ import { requireTrustedMutation } from '../../middleware/auth-security.js';
 import { AdminController } from './admin.controller.js';
 import { AdminRepository } from './admin.repository.js';
 import { AdminService } from './admin.service.js';
+import { SettingsRepository } from '../settings/settings.repository.js';
+import { SettingsService } from '../settings/settings.service.js';
+import { CertificateIssuanceService } from '../certificates/certificate-issuance.service.js';
 
 export function createAdminRouter(
   database: Pick<Pool, 'query'>,
@@ -16,7 +19,11 @@ export function createAdminRouter(
 ) {
   const router = Router();
   const controller = new AdminController(
-    new AdminService(new AdminRepository(database)),
+    new AdminService(
+      new AdminRepository(database),
+      new CertificateIssuanceService(database),
+    ),
+    new SettingsService(new SettingsRepository(database)),
   );
 
   router.use((_req, res, next) => {
@@ -31,6 +38,7 @@ export function createAdminRouter(
 
   router.get('/dashboard', controller.dashboard);
   router.get('/users', controller.users);
+  router.get('/users/:id/avatar', controller.traineeAvatar);
   router.post('/users', requireTrustedMutation, controller.createTrainee);
   router.patch('/users/:id', requireTrustedMutation, controller.updateTrainee);
   router.get('/assignments', controller.assignments);

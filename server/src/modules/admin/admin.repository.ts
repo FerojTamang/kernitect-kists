@@ -250,11 +250,15 @@ export class AdminRepository {
       id: number; firstName: string; lastName: string; email: string;
       jobRoleId: number | null; jobRole: string | null; isActive: boolean;
       assignedCount: number; completedCount: number; progressPercentage: string;
+      avatarUrl: string | null; requiredTrainingModuleIds: number[];
     }>(`SELECT u.id, u.first_name AS "firstName", u.last_name AS "lastName", u.email,
       u.job_role_id AS "jobRoleId", j.name AS "jobRole", u.is_active AS "isActive",
-      COUNT(ta.id) FILTER (WHERE ta.status = 'active')::int AS "assignedCount",
-      COUNT(ta.id) FILTER (WHERE ta.status = 'active' AND p.completed_at IS NOT NULL AND p.percentage = 100)::int AS "completedCount",
-      COALESCE(ROUND(AVG(COALESCE(p.percentage, 0)) FILTER (WHERE ta.status = 'active'), 0), 0)::text AS "progressPercentage"
+      CASE WHEN u.avatar_filename IS NULL THEN NULL ELSE '/api/admin/users/' || u.id || '/avatar' END AS "avatarUrl",
+      COUNT(ta.id) FILTER (WHERE ta.status = 'active' AND ta.required)::int AS "assignedCount",
+      COUNT(ta.id) FILTER (WHERE ta.status = 'active' AND ta.required AND p.completed_at IS NOT NULL AND p.percentage = 100)::int AS "completedCount",
+      COALESCE(ROUND(AVG(COALESCE(p.percentage, 0)) FILTER (WHERE ta.status = 'active' AND ta.required), 0), 0)::text AS "progressPercentage",
+      COALESCE(array_agg(ta.training_module_id ORDER BY ta.training_module_id)
+        FILTER (WHERE ta.status = 'active' AND ta.required), '{}')::int[] AS "requiredTrainingModuleIds"
       FROM users u
       JOIN system_roles r ON r.id = u.system_role_id AND r.name = 'trainee'
       LEFT JOIN job_roles j ON j.id = u.job_role_id
@@ -285,6 +289,52 @@ export class AdminRepository {
       FROM system_roles r WHERE u.id=$1 AND r.id=u.system_role_id AND r.name='trainee'
       RETURNING u.id`, [id, input.firstName, input.lastName, input.email, input.jobRoleId, input.isActive]);
     return result.rows.length > 0;
+  }
+
+  async updateTraineeWithRequirements(
+    id: number,
+    input: { firstName: string; lastName: string; email: string; jobRoleId: number | null; isActive: boolean },
+    requiredTrainingModuleIds: number[],
+    assignedBy: number,
+  ) {
+    const result = await this.database.query<{ id: number }>(
+      `WITH updated_user AS (
+        UPDATE users u SET first_name=$2, last_name=$3, email=$4, job_role_id=$5,
+          is_active=$6, updated_at=now()
+        FROM system_roles r
+        WHERE u.id=$1 AND r.id=u.system_role_id AND r.name='trainee'
+        RETURNING u.id
+      ), selected_modules AS (
+        SELECT unnest($7::int[]) AS module_id
+      ), upserted_assignments AS (
+        INSERT INTO training_assignments
+          (trainee_id, training_module_id, assigned_by, required, status)
+        SELECT updated_user.id, selected_modules.module_id, $8, true, 'active'
+        FROM updated_user CROSS JOIN selected_modules
+        ON CONFLICT (trainee_id, training_module_id) DO UPDATE
+          SET required=true, status='active', updated_at=now()
+        RETURNING id, trainee_id, training_module_id
+      ), inserted_progress AS (
+        INSERT INTO progress (trainee_id, training_module_id, training_assignment_id)
+        SELECT trainee_id, training_module_id, id FROM upserted_assignments
+        ON CONFLICT (training_assignment_id) DO NOTHING
+      ), demoted_requirements AS (
+        UPDATE training_assignments ta SET required=false, updated_at=now()
+        WHERE ta.trainee_id IN (SELECT id FROM updated_user)
+          AND ta.status='active' AND ta.required
+          AND NOT (ta.training_module_id = ANY($7::int[]))
+      )
+      SELECT id FROM updated_user`,
+      [id, input.firstName, input.lastName, input.email, input.jobRoleId, input.isActive, requiredTrainingModuleIds, assignedBy],
+    );
+    return result.rows.length > 0;
+  }
+
+  async activeTrainingModuleCount(ids: number[]) {
+    return Number((await this.database.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM training_modules WHERE is_active AND id = ANY($1::int[])`,
+      [ids],
+    )).rows[0]?.count ?? 0);
   }
 
   async jobRoleExists(id: number) {

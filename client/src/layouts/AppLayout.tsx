@@ -1,9 +1,10 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { BrandLogo } from '../components/BrandLogo';
 import { useAuth } from '../features/auth/auth.context';
 import type { NavigationItem } from '../types/navigation';
 import { DashboardIcon } from '../features/trainee/DashboardIcon';
+import './admin-shell.css';
 
 interface AppLayoutProps {
   audience: string;
@@ -49,25 +50,6 @@ function traineeSectionIsActive(label: string, pathname: string): boolean {
   }
 
   return false;
-}
-
-function navigationIcon(label: string): string {
-  const icons: Record<string, string> = {
-    Dashboard: '▣',
-    'My Training': '◫',
-    Scenarios: '◧',
-    Assessments: '▤',
-    Certificates: '◨',
-    Progress: '▥',
-    Resources: '◫',
-    Settings: '⚙',
-    Users: '◉',
-    'Training content': '◫',
-    Assignments: '▤',
-    'Progress & results': '▥',
-  };
-
-  return icons[label] ?? '•';
 }
 
 export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
@@ -164,13 +146,9 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
 
       <aside className="sidebar">
         <div className="brand-block">
-          {isTrainee ? (
-            <div className="dashboard-logo-frame">
-              <BrandLogo variant="transparent-white" />
-            </div>
-          ) : (
-            <BrandLogo variant="dark" />
-          )}
+          <div className="dashboard-logo-frame">
+            <BrandLogo variant="transparent-white" />
+          </div>
           <div className="brand-tagline">PEOPLE | SAFETY | PROGRESS</div>
           <div className="brand-copy">
             <div className="brand-name">KISTS</div>
@@ -194,11 +172,7 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
               }
             >
               <span className="nav-icon" aria-hidden="true">
-                {isTrainee ? (
-                  <DashboardIcon name={label} />
-                ) : (
-                  navigationIcon(label)
-                )}
+                <DashboardIcon name={label} />
               </span>
               <span>{label}</span>
             </NavLink>
@@ -213,11 +187,6 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
           </span>
 
           <div className="sidebar-user">
-            {!isTrainee && (
-              <span>
-                {user?.firstName} {user?.lastName}
-              </span>
-            )}
             <button
               className="button sidebar-signout"
               onClick={() => void signOut()}
@@ -233,7 +202,16 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
       <div className="workspace">
         <header className="topbar">
           <span>Interactive Safety Training System</span>
-          <span className="badge">{audience} preview</span>
+          {isTrainee ? (
+            <span className="badge">{audience} preview</span>
+          ) : (
+            <Link className="admin-shell-profile" to="/admin/settings" aria-label="Open administrator settings">
+              <span className="admin-shell-avatar" aria-hidden="true">
+                {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : `${user?.firstName[0] ?? ''}${user?.lastName[0] ?? ''}`.toUpperCase()}
+              </span>
+              <span><strong>{user ? `${user.firstName} ${user.lastName}`.trim() : 'KISTS Administrator'}</strong><small>Administrator</small></span>
+            </Link>
+          )}
         </header>
         <main id="main-content" tabIndex={-1}>
           <Outlet />

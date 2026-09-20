@@ -337,6 +337,37 @@ test('trainee dashboard is session-bound, role-protected and database-backed', a
   assert.deepEqual(emptyBody.assignedTraining, []);
 });
 
+test('trainee dashboard exposes only current active required training', async () => {
+  const forklift = await database.query<{ id: number }>(
+    `UPDATE training_assignments ta SET required=false
+     FROM training_modules m
+     WHERE ta.training_module_id=m.id AND ta.trainee_id=$1
+       AND m.slug='forklift-pedestrian-safety' AND ta.status='active'
+     RETURNING ta.id`,
+    [traineeId],
+  );
+  assert.equal(forklift.rowCount, 1);
+  try {
+    const response = await dashboard(cookieFrom(await login()));
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      summary: { totalAssigned: number; overallProgressPercentage: number };
+      assignedTraining: Array<{ title: string }>;
+    };
+    assert.equal(body.summary.totalAssigned, 1);
+    assert.equal(body.summary.overallProgressPercentage, 60);
+    assert.deepEqual(
+      body.assignedTraining.map((assignment) => assignment.title),
+      ['Manual Handling'],
+    );
+  } finally {
+    await database.query(
+      'UPDATE training_assignments SET required=true WHERE id=$1',
+      [forklift.rows[0]!.id],
+    );
+  }
+});
+
 test('manual handling module endpoint is trainee-only, assignment-bound and resume-aware', async () => {
   const cookie = cookieFrom(await login());
   const assignmentRow = await database.query<{ id: number }>(
@@ -1048,6 +1079,23 @@ test('trainee password change verifies the current password and preserves policy
   assert.equal((await request(password, nextPassword)).status, 204);
   assert.equal((await login(traineeEmail)).status, 401);
   assert.equal((await login(traineeEmail, { password: nextPassword })).status, 200);
+});
+
+test('administrator reuses persistent avatar and password settings with role-safe URLs', async () => {
+  const cookie = cookieFrom(await login(adminEmail));
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+  const upload = await fetch(`${base}/api/admin/settings/avatar`, { method: 'POST', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1', 'Content-Type': 'image/png' }, body: png });
+  assert.equal(upload.status, 200);
+  assert.match((await upload.json() as { avatarUrl: string }).avatarUrl, /^\/api\/admin\/settings\/avatar\?v=\d+$/);
+  const current = await me(cookie);
+  assert.equal(current.status, 200);
+  assert.equal((await current.json() as { user: AuthUser }).user.avatarUrl, '/api/admin/settings/avatar');
+  assert.equal((await fetch(`${base}/api/admin/settings/avatar`, { headers: { Cookie: cookie } })).status, 200);
+  const traineeCookie = cookieFrom(await login(emptyTraineeEmail));
+  assert.equal((await fetch(`${base}/api/admin/settings/avatar`, { headers: { Cookie: traineeCookie } })).status, 403);
+  assert.equal((await fetch(`${base}/api/admin/settings/avatar`, { method: 'DELETE', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1' } })).status, 204);
+  const passwordAttempt = await fetch(`${base}/api/admin/settings/password`, { method: 'POST', headers: { Cookie: cookie, Origin: env.clientUrl, 'X-KISTS-Request': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: 'incorrect-current-password', newPassword: 'A-valid-new-password-123' }) });
+  assert.equal(passwordAttempt.status, 400);
 });
 
 test('repeated failed login is rate-limited with a retry hint', async () => {

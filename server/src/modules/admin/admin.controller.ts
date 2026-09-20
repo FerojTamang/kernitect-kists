@@ -2,9 +2,13 @@ import type { RequestHandler } from 'express';
 import { HttpError } from '../../utils/http-error.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import type { AdminService } from './admin.service.js';
+import type { SettingsService } from '../settings/settings.service.js';
 
 export class AdminController {
-  constructor(private readonly service: AdminService) {}
+  constructor(
+    private readonly service: AdminService,
+    private readonly settingsService: SettingsService,
+  ) {}
 
   dashboard: RequestHandler = async (req, res) => {
     const user = req.authenticatedUser as AuthUser | undefined;
@@ -25,7 +29,16 @@ export class AdminController {
   };
 
   updateTrainee: RequestHandler = async (req, res) => {
-    res.json(await this.service.updateTrainee(Number(req.params.id), req.body));
+    const user = req.authenticatedUser as AuthUser;
+    res.json(await this.service.updateTrainee(user, Number(req.params.id), req.body));
+  };
+
+  traineeAvatar: RequestHandler = async (req, res) => {
+    const traineeId = Number(req.params.id);
+    if (!(await this.service.traineeExists(traineeId)))
+      throw new HttpError(404, 'Trainee account not found.', 'USER_NOT_FOUND');
+    const avatar = await this.settingsService.avatar(traineeId);
+    res.set({ 'Content-Type': avatar.contentType, 'Cache-Control': 'private, no-cache' }).send(avatar.bytes);
   };
 
   assignments: RequestHandler = async (_req, res) => {

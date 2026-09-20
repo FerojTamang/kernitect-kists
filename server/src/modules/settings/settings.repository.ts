@@ -4,7 +4,7 @@ export class SettingsRepository {
   constructor(private readonly database: Pick<Pool, 'query'>) {}
   async account(userId: number) {
     return (await this.database.query<{ passwordHash: string; avatarFilename: string | null }>(
-      `SELECT password_hash AS "passwordHash", avatar_filename AS "avatarFilename" FROM users WHERE id=$1 AND is_active`, [userId],
+      `SELECT password_hash AS "passwordHash", avatar_filename AS "avatarFilename" FROM users WHERE id=$1`, [userId],
     )).rows[0];
   }
   async updatePassword(userId: number, passwordHash: string) {

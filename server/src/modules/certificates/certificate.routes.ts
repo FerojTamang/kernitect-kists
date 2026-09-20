@@ -8,6 +8,7 @@ import type { AuthService } from '../auth/auth.service.js';
 import { CertificateController } from './certificate.controller.js';
 import { CertificateRepository } from './certificate.repository.js';
 import { CertificateService } from './certificate.service.js';
+import { CertificateIssuanceService } from './certificate-issuance.service.js';
 
 export function createCertificateRouter(
   database: Pool,
@@ -15,7 +16,10 @@ export function createCertificateRouter(
 ) {
   const router = Router();
   const controller = new CertificateController(
-    new CertificateService(new CertificateRepository(database)),
+    new CertificateService(
+      new CertificateRepository(database),
+      new CertificateIssuanceService(database),
+    ),
   );
 
   router.use((_req, res, next) => {

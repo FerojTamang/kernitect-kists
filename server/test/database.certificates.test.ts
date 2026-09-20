@@ -8,6 +8,51 @@ import {
   complete,
   attempt,
 } from './helpers/database.js';
+import { CertificateIssuanceService } from '../src/modules/certificates/certificate-issuance.service.js';
+
+test('shared issuance rechecks eligibility after a requirement is removed and remains idempotent', async () =>
+  isolated(async (client) => {
+    const f = await fixture(client);
+    const manual = await assign(client, f.trainee, f.manual, f.admin);
+    const forklift = await assign(client, f.trainee, f.forklift, f.admin);
+    await complete(client, manual);
+    await attempt(client, manual, f.assessment, 100);
+    const issuance = new CertificateIssuanceService(client);
+
+    await issuance.issueIfEligible(f.trainee);
+    assert.equal(
+      (await client.query('SELECT id FROM certificates WHERE trainee_id=$1', [f.trainee])).rowCount,
+      0,
+    );
+
+    await client.query(
+      'UPDATE training_assignments SET required=false WHERE id=$1',
+      [forklift],
+    );
+    await issuance.issueIfEligible(f.trainee);
+    const issued = await client.query<{
+      id: number;
+      certificateNumber: string;
+      issuedAt: Date;
+    }>(
+      `SELECT id, certificate_number AS "certificateNumber", issued_at AS "issuedAt"
+       FROM certificates WHERE trainee_id=$1 AND status='issued'`,
+      [f.trainee],
+    );
+    assert.equal(issued.rowCount, 1);
+
+    await issuance.issueIfEligible(f.trainee);
+    const unchanged = await client.query<{
+      id: number;
+      certificateNumber: string;
+      issuedAt: Date;
+    }>(
+      `SELECT id, certificate_number AS "certificateNumber", issued_at AS "issuedAt"
+       FROM certificates WHERE trainee_id=$1 AND status='issued'`,
+      [f.trainee],
+    );
+    assert.deepEqual(unchanged.rows, issued.rows);
+  }));
 
 test('certification rejects no required assignments and incomplete required training', async () =>
   isolated(async (client) => {

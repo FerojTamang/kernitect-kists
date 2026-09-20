@@ -41,6 +41,25 @@ const paths: Record<string, ReactNode> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  Users: (
+    <>
+      <circle cx="9" cy="8" r="4" />
+      <path d="M2 21v-3a7 7 0 0 1 14 0v3M16 4a4 4 0 0 1 0 8M18 15a6 6 0 0 1 4 6" />
+    </>
+  ),
+  'Training content': (
+    <>
+      <path d="M3 5.5A3.5 3.5 0 0 1 6.5 2H11v18H6.5A3.5 3.5 0 0 0 3 23V5.5Z" />
+      <path d="M21 5.5A3.5 3.5 0 0 0 17.5 2H13v18h4.5A3.5 3.5 0 0 1 21 23V5.5Z" />
+    </>
+  ),
+  Assignments: (
+    <>
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </>
+  ),
+  'Progress & results': <path d="M3 21V13h4v8m3 0V8h4v13m3 0V3h4v18H3" />,
   check: (
     <>
       <circle cx="12" cy="12" r="9" />

@@ -104,7 +104,7 @@ after(async () => {
   await database.end();
 });
 
-async function login(): Promise<string> {
+async function login(email = traineeEmail): Promise<string> {
   const response = await fetch(`${base}/api/auth/login`, {
     method: 'POST',
     headers: {
@@ -112,7 +112,7 @@ async function login(): Promise<string> {
       'X-KISTS-Request': '1',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email: traineeEmail, password }),
+    body: JSON.stringify({ email, password }),
   });
   assert.equal(response.status, 200);
   const cookie = response.headers.get('set-cookie')?.split(';')[0];
@@ -121,6 +121,116 @@ async function login(): Promise<string> {
   }
   return cookie;
 }
+
+test('admin requirement removal issues one certificate for a previously blocked eligible trainee', async () => {
+  const passwordHash = await hashPassword(password);
+  const edgeTraineeId = (
+    await database.query<{ id: number }>(
+      `INSERT INTO users
+        (first_name, last_name, email, password_hash, system_role_id, job_role_id, is_active)
+       SELECT 'Alex', 'Edge', 'alex.edge@example.invalid', $1, r.id, j.id, true
+       FROM system_roles r CROSS JOIN job_roles j
+       WHERE r.name='trainee' AND j.name='Warehouse Operative'
+       RETURNING id`,
+      [passwordHash],
+    )
+  ).rows[0]!.id;
+  const administratorId = (
+    await database.query<{ id: number }>(
+      `SELECT u.id FROM users u JOIN system_roles r ON r.id=u.system_role_id
+       WHERE u.email='certificate.admin@example.invalid' AND r.name='administrator'`,
+    )
+  ).rows[0]!.id;
+  const modules = await database.query<{ id: number; slug: string }>(
+    `SELECT id, slug FROM training_modules
+     WHERE slug IN ('manual-handling', 'forklift-pedestrian-safety')`,
+  );
+  const edgeManualId = modules.rows.find((module) => module.slug === 'manual-handling')!.id;
+  const edgeForkliftId = modules.rows.find((module) => module.slug === 'forklift-pedestrian-safety')!.id;
+  const edgeAssignments = await database.query<{ id: number; trainingModuleId: number }>(
+    `INSERT INTO training_assignments
+      (trainee_id, training_module_id, assigned_by, required)
+     VALUES ($1,$2,$4,true),($1,$3,$4,true)
+     RETURNING id, training_module_id AS "trainingModuleId"`,
+    [edgeTraineeId, edgeManualId, edgeForkliftId, administratorId],
+  );
+  const edgeManualAssignment = edgeAssignments.rows.find(
+    (assignment) => assignment.trainingModuleId === edgeManualId,
+  )!.id;
+  await database.query(
+    `INSERT INTO progress (trainee_id, training_module_id, training_assignment_id)
+     SELECT trainee_id, training_module_id, id FROM training_assignments
+     WHERE trainee_id=$1`,
+    [edgeTraineeId],
+  );
+  const correctAnswers = (
+    await database.query<{ questionId: number; optionId: number }>(
+      `SELECT q.id AS "questionId", ao.id AS "optionId"
+       FROM questions q
+       JOIN answer_options ao ON ao.question_id=q.id AND ao.is_correct
+       WHERE q.assessment_id=$1 ORDER BY q.sequence_order, ao.sequence_order`,
+      [assessmentId],
+    )
+  ).rows;
+  const passed = await new AssessmentRepository(database).submitAssessment(
+    edgeTraineeId,
+    edgeManualAssignment,
+    assessmentId,
+    correctAnswers,
+  );
+  assert.ok(passed?.attempt.passed);
+  assert.equal(
+    (await database.query('SELECT id FROM certificates WHERE trainee_id=$1', [edgeTraineeId])).rowCount,
+    0,
+  );
+
+  const adminCookie = await login('certificate.admin@example.invalid');
+  const update = await fetch(`${base}/api/admin/users/${edgeTraineeId}`, {
+    method: 'PATCH',
+    headers: {
+      Cookie: adminCookie,
+      Origin: env.clientUrl,
+      'X-KISTS-Request': '1',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      firstName: 'Alex',
+      lastName: 'Edge',
+      email: 'alex.edge@example.invalid',
+      jobRoleId: null,
+      isActive: true,
+      requiredTrainingModuleIds: [edgeManualId],
+    }),
+  });
+  assert.equal(update.status, 200);
+  const issued = await database.query<{ certificateNumber: string; issuedAt: Date }>(
+    `SELECT certificate_number AS "certificateNumber", issued_at AS "issuedAt"
+     FROM certificates WHERE trainee_id=$1 AND status='issued'`,
+    [edgeTraineeId],
+  );
+  assert.equal(issued.rowCount, 1);
+
+  const repeat = await fetch(`${base}/api/admin/users/${edgeTraineeId}`, {
+    method: 'PATCH',
+    headers: {
+      Cookie: adminCookie,
+      Origin: env.clientUrl,
+      'X-KISTS-Request': '1',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      firstName: 'Alex', lastName: 'Edge', email: 'alex.edge@example.invalid',
+      jobRoleId: null, isActive: true, requiredTrainingModuleIds: [edgeManualId],
+    }),
+  });
+  assert.equal(repeat.status, 200);
+  const unchanged = await database.query<{ certificateNumber: string; issuedAt: Date }>(
+    `SELECT certificate_number AS "certificateNumber", issued_at AS "issuedAt"
+     FROM certificates WHERE trainee_id=$1 AND status='issued'`,
+    [edgeTraineeId],
+  );
+  assert.deepEqual(unchanged.rows, issued.rows);
+});
 
 test('passing the final required assessment automatically issues and exposes a current digital certificate', async () => {
   const cookie = await login();

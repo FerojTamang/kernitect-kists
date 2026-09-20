@@ -55,6 +55,8 @@ export interface AdminUser {
   assignedCount: number;
   completedCount: number;
   progressPercentage: number;
+  avatarUrl: string | null;
+  requiredTrainingModuleIds: number[];
 }
 
 export interface AdminUsersData {
@@ -65,6 +67,7 @@ export interface AdminUsersData {
     unassignedJobRole: number;
   };
   jobRoles: AdminJobRole[];
+  trainingModules: AdminAssignmentModule[];
   users: AdminUser[];
 }
 
@@ -83,6 +86,7 @@ export interface UpdateTraineeInput {
   email: string;
   jobRoleId: number | null;
   isActive: boolean;
+  requiredTrainingModuleIds: number[];
 }
 
 export type AdminAssignmentStatus = 'active' | 'cancelled';

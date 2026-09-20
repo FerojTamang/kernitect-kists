@@ -254,9 +254,13 @@ test('administrator can list, create, edit and deactivate trainee accounts witho
   const initial = (await list.json()) as {
     users: Array<Record<string, unknown>>;
     jobRoles: Array<{ id: number; name: string }>;
+    trainingModules: Array<{ id: number; title: string }>;
   };
   assert.equal(initial.users.length, 1);
   assert.equal('passwordHash' in initial.users[0]!, false);
+  assert.equal(initial.users[0]!.avatarUrl, null);
+  assert.ok(Array.isArray(initial.users[0]!.requiredTrainingModuleIds));
+  assert.ok(initial.trainingModules.length >= 1);
   const supervisor = initial.jobRoles.find(
     (role) => role.name === 'Supervisor',
   );
@@ -300,6 +304,7 @@ test('administrator can list, create, edit and deactivate trainee accounts witho
       email: 'new.trainee@example.invalid',
       jobRoleId: null,
       isActive: false,
+      requiredTrainingModuleIds: [initial.trainingModules[0]!.id],
     }),
   });
   assert.equal(updated.status, 200);
@@ -314,6 +319,8 @@ test('administrator can list, create, edit and deactivate trainee accounts witho
       firstName: string;
       isActive: boolean;
       jobRole: string | null;
+      assignedCount: number;
+      requiredTrainingModuleIds: number[];
     }>;
   };
   const changed = payload.users.find((user) => user.id === id);
@@ -325,6 +332,91 @@ test('administrator can list, create, edit and deactivate trainee accounts witho
     },
     { firstName: 'Updated', isActive: false, jobRole: null },
   );
+  assert.deepEqual(
+    changed?.requiredTrainingModuleIds,
+    [initial.trainingModules[0]!.id],
+  );
+  assert.equal(changed?.assignedCount, 1);
+
+  const removedRequirement = await fetch(`${base}/api/admin/users/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({
+      firstName: 'Updated',
+      lastName: 'Trainee',
+      email: 'new.trainee@example.invalid',
+      jobRoleId: null,
+      isActive: false,
+      requiredTrainingModuleIds: [],
+    }),
+  });
+  assert.equal(removedRequirement.status, 200);
+  const retained = await database.query<{
+    required: boolean;
+    status: string;
+    progressCount: number;
+  }>(
+    `SELECT ta.required, ta.status,
+      COUNT(p.id)::int AS "progressCount"
+     FROM training_assignments ta
+     LEFT JOIN progress p ON p.training_assignment_id = ta.id
+     WHERE ta.trainee_id=$1 AND ta.training_module_id=$2
+     GROUP BY ta.id`,
+    [id, initial.trainingModules[0]!.id],
+  );
+  assert.deepEqual(retained.rows[0], {
+    required: false,
+    status: 'active',
+    progressCount: 1,
+  });
+  const afterRemoval = (await (
+    await fetch(`${base}/api/admin/users`, {
+      headers: { Cookie: adminCookie },
+    })
+  ).json()) as {
+    users: Array<{
+      id: number;
+      assignedCount: number;
+      requiredTrainingModuleIds: number[];
+    }>;
+  };
+  const removedUser = afterRemoval.users.find((user) => user.id === id);
+  assert.equal(removedUser?.assignedCount, 0);
+  assert.deepEqual(removedUser?.requiredTrainingModuleIds, []);
+
+  const readdedRequirement = await fetch(`${base}/api/admin/users/${id}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({
+      firstName: 'Updated',
+      lastName: 'Trainee',
+      email: 'new.trainee@example.invalid',
+      jobRoleId: null,
+      isActive: false,
+      requiredTrainingModuleIds: [initial.trainingModules[0]!.id],
+    }),
+  });
+  assert.equal(readdedRequirement.status, 200);
+  const afterReadd = await database.query<{
+    assignmentCount: number;
+    requiredCount: number;
+    progressCount: number;
+  }>(
+    `SELECT COUNT(DISTINCT ta.id)::int AS "assignmentCount",
+      COUNT(DISTINCT ta.id) FILTER (
+        WHERE ta.status='active' AND ta.required
+      )::int AS "requiredCount",
+      COUNT(DISTINCT p.id)::int AS "progressCount"
+     FROM training_assignments ta
+     LEFT JOIN progress p ON p.training_assignment_id = ta.id
+     WHERE ta.trainee_id=$1 AND ta.training_module_id=$2`,
+    [id, initial.trainingModules[0]!.id],
+  );
+  assert.deepEqual(afterReadd.rows[0], {
+    assignmentCount: 1,
+    requiredCount: 1,
+    progressCount: 1,
+  });
   assert.equal(payload.summary.inactive, 1);
   assert.equal(payload.summary.unassignedJobRole, 1);
 });

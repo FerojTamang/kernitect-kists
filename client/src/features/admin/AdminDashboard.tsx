@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest, ApiError } from '../../services/api/request';
 import { AdminWorkflowNav } from './AdminWorkflowNav';
+import { DashboardIcon } from '../trainee/DashboardIcon';
 import './admin-dashboard.css';
 
 interface AdminDashboardData {
@@ -47,23 +48,25 @@ function SummaryCard({
   value,
   detail,
   icon,
+  to,
 }: {
   label: string;
   value: string | number;
   detail: string;
   icon: string;
+  to: string;
 }) {
   return (
-    <article className="admin-summary-card">
+    <Link className="admin-summary-card" to={to}>
       <span className="admin-summary-icon" aria-hidden="true">
-        {icon}
+        <DashboardIcon name={icon} />
       </span>
       <div>
         <p>{label}</p>
         <strong>{value}</strong>
         <span>{detail}</span>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -158,7 +161,7 @@ export function AdminDashboard() {
 
   if (!dashboard) return null;
 
-  const { administrator, summary, trainees, modules } = dashboard;
+  const { summary, trainees, modules } = dashboard;
   const outstandingAssignments = Math.max(
     summary.activeAssignments - summary.completedAssignments,
     0,
@@ -172,18 +175,6 @@ export function AdminDashboard() {
           <span className="admin-context-value">KISTS Administrator</span>
         </div>
 
-        <div className="admin-profile">
-          <span className="admin-profile-avatar" aria-hidden="true">
-            {administrator.firstName[0]}
-            {administrator.lastName[0]}
-          </span>
-          <div>
-            <strong>
-              {administrator.firstName} {administrator.lastName}
-            </strong>
-            <small>Administrator</small>
-          </div>
-        </div>
       </div>
 
       <section className="admin-hero">
@@ -226,25 +217,29 @@ export function AdminDashboard() {
           label="Total trainees"
           value={summary.totalTrainees}
           detail={`${summary.activeTrainees} active accounts`}
-          icon="👥"
+          icon="Users"
+          to="/admin/users"
         />
         <SummaryCard
           label="Active assignments"
           value={summary.activeAssignments}
           detail={`${outstandingAssignments} outstanding`}
-          icon="▤"
+          icon="Assignments"
+          to="/admin/assignments"
         />
         <SummaryCard
           label="Completed training"
           value={summary.completedAssignments}
           detail={`${summary.completionRate}% completion rate`}
-          icon="✓"
+          icon="Progress & results"
+          to="/admin/progress"
         />
         <SummaryCard
           label="Certificates issued"
           value={summary.certificatesIssued}
           detail="Current digital certificates"
-          icon="◈"
+          icon="Certificates"
+          to="/admin/progress"
         />
       </section>
 
@@ -272,7 +267,7 @@ export function AdminDashboard() {
                   <div className="admin-module-copy">
                     <div className="admin-module-title-row">
                       <strong>{module.title}</strong>
-                      <span>{module.averageProgress}% avg.</span>
+                      <span>{module.averageProgress}%</span>
                     </div>
                     <div
                       className="admin-module-progress"
@@ -303,21 +298,21 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          <div className="admin-attention-metric">
+          <Link className="admin-attention-metric" to="/admin/assignments">
             <span>Outstanding assignments</span>
             <strong>{outstandingAssignments}</strong>
-          </div>
-          <div className="admin-attention-metric">
+          </Link>
+          <Link className="admin-attention-metric" to="/admin/users">
             <span>Trainee accounts</span>
             <strong>{summary.activeTrainees}</strong>
-          </div>
-          <div className="admin-attention-metric">
+          </Link>
+          <Link className="admin-attention-metric" to="/admin/progress">
             <span>Certificates issued</span>
             <strong>{summary.certificatesIssued}</strong>
-          </div>
+          </Link>
 
           <div className="admin-quick-actions">
-            <p>Planned functionality</p>
+            <p>Quick actions</p>
             <Link to="/admin/users">Manage trainees</Link>
             <Link to="/admin/assignments">Assign training</Link>
             <Link to="/admin/progress">Review progress & results</Link>

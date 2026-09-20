@@ -85,7 +85,7 @@ test('9E-B1 administrator can create or restore a trainee and verify the job rol
       .getByLabel('Workplace job role')
       .selectOption({ label: workflowJobRole });
 
-    const active = dialog.getByRole('checkbox');
+    const active = dialog.getByRole('checkbox', { name: 'Active account' });
     if (!(await active.isChecked())) {
       await active.check();
     }

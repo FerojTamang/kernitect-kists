@@ -306,10 +306,16 @@ test('mobile login remains usable without horizontal overflow', async ({
   });
 });
 
-test('trainee My Training lists only assigned modules and opens Manual Handling', async ({
+test('trainee My Training lists only current required modules and opens Manual Handling', async ({
   page,
 }) => {
   await signIn(page);
+
+  const dashboardResponse = await page.request.get('/api/trainee/dashboard');
+  expect(dashboardResponse.status()).toBe(200);
+  const currentTraining = (await dashboardResponse.json()) as {
+    assignedTraining: Array<{ title: string }>;
+  };
 
   await page.getByRole('link', { name: 'My Training' }).click();
 
@@ -334,18 +340,29 @@ test('trainee My Training lists only assigned modules and opens Manual Handling'
     }),
   ).toBeVisible();
 
-  await expect(
-    assignedModules.getByRole('heading', {
-      name: 'Forklift & Pedestrian Safety',
-      exact: true,
-    }),
-  ).toBeVisible();
-
-  await expect(
-    assignedModules.getByText(
-      'Training content coming in a later development phase',
-    ),
-  ).toBeVisible();
+  for (const assignment of currentTraining.assignedTraining) {
+    await expect(
+      assignedModules.getByRole('heading', {
+        name:
+          assignment.title === 'Forklift and Pedestrian Safety'
+            ? 'Forklift & Pedestrian Safety'
+            : assignment.title,
+        exact: true,
+      }),
+    ).toBeVisible();
+  }
+  if (
+    !currentTraining.assignedTraining.some(
+      (assignment) => assignment.title === 'Forklift and Pedestrian Safety',
+    )
+  ) {
+    await expect(
+      assignedModules.getByRole('heading', {
+        name: 'Forklift & Pedestrian Safety',
+        exact: true,
+      }),
+    ).toHaveCount(0);
+  }
 
   await expect(assignedModules.getByText('Fire Safety Basics')).toHaveCount(0);
 

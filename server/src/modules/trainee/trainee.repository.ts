@@ -44,7 +44,7 @@ export class TraineeRepository {
       JOIN system_roles r ON r.id = u.system_role_id
       LEFT JOIN job_roles j ON j.id = u.job_role_id
       JOIN training_assignments a
-        ON a.trainee_id = u.id AND a.status = 'active'
+        ON a.trainee_id = u.id AND a.status = 'active' AND a.required
       JOIN training_modules m ON m.id = a.training_module_id AND m.is_active
       LEFT JOIN progress p ON p.training_assignment_id = a.id
       WHERE u.id = $1 AND r.name = 'trainee' AND u.is_active

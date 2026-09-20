@@ -24,6 +24,7 @@ import { AdminDashboard } from './features/admin/AdminDashboard';
 import { AdminUsers } from './features/admin/AdminUsers';
 import { AdminAssignments } from './features/admin/AdminAssignments';
 import { AdminProgress } from './features/admin/AdminProgress';
+import { AdminSettings } from './features/admin/AdminSettings';
 
 export function App() {
   return (
@@ -109,12 +110,14 @@ export function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="assignments" element={<AdminAssignments />} />
           <Route path="progress" element={<AdminProgress />} />
+          <Route path="settings" element={<AdminSettings />} />
           {adminNavigation.map(
             (item) =>
               item.path !== 'dashboard' &&
               item.path !== 'users' &&
               item.path !== 'assignments' &&
-              item.path !== 'progress' && (
+              item.path !== 'progress' &&
+              item.path !== 'settings' && (
                 <Route
                   key={item.path}
                   path={item.path}

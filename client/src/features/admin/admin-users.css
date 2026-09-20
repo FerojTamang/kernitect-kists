@@ -458,6 +458,82 @@
   }
 }
 
+.admin-users-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-users-identity > div {
+  min-width: 0;
+}
+
+.admin-users-avatar {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #ddd9f1;
+  border-radius: 50%;
+  background: #f0edff;
+  color: #5749cf;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-users-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-users-required {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 13px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.admin-users-required legend {
+  padding: 0 5px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-users-required > p {
+  margin: 0 0 2px;
+  color: #64748b;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.admin-users-required > label {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  padding: 8px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-users-required input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #6c5ce7;
+}
+
+.admin-users-required > small {
+  color: #64748b;
+}
+
 
 /* Step 10C-1 tablet hotfix: switch the wide users table to readable cards
    before the fixed administrator sidebar makes the table overflow the viewport. */

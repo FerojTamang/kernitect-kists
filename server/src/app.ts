@@ -35,6 +35,10 @@ export function createApp(database: Pool = pool) {
   app.use('/api/auth', createAuthRouter(authService));
   app.use('/api/trainee', createTraineeRouter(database, authService));
   app.use('/api/trainee/settings', createSettingsRouter(database, authService));
+  app.use(
+    '/api/admin/settings',
+    createSettingsRouter(database, authService, 'administrator'),
+  );
   app.use('/api/trainee/training', createTrainingRouter(database, authService));
   app.use('/api/trainee/training', createScenarioRouter(database, authService));
   app.use(

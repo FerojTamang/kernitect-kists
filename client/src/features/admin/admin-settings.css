@@ -1,0 +1,4 @@
+.administrator-shell .admin-settings-page{width:min(100%,1240px)}
+.administrator-shell .admin-settings-page .settings-profile-card,.administrator-shell .admin-settings-page .settings-card{border-color:rgb(148 163 184 / 24%);box-shadow:0 12px 34px rgb(15 38 69 / 7%)}
+.administrator-shell .admin-settings-page .settings-secondary-grid{grid-template-columns:minmax(0,1fr)}
+.administrator-shell .admin-settings-page .settings-card{max-width:580px}

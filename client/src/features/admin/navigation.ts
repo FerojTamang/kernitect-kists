@@ -31,4 +31,9 @@ export const adminNavigation: NavigationItem[] = [
     description:
       'Monitor trainee learning, 360° scenario completion, assessment results and certification status.',
   },
+  {
+    path: 'settings',
+    label: 'Settings',
+    description: 'Manage your administrator profile and account security.',
+  },
 ];

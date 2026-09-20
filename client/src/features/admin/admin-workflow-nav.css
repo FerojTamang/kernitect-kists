@@ -81,6 +81,11 @@
   font-weight: 800;
 }
 
+.admin-workflow-step svg {
+  width: 18px;
+  height: 18px;
+}
+
 .admin-workflow-nav a.is-current .admin-workflow-step {
   background: #6f51ad;
   color: #ffffff;
@@ -767,4 +772,3 @@ body .administrator-shell .admin-progress-table-wrap {
   max-width: 100%;
   min-width: 0;
 }
-

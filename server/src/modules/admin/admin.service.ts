@@ -2,6 +2,7 @@ import { HttpError } from '../../utils/http-error.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { hashPassword } from '../auth/auth.password.js';
 import { AdminRepository } from './admin.repository.js';
+import type { CertificateIssuanceService } from '../certificates/certificate-issuance.service.js';
 import type {
   AdminAssignmentsData,
   AdminDashboardData,
@@ -15,7 +16,16 @@ import type {
 } from './admin.types.js';
 
 export class AdminService {
-  constructor(private readonly repository: AdminRepository) {}
+  constructor(
+    private readonly repository: AdminRepository,
+    private readonly certificateIssuance: CertificateIssuanceService,
+  ) {}
+
+  traineeExists(id: number) {
+    return Number.isInteger(id) && id > 0
+      ? this.repository.traineeExistsForAssignment(id)
+      : Promise.resolve(false);
+  }
 
   async dashboard(user: AuthUser): Promise<AdminDashboardData> {
     const [summaryRow, traineeRows, moduleRows] = await Promise.all([
@@ -75,9 +85,10 @@ export class AdminService {
   }
 
   async users(): Promise<AdminUsersData> {
-    const [rows, jobRoles] = await Promise.all([
+    const [rows, jobRoles, trainingModules] = await Promise.all([
       this.repository.users(),
       this.repository.jobRoles(),
+      this.repository.assignmentModules(),
     ]);
     const users = rows.map((row) => ({
       ...row,
@@ -92,11 +103,17 @@ export class AdminService {
           .length,
       },
       jobRoles,
+      trainingModules,
       users,
     };
   }
 
-  private validatePerson(input: UpdateTraineeInput) {
+  private validatePerson(
+    input: Pick<
+      UpdateTraineeInput,
+      'firstName' | 'lastName' | 'email' | 'jobRoleId' | 'isActive'
+    >,
+  ) {
     const firstName = input.firstName?.trim();
     const lastName = input.lastName?.trim();
     const email = input.email?.trim().toLowerCase();
@@ -179,7 +196,7 @@ export class AdminService {
     }
   }
 
-  async updateTrainee(id: number, input: UpdateTraineeInput) {
+  async updateTrainee(user: AuthUser, id: number, input: UpdateTraineeInput) {
     if (!Number.isInteger(id) || id <= 0)
       throw new HttpError(
         400,
@@ -187,6 +204,13 @@ export class AdminService {
         'INVALID_USER_ID',
       );
     const clean = this.validatePerson(input);
+    if (!Array.isArray(input.requiredTrainingModuleIds))
+      throw new HttpError(400, 'Required training selections are required.', 'INVALID_REQUIRED_TRAINING');
+    const requiredTrainingModuleIds = [...new Set(input.requiredTrainingModuleIds)];
+    if (requiredTrainingModuleIds.some((moduleId) => !Number.isInteger(moduleId) || moduleId <= 0))
+      throw new HttpError(400, 'Select valid required training modules.', 'INVALID_REQUIRED_TRAINING');
+    if ((await this.repository.activeTrainingModuleCount(requiredTrainingModuleIds)) !== requiredTrainingModuleIds.length)
+      throw new HttpError(400, 'One or more selected training modules are unavailable.', 'INVALID_REQUIRED_TRAINING');
     if (
       clean.jobRoleId !== null &&
       !(await this.repository.jobRoleExists(clean.jobRoleId))
@@ -197,12 +221,13 @@ export class AdminService {
         'INVALID_JOB_ROLE',
       );
     try {
-      if (!(await this.repository.updateTrainee(id, clean)))
+      if (!(await this.repository.updateTraineeWithRequirements(id, clean, requiredTrainingModuleIds, user.id)))
         throw new HttpError(
           404,
           'Trainee account not found.',
           'USER_NOT_FOUND',
         );
+      await this.certificateIssuance.issueIfEligible(id);
       return { id };
     } catch (error) {
       if (

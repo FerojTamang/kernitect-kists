@@ -46,7 +46,9 @@ export class AuthRepository {
         AND r.name IN ('trainee', 'administrator')
       RETURNING u.id, u.first_name AS "firstName", u.last_name AS "lastName",
         u.email, r.name AS "systemRole", j.name AS "jobRole",
-        CASE WHEN u.avatar_filename IS NULL THEN NULL ELSE '/api/trainee/settings/avatar' END AS "avatarUrl"`,
+        CASE WHEN u.avatar_filename IS NULL THEN NULL
+          WHEN r.name = 'administrator' THEN '/api/admin/settings/avatar'
+          ELSE '/api/trainee/settings/avatar' END AS "avatarUrl"`,
         [tokenHash],
       )
     ).rows[0];
