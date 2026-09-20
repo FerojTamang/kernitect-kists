@@ -213,9 +213,11 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
           </span>
 
           <div className="sidebar-user">
-            <span>
-              {user?.firstName} {user?.lastName}
-            </span>
+            {!isTrainee && (
+              <span>
+                {user?.firstName} {user?.lastName}
+              </span>
+            )}
             <button
               className="button sidebar-signout"
               onClick={() => void signOut()}

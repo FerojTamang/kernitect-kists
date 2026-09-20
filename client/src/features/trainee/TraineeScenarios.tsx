@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import warehouseSceneImage from '../../assets/training/manual-handling/manual-handling-hero.png';
 import { ApiError, apiRequest } from '../../services/api/request';
 import type { DashboardAssignment, TraineeDashboardData } from './dashboard.types';
+import { DashboardIcon } from './DashboardIcon';
 import './trainee-scenarios.css';
 
 interface ScenarioDetail {
@@ -67,7 +68,7 @@ export function TraineeScenarios() {
   if (!records) return <ScenarioLibraryState title="Loading your scenarios" detail="Preparing your interactive safety activities…" loading />;
   return <div className="scenario-library-page">
     <header className="scenario-library-header"><div><p className="eyebrow">My Training / Scenarios</p><h1>Safety Scenarios</h1><p className="lead">Practise workplace safety decisions in interactive training environments.</p></div><Link className="secondary-link" to="/trainee/training">← My Training</Link></header>
-    <section className="scenario-library-intro" aria-label="Scenario access"><span className="scenario-library-intro-icon" aria-hidden="true">◇</span><div><strong>Scenario access</strong><p>Complete the required learning content before starting a scenario.</p></div></section>
+    <section className="scenario-library-intro" aria-label="Scenario access"><span className="scenario-library-intro-icon" aria-hidden="true"><DashboardIcon name="Scenarios" /></span><div><strong>Scenario access</strong><p>Complete the required learning content before starting a scenario.</p></div></section>
     <section className="scenario-library-list" aria-label="Assigned scenarios">{records.length ? records.map((record) => <ScenarioCard key={record.assignment.assignmentId} record={record} />) : <div className="scenario-library-empty card"><h2>No scenarios assigned</h2><p>Your assigned interactive training scenarios will appear here.</p></div>}</section>
   </div>;
 }

@@ -47,11 +47,24 @@
 }
 
 .assessment-brand-logo {
+  position: relative;
+  z-index: 1;
+  display: block;
   width: 190px;
   max-width: calc(100% - 38px);
   aspect-ratio: 2.3;
   overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
   mix-blend-mode: screen;
+}
+
+.assessment-brand-logo:focus-visible {
+  outline: 3px solid #a99ff8;
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .assessment-brand-logo .brand-logo {
@@ -662,10 +675,23 @@
 }
 
 .assessment-result-logo {
+  position: relative;
+  z-index: 1;
+  display: block;
   width: 190px;
   aspect-ratio: 2.3;
   overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
   mix-blend-mode: screen;
+}
+
+.assessment-result-logo:focus-visible {
+  outline: 3px solid #a99ff8;
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .assessment-result-logo .brand-logo {

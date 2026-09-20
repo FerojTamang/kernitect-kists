@@ -113,9 +113,13 @@ function AssessmentResultBrand() {
       className="assessment-result-brand"
       aria-label="KISTS assessment result"
     >
-      <div className="assessment-result-logo">
+      <Link
+        className="assessment-result-logo"
+        to="/trainee/dashboard"
+        aria-label="Go to trainee dashboard"
+      >
         <BrandLogo variant="dark" />
-      </div>
+      </Link>
       <div>
         <p>Manual Handling</p>
         <h2>Final Assessment</h2>
@@ -494,9 +498,13 @@ export function TraineeAssessment() {
         aria-label="Assessment progress"
       >
         <div className="assessment-sidebar-brand">
-          <div className="assessment-brand-logo">
+          <Link
+            className="assessment-brand-logo"
+            to="/trainee/dashboard"
+            aria-label="Go to trainee dashboard"
+          >
             <BrandLogo variant="dark" />
-          </div>
+          </Link>
           <button
             type="button"
             className="assessment-progress-close"

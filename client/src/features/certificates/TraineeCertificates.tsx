@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import kernitectLogo from '../../assets/branding/kernitect-logo-on-light.png';
 import { ApiError, apiRequest } from '../../services/api/request';
+import { DashboardIcon } from '../trainee/DashboardIcon';
 import './certificate.css';
 
 export interface TraineeCertificate {
@@ -170,7 +171,7 @@ export function TraineeCertificates() {
       ) : (
         <>
           <section className="certificate-library-summary" aria-label="Certificate summary">
-            <article><span className="certificate-summary-icon" aria-hidden="true">◇</span><div><small>Certificates earned</small><strong>1</strong></div></article>
+            <article><span className="certificate-summary-icon" aria-hidden="true"><DashboardIcon name="Certificates" /></span><div><small>Certificates earned</small><strong>1</strong></div></article>
             <article><span className="certificate-summary-icon" aria-hidden="true">✓</span><div><small>Latest certificate</small><strong>{status.certificate.training[0]?.moduleTitle ?? 'KISTS Safety Training'}</strong></div></article>
             <article><span className="certificate-summary-icon" aria-hidden="true">◷</span><div><small>Latest issue date</small><strong>{formatDate(status.certificate.issuedAt) ?? 'Date unavailable'}</strong></div></article>
           </section>
