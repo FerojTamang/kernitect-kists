@@ -11,9 +11,11 @@ INSERT INTO job_roles (name, description) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO training_modules (title, slug, description, is_active) VALUES
-  ('Manual Handling', 'manual-handling', 'Main planned A7 prototype module. Learning content requires client review.', true),
-  ('Forklift and Pedestrian Safety', 'forklift-pedestrian-safety', 'Initial training scope. Learning content requires client review.', false)
-ON CONFLICT (slug) DO UPDATE SET is_active = EXCLUDED.is_active;
+  ('Manual Handling', 'manual-handling', 'Develop safe lifting, carrying and load-handling techniques to reduce injury risk in warehouse environments.', true),
+  ('Forklift and Pedestrian Safety', 'forklift-pedestrian-safety', 'Covers safe pedestrian movement around forklift operations, including blind spots, safe distances, crossing points and warehouse traffic awareness.', false)
+ON CONFLICT (slug) DO UPDATE SET
+  description = EXCLUDED.description,
+  is_active = EXCLUDED.is_active;
 
 INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
 SELECT id, 'Introduction', 'text',

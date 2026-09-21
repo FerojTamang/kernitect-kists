@@ -20,7 +20,7 @@ before(async () => {
   assertLocalDevelopmentDatabase(env.databaseUrl);
   await inTransaction(pool, async (client) => {
     const applied = await migrate(client, schema);
-    assert.equal(applied.length, 14);
+    assert.equal(applied.length, 15);
     await seed(client, schema);
   });
   created = true;
