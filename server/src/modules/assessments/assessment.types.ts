@@ -27,6 +27,8 @@ export interface AssessmentAttemptSummary {
 export interface TrainingAssessmentDetail {
   assignmentId: number;
   moduleId: number;
+  moduleTitle: string;
+  hasScenario: boolean;
   assessment: {
     id: number;
     title: string;

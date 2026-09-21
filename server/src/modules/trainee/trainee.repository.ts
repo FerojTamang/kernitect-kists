@@ -19,6 +19,10 @@ interface DashboardRow {
   completedAt: Date | null;
   learningCompletedSections: string;
   learningTotalSections: string;
+  scenarioCompleted: string;
+  scenarioTotal: string;
+  assessmentPassed: string;
+  assessmentTotal: string;
 }
 
 export class TraineeRepository {
@@ -40,6 +44,21 @@ export class TraineeRepository {
            ))::text AS "learningCompletedSections",
         (SELECT count(*) FROM training_content c
          WHERE c.training_module_id = m.id AND c.is_active)::text AS "learningTotalSections"
+        ,(SELECT count(*) FROM scenarios s
+          WHERE s.training_module_id = m.id AND s.is_active
+            AND EXISTS (SELECT 1 FROM scenario_attempts sa
+              WHERE sa.training_assignment_id = a.id AND sa.scenario_id = s.id
+                AND sa.completed_at IS NOT NULL))::text AS "scenarioCompleted"
+        ,(SELECT count(*) FROM scenarios s
+          WHERE s.training_module_id = m.id AND s.is_active)::text AS "scenarioTotal"
+        ,(SELECT count(*) FROM assessments assessment
+          WHERE assessment.training_module_id = m.id AND assessment.is_active
+            AND EXISTS (SELECT 1 FROM assessment_attempts attempt
+              WHERE attempt.training_assignment_id = a.id
+                AND attempt.assessment_id = assessment.id
+                AND attempt.submitted_at IS NOT NULL AND attempt.passed))::text AS "assessmentPassed"
+        ,(SELECT count(*) FROM assessments assessment
+          WHERE assessment.training_module_id = m.id AND assessment.is_active)::text AS "assessmentTotal"
       FROM users u
       JOIN system_roles r ON r.id = u.system_role_id
       LEFT JOIN job_roles j ON j.id = u.job_role_id

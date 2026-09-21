@@ -23,7 +23,20 @@ export interface TraineeCertificate {
 export interface CertificateStatus {
   eligible: boolean;
   certificate: TraineeCertificate | null;
+  history: TraineeCertificate[];
+  requirements: Array<{
+    assignmentId: number;
+    moduleId: number;
+    moduleTitle: string;
+    completed: boolean;
+  }>;
   completion: { requiredAssignments: number; completedAssignments: number; requiredAssessments: number; passedAssessments: number };
+}
+
+function certificateTrainingLabel(certificate: TraineeCertificate): string {
+  const titles = certificate.training.map((training) => training.moduleTitle);
+  if (titles.length === 0) return 'KISTS Safety Training';
+  return titles.join(' · ');
 }
 
 function formatDate(value: string): string | null {
@@ -67,7 +80,6 @@ function CertificateState({ loading, error, retry }: { loading: boolean; error: 
 }
 
 export function CertificatePreview({ certificate }: { certificate: TraineeCertificate }) {
-  const courseTitle = certificate.training[0]?.moduleTitle ?? 'KISTS Safety Training';
   const issueDate = formatDate(certificate.issuedAt);
   return (
     <div className="certificate-preview certificate-print-root" role="region" aria-label="Certificate preview">
@@ -83,9 +95,11 @@ export function CertificatePreview({ certificate }: { certificate: TraineeCertif
             <div className="certificate-document-number"><span>Certificate ID</span><strong>{certificate.certificateNumber}</strong></div>
           </header>
           <main className="certificate-document-body">
-            <p>This is to certify that</p><h3>{certificate.traineeName}</h3><p>has successfully completed the</p>
-            <h4>{courseTitle.toUpperCase()} SAFETY TRAINING</h4>
-            <p className="certificate-description">including learning content, interactive 360° warehouse safety scenario,<br />and final assessment.</p>
+            <p>This is to certify that</p><h3>{certificate.traineeName}</h3><p>has successfully completed the following required KISTS training:</p>
+            <ul className="certificate-training-list">
+              {certificate.training.map((training) => <li key={training.assignmentId}>{training.moduleTitle}</li>)}
+            </ul>
+            <p className="certificate-description">All required learning, interactive safety scenarios where applicable,<br />and final assessments have been completed.</p>
           </main>
           <footer className="certificate-document-footer">
             <div className="certificate-signatory"><em>Ram Kumar Tamang</em><span className="certificate-signature-line" /><strong>Ram Kumar Tamang</strong><small>Logistics Manager</small></div>
@@ -152,13 +166,42 @@ export function CertificateModal({ certificate, onClose, returnFocusRef }: { cer
   );
 }
 
+function CertificateLibraryCard({
+  certificate,
+  current,
+}: {
+  certificate: TraineeCertificate;
+  current: boolean;
+}) {
+  return (
+    <article className="certificate-library-card">
+      <div className="certificate-credential-mark" aria-hidden="true"><span>Certificate</span><strong>KISTS</strong><i>People · Safety · Progress</i></div>
+      <div className="certificate-library-copy">
+        <div className="certificate-card-status"><span className="certificate-card-check" aria-hidden="true">✓</span><span className="certificate-issued-badge">{current ? 'Current' : 'Issued'}</span></div>
+        <h3>{certificateTrainingLabel(certificate)}</h3>
+        <p>Official KISTS training certificate confirming successful completion.</p>
+        <ul className="certificate-card-training" aria-label="Covered training">
+          {certificate.training.map((training) => <li key={training.assignmentId}>{training.moduleTitle}</li>)}
+        </ul>
+        <dl>
+          <div><dt>Issued</dt><dd>{formatDate(certificate.issuedAt) ?? 'Date unavailable'}</dd></div>
+          <div><dt>Certificate ID</dt><dd>{certificate.certificateNumber}</dd></div>
+        </dl>
+        <div className="certificate-card-actions"><Link className="certificate-button primary" to={`/trainee/certificates/${certificate.id}`}>{current ? 'View Certificate' : 'View'}</Link></div>
+      </div>
+    </article>
+  );
+}
+
 export function TraineeCertificates() {
   const { status, loading, error, load } = useCertificateStatus();
   if (loading || error || !status) return <CertificateState loading={loading} error={error} retry={() => void load()} />;
+  const certificateCount = status.history.length + (status.certificate ? 1 : 0);
+  const hasCertificates = certificateCount > 0;
   return (
     <div className="certificate-library">
       <header className="certificate-library-header"><p className="eyebrow">Training records / Certificates</p><h1>My Certificates</h1><p>View and manage your official KISTS training certificates.</p></header>
-      {!status.certificate ? (
+      {!hasCertificates ? (
         <section className="certificate-pending card" role="status">
           <span className="certificate-pending-icon" aria-hidden="true">○</span><h2>No certificates yet</h2>
           <p>Complete your required training and assessments to earn your first KISTS certificate.</p>
@@ -168,29 +211,49 @@ export function TraineeCertificates() {
           </div>
           <Link className="certificate-button primary" to="/trainee/training">Return to My Training</Link>
         </section>
-      ) : (
+      ) : status.certificate ? (
         <>
           <section className="certificate-library-summary" aria-label="Certificate summary">
-            <article><span className="certificate-summary-icon" aria-hidden="true"><DashboardIcon name="Certificates" /></span><div><small>Certificates earned</small><strong>1</strong></div></article>
-            <article><span className="certificate-summary-icon" aria-hidden="true">✓</span><div><small>Latest certificate</small><strong>{status.certificate.training[0]?.moduleTitle ?? 'KISTS Safety Training'}</strong></div></article>
-            <article><span className="certificate-summary-icon" aria-hidden="true">◷</span><div><small>Latest issue date</small><strong>{formatDate(status.certificate.issuedAt) ?? 'Date unavailable'}</strong></div></article>
+            <article><span className="certificate-summary-icon" aria-hidden="true"><DashboardIcon name="Certificates" /></span><div><small>Certificates earned</small><strong>{certificateCount}</strong></div></article>
+            <article><span className="certificate-summary-icon" aria-hidden="true">✓</span><div><small>Current certificate</small><strong>{certificateTrainingLabel(status.certificate)}</strong></div></article>
+            <article><span className="certificate-summary-icon" aria-hidden="true">◷</span><div><small>Current issue date</small><strong>{formatDate(status.certificate.issuedAt) ?? 'Date unavailable'}</strong></div></article>
           </section>
           <section className="certificate-library-section" aria-labelledby="issued-certificates-title">
-            <div className="certificate-library-section-heading"><div><p className="eyebrow">Official credentials</p><h2 id="issued-certificates-title">Issued Certificates</h2></div><span>1 certificate</span></div>
+            <div className="certificate-library-section-heading"><div><p className="eyebrow">Current certification</p><h2 id="issued-certificates-title">Current Certificate</h2></div></div>
             <div className="certificate-library-grid">
-              <article className="certificate-library-card">
-                <div className="certificate-credential-mark" aria-hidden="true"><span>Certificate</span><strong>KISTS</strong><i>People · Safety · Progress</i></div>
-                <div className="certificate-library-copy">
-                  <div className="certificate-card-status"><span className="certificate-card-check" aria-hidden="true">✓</span><span className="certificate-issued-badge">Issued</span></div>
-                  <h3>{status.certificate.training[0]?.moduleTitle ?? 'KISTS Safety Training'}</h3>
-                  <p>Official KISTS training certificate confirming successful completion.</p>
-                  <dl>
-                    <div><dt>Issued</dt><dd>{formatDate(status.certificate.issuedAt) ?? 'Date unavailable'}</dd></div>
-                    <div><dt>Certificate ID</dt><dd>{status.certificate.certificateNumber}</dd></div>
-                  </dl>
-                  <div className="certificate-card-actions"><Link className="certificate-button primary" to={`/trainee/certificates/${status.certificate.id}`}>View Certificate</Link></div>
-                </div>
-              </article>
+              <CertificateLibraryCard certificate={status.certificate} current />
+            </div>
+          </section>
+          {status.history.length ? (
+            <section className="certificate-library-section" aria-labelledby="certificate-history-title">
+              <div className="certificate-library-section-heading"><div><p className="eyebrow">Training record</p><h2 id="certificate-history-title">Previous Certificates</h2></div><span>{status.history.length} previous</span></div>
+              <div className="certificate-library-grid certificate-history-grid">
+                {status.history.map((certificate) => <CertificateLibraryCard key={certificate.id} certificate={certificate} current={false} />)}
+              </div>
+            </section>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <section className="certificate-current-pending card" role="status">
+            <p className="eyebrow">Current certification</p>
+            <h2>Additional required training outstanding</h2>
+            <p>Complete every current requirement to receive an updated KISTS certificate.</p>
+            <ul>
+              {status.requirements.map((requirement) => (
+                <li className={requirement.completed ? 'completed' : ''} key={requirement.assignmentId}>
+                  <span aria-hidden="true">{requirement.completed ? '✓' : '○'}</span>
+                  <span>{requirement.moduleTitle}</span>
+                </li>
+              ))}
+            </ul>
+            <strong>Certificate status: Pending</strong>
+            <Link className="certificate-button primary" to="/trainee/training">Return to My Training</Link>
+          </section>
+          <section className="certificate-library-section" aria-labelledby="previous-certificates-title">
+            <div className="certificate-library-section-heading"><div><p className="eyebrow">Training record</p><h2 id="previous-certificates-title">Previous Certificates</h2></div><span>{status.history.length} previous</span></div>
+            <div className="certificate-library-grid certificate-history-grid">
+              {status.history.map((certificate) => <CertificateLibraryCard key={certificate.id} certificate={certificate} current={false} />)}
             </div>
           </section>
         </>
@@ -204,8 +267,11 @@ export function TraineeCertificateDetail() {
   const navigate = useNavigate();
   const { status, loading, error, load } = useCertificateStatus();
   if (loading || error || !status) return <CertificateState loading={loading} error={error} retry={() => void load()} />;
-  const certificate = status.certificate;
-  if (!certificate || String(certificate.id) !== certificateId) {
+  const certificate = [status.certificate, ...status.history].find(
+    (item): item is TraineeCertificate =>
+      item !== null && String(item.id) === certificateId,
+  );
+  if (!certificate) {
     return <section className="certificate-state card" role="alert"><p className="eyebrow">Training records / Certificates</p><h1>Certificate not found</h1><p>This certificate is not available in your issued training records.</p><Link className="certificate-button primary" to="/trainee/certificates">Back to Certificates</Link></section>;
   }
   return (

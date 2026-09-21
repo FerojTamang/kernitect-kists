@@ -39,10 +39,7 @@ export class AssessmentService {
       );
     }
 
-    if (
-      context.activeScenarioCount === 0 ||
-      context.completedScenarioCount < context.activeScenarioCount
-    ) {
+    if (context.completedScenarioCount < context.activeScenarioCount) {
       throw new HttpError(
         409,
         'Complete the interactive warehouse scenario before starting the final assessment.',
@@ -96,6 +93,8 @@ export class AssessmentService {
     return {
       assignmentId: context.assignmentId,
       moduleId: context.moduleId,
+      moduleTitle: context.moduleTitle,
+      hasScenario: context.activeScenarioCount > 0,
       assessment: {
         id: context.assessmentId,
         title: context.title,

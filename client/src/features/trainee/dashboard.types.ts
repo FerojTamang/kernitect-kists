@@ -14,6 +14,12 @@ export interface DashboardAssignment {
   learningProgressPercentage: number;
   learningCompletedSections: number;
   learningTotalSections: number;
+  scenarioCompleted: number;
+  scenarioTotal: number;
+  assessmentPassed: number;
+  assessmentTotal: number;
+  resumeStage: 'learning' | 'scenario' | 'assessment';
+  resumePath: string;
   assignedAt: string;
   dueAt: string | null;
   nextAction: NextAction;

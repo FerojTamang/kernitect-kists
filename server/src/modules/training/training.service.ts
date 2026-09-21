@@ -96,6 +96,8 @@ export class TrainingService {
       assignmentId: firstRow.assignmentId,
       moduleId: firstRow.moduleId,
       moduleTitle: firstRow.moduleTitle,
+      moduleDescription: firstRow.moduleDescription,
+      hasScenario: firstRow.hasScenario,
       status,
       progress: {
         assignmentPercentage,
@@ -136,15 +138,18 @@ export class TrainingService {
         'CONTENT_NOT_FOUND',
       );
     if (
-      !questions.length ||
+      questions.length === 0 ||
       questions.some((question) => !question.answeredCorrectly)
     )
       throw new HttpError(
         409,
-        'Answer both check questions correctly before completing this section.',
+        questions.length === 0
+          ? 'This learning section does not have a configured practice check.'
+          : `Answer all ${questions.length} practice questions correctly before completing this section.`,
         'FORMATIVE_CHECK_REQUIRED',
       );
     await this.repository.completeContent(user.id, assignmentId, contentId);
+    await this.repository.refreshProgress(user.id, assignmentId);
     return this.getAssignmentDetail(user, assignmentId);
   }
 
@@ -187,6 +192,8 @@ export class TrainingService {
 
     if (answer.correct)
       await this.repository.completeContent(user.id, assignmentId, contentId);
+    if (answer.correct)
+      await this.repository.refreshProgress(user.id, assignmentId);
     const updatedModule = await this.getAssignmentDetail(user, assignmentId);
     const updatedSection = updatedModule.sections.find(
       (item) => item.id === contentId,

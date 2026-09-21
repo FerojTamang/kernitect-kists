@@ -10,6 +10,7 @@ import type {
 interface AssessmentContextRow {
   assignmentId: number;
   moduleId: number;
+  moduleTitle: string;
   assessmentId: number;
   title: string;
   description: string;
@@ -64,7 +65,7 @@ export class AssessmentRepository {
   ): Promise<AssessmentContextRow | undefined> {
     const result = await this.database.query<AssessmentContextRow>(
       `SELECT ta.id AS "assignmentId",
-        ta.training_module_id AS "moduleId",
+        ta.training_module_id AS "moduleId", m.title AS "moduleTitle",
         a.id AS "assessmentId",
         a.title,
         a.description,
@@ -96,9 +97,8 @@ export class AssessmentRepository {
       WHERE ta.id = $1
         AND ta.trainee_id = $2
         AND ta.status = 'active'
-        AND m.slug = 'manual-handling'
       GROUP BY ta.id, ta.training_module_id, a.id, a.title, a.description,
-        a.pass_percentage, a.sequence_order
+        a.pass_percentage, a.sequence_order, m.title
       ORDER BY a.sequence_order ASC
       LIMIT 1`,
       [assignmentId, userId],
@@ -349,5 +349,4 @@ export class AssessmentRepository {
 
     return result;
   }
-
 }

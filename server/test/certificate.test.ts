@@ -122,6 +122,28 @@ async function login(email = traineeEmail): Promise<string> {
   return cookie;
 }
 
+async function completeActiveScenarios(assignmentId: number): Promise<void> {
+  await database.query(
+    `INSERT INTO scenario_attempts (
+      trainee_id, training_assignment_id, training_module_id, scenario_id,
+      started_at, completed_at
+    )
+    SELECT ta.trainee_id, ta.id, ta.training_module_id, s.id,
+      clock_timestamp() - interval '10 minutes', clock_timestamp()
+    FROM training_assignments ta
+    JOIN scenarios s
+      ON s.training_module_id = ta.training_module_id
+     AND s.is_active
+    WHERE ta.id = $1
+    ON CONFLICT (training_assignment_id, scenario_id) DO UPDATE SET
+      completed_at = COALESCE(
+        scenario_attempts.completed_at,
+        EXCLUDED.completed_at
+      )`,
+    [assignmentId],
+  );
+}
+
 test('admin requirement removal issues one certificate for a previously blocked eligible trainee', async () => {
   const passwordHash = await hashPassword(password);
   const edgeTraineeId = (
@@ -172,6 +194,8 @@ test('admin requirement removal issues one certificate for a previously blocked 
       [assessmentId],
     )
   ).rows;
+  await completeActiveScenarios(edgeManualAssignment);
+
   const passed = await new AssessmentRepository(database).submitAssessment(
     edgeTraineeId,
     edgeManualAssignment,
@@ -257,6 +281,8 @@ test('passing the final required assessment automatically issues and exposes a c
     )
   ).rows;
   assert.equal(correctAnswers.length, 10);
+
+  await completeActiveScenarios(assignmentId);
 
   const result = await new AssessmentRepository(database).submitAssessment(
     traineeId,

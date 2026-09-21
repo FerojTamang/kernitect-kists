@@ -68,6 +68,17 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   let submissions = 0;
 
   await signIn(page);
+  await page.route('**/api/trainee/dashboard', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        assignedTraining: [
+          { assignmentId, required: true, status: 'completed' },
+        ],
+      }),
+    }),
+  );
 
   await page.route('**/api/trainee/certificates', (route) =>
     route.fulfill({
@@ -76,6 +87,7 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
       body: JSON.stringify({
         eligible: true,
         completion: { requiredAssignments: 1, completedAssignments: 1, requiredAssessments: 1, passedAssessments: 1 },
+        history: [],
         certificate: {
           id: 700,
           certificateNumber: 'KISTS-20260917-ABCDEF123456',
@@ -194,7 +206,7 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   });
 
   const assessmentUrl = page.url();
-  const certificateButton = page.getByRole('button', { name: 'View digital certificate →' });
+  const certificateButton = page.getByRole('button', { name: /View digital certificate/ });
   await certificateButton.click();
   await expect(page).toHaveURL(assessmentUrl);
   const dialog = page.getByRole('dialog', { name: 'Digital Certificate' });

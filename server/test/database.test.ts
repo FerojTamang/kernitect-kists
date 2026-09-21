@@ -75,6 +75,37 @@ test('development seed is repeatable and preserves disabled account hashes', asy
     assert.equal(scenario.rows[0]?.hazards, 5);
   }));
 
+test('Forklift awareness module is active with learning and assessment but no scenario', async () =>
+  isolated(async (client) => {
+    const result = await client.query<{
+      isActive: boolean;
+      sections: number;
+      scenarios: number;
+      questions: number;
+      passPercentage: string;
+    }>(
+      `SELECT m.is_active AS "isActive",
+        COUNT(DISTINCT c.id) FILTER (WHERE c.is_active)::int AS sections,
+        COUNT(DISTINCT s.id) FILTER (WHERE s.is_active)::int AS scenarios,
+        COUNT(DISTINCT q.id)::int AS questions,
+        MIN(a.pass_percentage)::text AS "passPercentage"
+       FROM training_modules m
+       LEFT JOIN training_content c ON c.training_module_id=m.id
+       LEFT JOIN scenarios s ON s.training_module_id=m.id
+       LEFT JOIN assessments a ON a.training_module_id=m.id AND a.is_active
+       LEFT JOIN questions q ON q.assessment_id=a.id
+       WHERE m.slug='forklift-pedestrian-safety'
+       GROUP BY m.id`,
+    );
+    assert.deepEqual(result.rows[0], {
+      isActive: true,
+      sections: 8,
+      scenarios: 0,
+      questions: 10,
+      passPercentage: '75.00',
+    });
+  }));
+
 test('seed and reset safety checks reject remote and unrelated databases', () => {
   assert.throws(() =>
     assertLocalDevelopmentDatabase(

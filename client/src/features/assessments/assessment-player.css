@@ -775,14 +775,56 @@
   padding: clamp(20px, 2.3vw, 30px);
   overflow: visible;
   border-radius: 20px;
-  box-shadow: 0 24px 65px rgb(15 23 42 / 12%);
+  box-shadow:
+    0 26px 68px rgb(15 23 42 / 13%),
+    0 2px 8px rgb(15 23 42 / 5%);
 }
 
 .assessment-result-player .assessment-result.passed {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 14px;
+  row-gap: 8px;
+  padding: clamp(24px, 2.6vw, 32px);
+  padding-bottom: clamp(32px, 3.5vh, 36px);
   border-color: rgb(16 185 129 / 25%);
+  border-radius: 22px;
   background:
-    radial-gradient(circle at 88% 8%, rgb(16 185 129 / 12%), transparent 16rem),
+    radial-gradient(circle at 88% 8%, rgb(16 185 129 / 10%), transparent 16rem),
     linear-gradient(135deg, #fff, #f8fffb);
+}
+
+.assessment-result-player .assessment-result.passed >
+  :is(
+    .assessment-result-score,
+    .assessment-attempt-summary,
+    .assessment-completion-message,
+    .assessment-overall-completion,
+    .assessment-actions
+  ) {
+  grid-column: 1 / -1;
+}
+
+.assessment-result-player .assessment-result.passed .assessment-result-icon {
+  grid-row: 1 / 4;
+  align-self: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgb(16 185 129 / 22%);
+  box-shadow: 0 9px 22px rgb(16 185 129 / 16%);
+}
+
+.assessment-result-player .assessment-result.passed .assessment-kicker {
+  align-self: end;
+  margin: 0;
+}
+
+.assessment-result-player .assessment-result.passed > h2 {
+  align-self: center;
+  margin: 0;
+}
+
+.assessment-result-player .assessment-result.passed > p {
+  align-self: start;
 }
 
 .assessment-result-player .assessment-result.not-passed {
@@ -810,12 +852,12 @@
   display: grid;
   justify-items: center;
   width: min(280px, 100%);
-  margin: clamp(8px, 1.4vh, 13px) auto;
-  padding: clamp(10px, 1.5vh, 14px) 20px;
+  margin: 8px auto 2px;
+  padding: 10px 20px 11px;
   border: 1px solid rgb(102 84 237 / 18%);
   border-radius: 16px;
   background: rgb(255 255 255 / 78%);
-  box-shadow: 0 12px 28px rgb(15 23 42 / 7%);
+  box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
 }
 
 .assessment-result-score strong {
@@ -830,13 +872,13 @@
 }
 
 .assessment-result-score span {
-  margin-top: 3px;
+  margin-top: 1px;
   color: #334155;
   font-weight: 750;
 }
 
 .assessment-result-score small {
-  margin-top: 2px;
+  margin-top: 1px;
   color: #64748b;
 }
 
@@ -850,21 +892,123 @@
 }
 
 .assessment-result-player .assessment-attempt-summary {
-  gap: 8px;
-  padding: clamp(7px, 1.1vh, 10px) 0;
+  gap: 9px;
+  padding: 7px 0 8px;
+  border-color: #e7eaf0;
 }
 
 .assessment-result-player .assessment-attempt-summary > div {
-  padding: 8px 9px;
+  min-height: 55px;
+  align-content: center;
+  padding: 8px 10px;
+  background: rgb(246 248 252 / 88%);
 }
 
 .assessment-result-player .assessment-completion-message {
-  padding: clamp(9px, 1.2vh, 12px) 14px;
+  position: relative;
+  gap: 3px;
+  padding: 11px 14px 11px 45px;
+  border-color: #bcebd3;
+  background: linear-gradient(90deg, #edfbf4, #f7fdf9);
+}
+
+.assessment-result-player .assessment-completion-message::before {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: #d9f7e9;
+  color: #087a54;
+  font-size: 0.76rem;
+  font-weight: 900;
+  transform: translateY(-50%);
+}
+
+.assessment-result-player .assessment-completion-message strong {
+  color: #145a42;
+  font-size: 0.9rem;
+}
+
+.assessment-result-player .assessment-completion-message span {
+  font-size: 0.79rem;
+}
+
+.assessment-overall-completion {
+  display: grid;
+  gap: 5px;
+  padding: 11px 14px;
+  border: 1px solid #ddd9fa;
+  border-radius: 11px;
+  background: linear-gradient(110deg, #faf9ff, #f4f2ff 70%, #f5fcf8);
+  text-align: left;
+}
+
+.assessment-overall-completion h3,
+.assessment-overall-completion p,
+.assessment-overall-completion ul {
+  margin: 0;
+}
+
+.assessment-overall-completion h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #342a85;
+  font-size: 0.94rem;
+}
+
+.assessment-overall-completion h3::before {
+  content: "✓";
+  display: grid;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 6px;
+  background: #e7e2ff;
+  color: #5545d7;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.assessment-overall-completion p {
+  color: #536078;
+  font-size: 0.78rem;
+}
+
+.assessment-overall-completion ul {
+  display: grid;
+  gap: 3px;
+  padding: 2px 0 0 29px;
+  list-style: none;
+  color: #25304a;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.assessment-overall-completion li::before {
+  content: "✓";
+  margin-right: 7px;
+  color: #07825a;
 }
 
 .assessment-result-player .assessment-actions {
-  gap: 10px;
-  margin-top: clamp(6px, 1vh, 10px);
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.assessment-result-player .assessment-actions .assessment-button {
+  width: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+  white-space: nowrap;
 }
 
 .assessment-pass-confetti {

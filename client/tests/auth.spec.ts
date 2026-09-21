@@ -108,7 +108,7 @@ test('trainee login reaches the database-backed dashboard, persists on reload, a
   ).toBeVisible();
   await expect(
     page.getByText('Forklift and Pedestrian Safety', { exact: true }),
-  ).toHaveCount(0);
+  ).toBeVisible();
   await expect(
     page.getByText('Learning progress 0%', { exact: true }),
   ).toBeVisible();
@@ -370,9 +370,13 @@ test('trainee My Training lists only current required modules and opens Manual H
 
   await expect(assignedModules.getByText('Fire Safety Basics')).toHaveCount(0);
 
-  await assignedModules
+  const manualHandlingCard = assignedModules
+    .locator('.assigned-module-card')
+    .filter({ hasText: 'Manual Handling' });
+
+  await manualHandlingCard
     .getByRole('link', {
-      name: /Start Learning|Continue Learning/,
+      name: /Start training|Continue training|Continue to scenario|Continue to assessment|Review training/,
     })
     .click();
 

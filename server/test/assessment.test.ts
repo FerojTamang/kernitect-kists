@@ -26,6 +26,8 @@ let base = '';
 let traineeId = 0;
 let assignmentId = 0;
 let assessmentId = 0;
+let forkliftAssignmentId = 0;
+let forkliftAssessmentId = 0;
 
 before(async () => {
   assertLocalDevelopmentDatabase(env.databaseUrl);
@@ -92,6 +94,31 @@ before(async () => {
        ORDER BY sequence_order
        LIMIT 1`,
       [manualModuleId],
+    )
+  ).rows[0]!.id;
+
+  const forkliftModuleId = (
+    await database.query<{ id: number }>(
+      `SELECT id FROM training_modules WHERE slug='forklift-pedestrian-safety'`,
+    )
+  ).rows[0]!.id;
+  forkliftAssignmentId = (
+    await database.query<{ id: number }>(
+      `INSERT INTO training_assignments
+       (trainee_id, training_module_id, assigned_by, required)
+       VALUES ($1,$2,$3,true) RETURNING id`,
+      [traineeId, forkliftModuleId, adminId],
+    )
+  ).rows[0]!.id;
+  await database.query(
+    `INSERT INTO progress (trainee_id, training_module_id, training_assignment_id)
+     VALUES ($1,$2,$3)`,
+    [traineeId, forkliftModuleId, forkliftAssignmentId],
+  );
+  forkliftAssessmentId = (
+    await database.query<{ id: number }>(
+      `SELECT id FROM assessments WHERE training_module_id=$1 AND is_active`,
+      [forkliftModuleId],
     )
   ).rows[0]!.id;
 
@@ -444,4 +471,89 @@ test('final assessment is gated, server-scored, retryable and completes training
     ).error.code,
     'ASSESSMENT_ALREADY_PASSED',
   );
+});
+
+test('Forklift assessment requires learning, skips scenario gating, and completes only after a pass', async () => {
+  const cookie = await login();
+  const endpoint = `${base}/api/trainee/training/${forkliftAssignmentId}/assessment`;
+  const locked = await fetch(endpoint, { headers: { Cookie: cookie } });
+  assert.equal(locked.status, 409);
+
+  await database.query(
+    `INSERT INTO training_content_completion
+      (trainee_id, training_assignment_id, training_module_id, training_content_id)
+     SELECT ta.trainee_id,ta.id,ta.training_module_id,c.id
+     FROM training_assignments ta JOIN training_content c
+       ON c.training_module_id=ta.training_module_id AND c.is_active
+     WHERE ta.id=$1`,
+    [forkliftAssignmentId],
+  );
+
+  const available = await fetch(endpoint, { headers: { Cookie: cookie } });
+  assert.equal(available.status, 200);
+  const detail = (await available.json()) as {
+    moduleTitle: string;
+    hasScenario: boolean;
+    questions: Array<{ id: number; options: Array<{ id: number }> }>;
+    assessment: { passPercentage: number };
+  };
+  assert.equal(detail.moduleTitle, 'Forklift and Pedestrian Safety');
+  assert.equal(detail.hasScenario, false);
+  assert.equal(detail.questions.length, 10);
+  assert.equal(detail.assessment.passPercentage, 75);
+
+  const answers = async (correct: boolean) =>
+    (
+      await database.query<{ questionId: number; optionId: number }>(
+        `SELECT DISTINCT ON(q.id) q.id AS "questionId",ao.id AS "optionId"
+         FROM questions q JOIN answer_options ao ON ao.question_id=q.id
+         WHERE q.assessment_id=$1 AND ao.is_correct=$2
+         ORDER BY q.id,ao.sequence_order`,
+        [forkliftAssessmentId, correct],
+      )
+    ).rows;
+  const submit = (body: unknown) =>
+    fetch(`${endpoint}/submit`, {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        Origin: env.clientUrl,
+        'X-KISTS-Request': '1',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ answers: body }),
+    });
+
+  const failed = await submit(await answers(false));
+  assert.equal(failed.status, 201);
+  assert.equal(
+    ((await failed.json()) as { attempt: { passed: boolean } }).attempt.passed,
+    false,
+  );
+  assert.equal(
+    Number(
+      (
+        await database.query<{ percentage: string }>(
+          `SELECT percentage::text AS percentage FROM progress WHERE training_assignment_id=$1`,
+          [forkliftAssignmentId],
+        )
+      ).rows[0]!.percentage,
+    ),
+    0,
+  );
+
+  const passed = await submit(await answers(true));
+  assert.equal(passed.status, 201);
+  assert.equal(
+    ((await passed.json()) as { attempt: { passed: boolean } }).attempt.passed,
+    true,
+  );
+  const progress = (
+    await database.query<{ percentage: string; completedAt: Date | null }>(
+      `SELECT percentage::text AS percentage,completed_at AS "completedAt" FROM progress WHERE training_assignment_id=$1`,
+      [forkliftAssignmentId],
+    )
+  ).rows[0]!;
+  assert.equal(Number(progress.percentage), 100);
+  assert.ok(progress.completedAt);
 });

@@ -159,12 +159,10 @@ test('administrator can create required and optional assignments with progress s
   );
   assert.ok(manualHandling);
   assert.ok(optionalModule);
-  assert.equal(
-    initial.modules.some(
-      (module) => module.slug === 'forklift-pedestrian-safety',
-    ),
-    false,
+  const forklift = initial.modules.find(
+    (module) => module.slug === 'forklift-pedestrian-safety',
   );
+  assert.ok(forklift);
 
   const required = await fetch(`${base}/api/admin/assignments`, {
     method: 'POST',
@@ -217,6 +215,17 @@ test('administrator can create required and optional assignments with progress s
   });
   assert.equal(optional.status, 201);
 
+  const forkliftAssignment = await fetch(`${base}/api/admin/assignments`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      traineeId,
+      trainingModuleId: forklift.id,
+      required: true,
+    }),
+  });
+  assert.equal(forkliftAssignment.status, 201);
+
   const list = await fetch(`${base}/api/admin/assignments`, {
     headers: { Cookie: adminCookie },
   });
@@ -235,7 +244,7 @@ test('administrator can create required and optional assignments with progress s
   const created = payload.assignments.filter(
     (assignment) => assignment.traineeId === traineeId,
   );
-  assert.equal(created.length, 2);
+  assert.equal(created.length, 3);
   assert.deepEqual(
     created
       .map((assignment) => ({
@@ -246,6 +255,12 @@ test('administrator can create required and optional assignments with progress s
       }))
       .sort((left, right) => left.slug.localeCompare(right.slug)),
     [
+      {
+        slug: 'forklift-pedestrian-safety',
+        required: true,
+        status: 'active',
+        progress: 0,
+      },
       {
         slug: 'manual-handling',
         required: true,

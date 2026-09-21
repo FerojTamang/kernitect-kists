@@ -9,6 +9,10 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { BrandLogo } from '../../components/BrandLogo';
 import { useAuth } from '../auth/auth.context';
+import type {
+  DashboardAssignment,
+  TraineeDashboardData,
+} from '../trainee/dashboard.types';
 import { ApiError, apiRequest } from '../../services/api/request';
 import {
   CertificateModal,
@@ -46,6 +50,8 @@ interface AssessmentAttemptSummary {
 interface TrainingAssessmentDetail {
   assignmentId: number;
   moduleId: number;
+  moduleTitle: string;
+  hasScenario: boolean;
   assessment: {
     id: number;
     title: string;
@@ -107,7 +113,7 @@ function AttemptSummary({ attempt }: { attempt: AssessmentAttemptSummary }) {
   );
 }
 
-function AssessmentResultBrand() {
+function AssessmentResultBrand({ moduleTitle }: { moduleTitle: string }) {
   return (
     <aside
       className="assessment-result-brand"
@@ -121,7 +127,7 @@ function AssessmentResultBrand() {
         <BrandLogo variant="dark" />
       </Link>
       <div>
-        <p>Manual Handling</p>
+        <p>{moduleTitle}</p>
         <h2>Final Assessment</h2>
         <span>Official KISTS training result</span>
       </div>
@@ -177,8 +183,13 @@ export function TraineeAssessment() {
   const [reviewing, setReviewing] = useState(false);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
-  const [issuedCertificate, setIssuedCertificate] = useState<TraineeCertificate | null>(null);
+  const [issuedCertificate, setIssuedCertificate] =
+    useState<TraineeCertificate | null>(null);
   const [certificateOpen, setCertificateOpen] = useState(false);
+  const [nextRequiredTraining, setNextRequiredTraining] =
+    useState<DashboardAssignment | null>(null);
+  const [allRequiredTrainingComplete, setAllRequiredTrainingComplete] =
+    useState(false);
   const certificateButtonRef = useRef<HTMLButtonElement>(null);
 
   const loadAssessment = useCallback(async () => {
@@ -202,6 +213,9 @@ export function TraineeAssessment() {
       setAnswers({});
       setCurrentQuestionIndex(0);
       setReviewing(false);
+      setIssuedCertificate(null);
+      setNextRequiredTraining(null);
+      setAllRequiredTrainingComplete(false);
     } catch (requestError) {
       if (requestError instanceof ApiError && requestError.status === 401)
         return;
@@ -222,16 +236,20 @@ export function TraineeAssessment() {
     return () => window.clearTimeout(timer);
   }, [loadAssessment]);
 
-  const answeredCount = useMemo(
+  const questions = useMemo(
     () =>
-      detail?.questions.filter((question) => answers[question.id]).length ?? 0,
-    [answers, detail],
+      [...(detail?.questions ?? [])].sort(
+        (left, right) => left.sequenceOrder - right.sequenceOrder,
+      ),
+    [detail?.questions],
+  );
+  const answeredCount = useMemo(
+    () => questions.filter((question) => answers[question.id]).length,
+    [answers, questions],
   );
 
   const allAnswered = Boolean(
-    detail &&
-    detail.questions.length > 0 &&
-    answeredCount === detail.questions.length,
+    detail && questions.length > 0 && answeredCount === questions.length,
   );
 
   const passedAttempt = result?.attempt.passed
@@ -239,26 +257,59 @@ export function TraineeAssessment() {
     : detail?.latestAttempt?.passed
       ? detail.latestAttempt
       : null;
+  const moduleTitle = detail?.moduleTitle || 'Manual Handling';
+  const hasScenario = detail?.hasScenario ?? true;
   const traineeFullName = user
     ? `${user.firstName} ${user.lastName}`.trim()
     : '';
 
   useEffect(() => {
-    if (!passedAttempt) return;
+    if (!passedAttempt || !detail) return;
     let active = true;
-    void apiRequest<CertificateStatus>('/trainee/certificates')
-      .then((payload) => {
-        if (active) setIssuedCertificate(payload.certificate);
+    void Promise.all([
+      apiRequest<TraineeDashboardData>('/trainee/dashboard'),
+      apiRequest<CertificateStatus>('/trainee/certificates'),
+    ])
+      .then(([dashboard, certificateStatus]) => {
+        if (!active) return;
+        const requiredTraining = dashboard.assignedTraining.filter(
+          (assignment) => assignment.required,
+        );
+        const nextTraining = requiredTraining.find(
+          (assignment) =>
+            assignment.assignmentId !== detail.assignmentId &&
+            assignment.status !== 'completed',
+        );
+        const allComplete =
+          requiredTraining.length > 0 &&
+          requiredTraining.every(
+            (assignment) => assignment.status === 'completed',
+          ) &&
+          certificateStatus.eligible &&
+          certificateStatus.certificate !== null;
+
+        setNextRequiredTraining(nextTraining ?? null);
+        setAllRequiredTrainingComplete(allComplete);
+        setIssuedCertificate(
+          allComplete ? certificateStatus.certificate : null,
+        );
       })
       .catch(() => {
-        if (active) setIssuedCertificate(null);
+        if (active) {
+          setNextRequiredTraining(null);
+          setAllRequiredTrainingComplete(false);
+          setIssuedCertificate(null);
+        }
       });
     return () => {
       active = false;
     };
-  }, [passedAttempt]);
+  }, [detail, passedAttempt]);
 
-  const closeCertificateModal = useCallback(() => setCertificateOpen(false), []);
+  const closeCertificateModal = useCallback(
+    () => setCertificateOpen(false),
+    [],
+  );
 
   async function submitAssessment() {
     if (!detail || !allAnswered || submitting) return;
@@ -272,7 +323,7 @@ export function TraineeAssessment() {
         {
           method: 'POST',
           body: JSON.stringify({
-            answers: detail.questions.map((question) => ({
+            answers: questions.map((question) => ({
               questionId: question.id,
               optionId: answers[question.id],
             })),
@@ -310,7 +361,7 @@ export function TraineeAssessment() {
     return (
       <AssessmentState
         title="Loading final assessment"
-        detail="Preparing your Manual Handling questions..."
+        detail="Preparing your final assessment questions..."
       />
     );
   }
@@ -363,12 +414,10 @@ export function TraineeAssessment() {
     return (
       <div className="assessment-page assessment-result-player passed-state">
         <AssessmentPassConfetti />
-        <AssessmentResultBrand />
+        <AssessmentResultBrand moduleTitle={moduleTitle} />
         <header className="assessment-page-header">
           <div>
-            <p className="eyebrow">
-              My Training / Manual Handling / Assessment
-            </p>
+            <p className="eyebrow">My Training / {moduleTitle} / Assessment</p>
             <h1>{detail.assessment.title}</h1>
           </div>
         </header>
@@ -391,18 +440,30 @@ export function TraineeAssessment() {
           </div>
           <AttemptSummary attempt={passedAttempt} />
           <div className="assessment-completion-message">
-            <strong>Manual Handling complete</strong>
+            <strong>{moduleTitle} complete</strong>
             <span>
-              Learning, interactive scenario and final assessment requirements
-              are complete.
+              {hasScenario
+                ? 'Learning, interactive scenario and final assessment requirements are complete.'
+                : 'Learning and final assessment requirements are complete.'}
             </span>
           </div>
+          {allRequiredTrainingComplete && issuedCertificate ? (
+            <div className="assessment-overall-completion">
+              <h3>All required training complete</h3>
+              <p>You have completed all currently required KISTS training.</p>
+              <ul>
+                {issuedCertificate.training.map((training) => (
+                  <li key={training.assignmentId}>{training.moduleTitle}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="assessment-actions">
             <Link
               className="assessment-button secondary"
               to={`/trainee/training/${detail.assignmentId}`}
             >
-              Review Manual Handling
+              Review {moduleTitle}
             </Link>
             <Link
               className="assessment-button secondary"
@@ -420,6 +481,17 @@ export function TraineeAssessment() {
                 View digital certificate →
               </button>
             ) : null}
+            {nextRequiredTraining ? (
+              <Link
+                className="assessment-button primary"
+                to={
+                  nextRequiredTraining.resumePath ||
+                  `/trainee/training/${nextRequiredTraining.assignmentId}`
+                }
+              >
+                Continue to {nextRequiredTraining.title} →
+              </Link>
+            ) : null}
           </div>
         </section>
         {certificateOpen && issuedCertificate ? (
@@ -436,12 +508,10 @@ export function TraineeAssessment() {
   if (result && !result.attempt.passed) {
     return (
       <div className="assessment-page assessment-result-player failed-state">
-        <AssessmentResultBrand />
+        <AssessmentResultBrand moduleTitle={moduleTitle} />
         <header className="assessment-page-header">
           <div>
-            <p className="eyebrow">
-              My Training / Manual Handling / Assessment
-            </p>
+            <p className="eyebrow">My Training / {moduleTitle} / Assessment</p>
             <h1>{detail.assessment.title}</h1>
           </div>
         </header>
@@ -462,8 +532,8 @@ export function TraineeAssessment() {
           </div>
           <AttemptSummary attempt={result.attempt} />
           <p className="assessment-result-guidance">
-            Review the Manual Handling learning content and try again when you
-            are ready.
+            Review the {moduleTitle} learning content and try again when you are
+            ready.
           </p>
           <div className="assessment-actions">
             <Link
@@ -485,9 +555,7 @@ export function TraineeAssessment() {
     );
   }
 
-  const answerProgress = Math.round(
-    (answeredCount / detail.questions.length) * 100,
-  );
+  const answerProgress = Math.round((answeredCount / questions.length) * 100);
 
   return (
     <div
@@ -527,14 +595,14 @@ export function TraineeAssessment() {
           <span aria-hidden="true">{progressCollapsed ? '›' : '‹'}</span>
         </button>
         <div className="assessment-module-summary">
-          <p>Manual Handling</p>
+          <p>{moduleTitle}</p>
           <h2>Final Assessment</h2>
           <span>
-            {detail.questions.length} Questions · Prototype pass mark{' '}
+            {questions.length} Questions · Prototype pass mark{' '}
             {detail.assessment.passPercentage}%
           </span>
           <span>
-            {answeredCount} of {detail.questions.length} answered
+            {answeredCount} of {questions.length} answered
           </span>
           <div className="assessment-sidebar-progress" aria-hidden="true">
             <span style={{ width: `${answerProgress}%` }} />
@@ -546,7 +614,7 @@ export function TraineeAssessment() {
         >
           <p>Assessment progress</p>
           <ol>
-            {detail.questions.map((question, index) => {
+            {questions.map((question, index) => {
               const answered = Boolean(answers[question.id]);
               const current = !reviewing && currentQuestionIndex === index;
               return (
@@ -574,10 +642,10 @@ export function TraineeAssessment() {
         </nav>
         <Link
           className="assessment-back-link"
-          to={`/trainee/training/${detail.assignmentId}/scenario`}
+          to={`/trainee/training/${detail.assignmentId}${hasScenario ? '/scenario' : ''}`}
         >
           <span aria-hidden="true">←</span>
-          <span>Back to Scenario</span>
+          <span>{hasScenario ? 'Back to Scenario' : 'Back to Learning'}</span>
         </Link>
       </aside>
       <button
@@ -598,7 +666,7 @@ export function TraineeAssessment() {
           Questions
         </button>
         <div>
-          <p className="eyebrow">My Training / Manual Handling / Assessment</p>
+          <p className="eyebrow">My Training / {moduleTitle} / Assessment</p>
           <h1>{detail.assessment.title}</h1>
           <p>{detail.assessment.description}</p>
         </div>
@@ -606,15 +674,15 @@ export function TraineeAssessment() {
           <span>
             {reviewing
               ? 'Review answers'
-              : `Question ${currentQuestionIndex + 1} of ${detail.questions.length}`}
+              : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
           </span>
           <strong>{answerProgress}%</strong>
         </div>
         <Link
           className="assessment-button secondary"
-          to={`/trainee/training/${detail.assignmentId}/scenario`}
+          to={`/trainee/training/${detail.assignmentId}${hasScenario ? '/scenario' : ''}`}
         >
-          ← Back to scenario
+          ← Back to {hasScenario ? 'scenario' : 'learning'}
         </Link>
       </header>
 
@@ -624,7 +692,7 @@ export function TraineeAssessment() {
       >
         <div>
           <span>Questions</span>
-          <strong>{detail.questions.length}</strong>
+          <strong>{questions.length}</strong>
         </div>
         <div>
           <span>Prototype pass mark</span>
@@ -633,7 +701,7 @@ export function TraineeAssessment() {
         <div>
           <span>Answered</span>
           <strong>
-            {answeredCount} / {detail.questions.length}
+            {answeredCount} / {questions.length}
           </strong>
         </div>
       </section>
@@ -657,7 +725,7 @@ export function TraineeAssessment() {
           void submitAssessment();
         }}
       >
-        {detail.questions.map((question, index) => (
+        {questions.map((question, index) => (
           <fieldset
             className="assessment-question card"
             key={question.id}
@@ -665,7 +733,7 @@ export function TraineeAssessment() {
           >
             <legend>
               <span>
-                Question {index + 1} of {detail.questions.length}
+                Question {index + 1} of {questions.length}
               </span>
               {question.questionText}
             </legend>
@@ -706,16 +774,14 @@ export function TraineeAssessment() {
                 className="assessment-button primary"
                 type="button"
                 onClick={() => {
-                  if (index === detail.questions.length - 1) {
+                  if (index === questions.length - 1) {
                     setReviewing(true);
                   } else {
                     setCurrentQuestionIndex(index + 1);
                   }
                 }}
               >
-                {index === detail.questions.length - 1
-                  ? 'Review answers'
-                  : 'Next →'}
+                {index === questions.length - 1 ? 'Review answers' : 'Next →'}
               </button>
             </div>
           </fieldset>
@@ -733,7 +799,7 @@ export function TraineeAssessment() {
               calculates your score only after final submission.
             </p>
             <div className="assessment-review-grid">
-              {detail.questions.map((question, index) => {
+              {questions.map((question, index) => {
                 const answered = Boolean(answers[question.id]);
                 return (
                   <button
@@ -768,7 +834,7 @@ export function TraineeAssessment() {
             <strong>
               {allAnswered
                 ? 'All questions answered'
-                : `${detail.questions.length - answeredCount} question${detail.questions.length - answeredCount === 1 ? '' : 's'} remaining`}
+                : `${questions.length - answeredCount} question${questions.length - answeredCount === 1 ? '' : 's'} remaining`}
             </strong>
             <span>
               Your score is calculated by KISTS only after you submit the final

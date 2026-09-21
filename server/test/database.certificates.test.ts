@@ -21,7 +21,11 @@ test('shared issuance rechecks eligibility after a requirement is removed and re
 
     await issuance.issueIfEligible(f.trainee);
     assert.equal(
-      (await client.query('SELECT id FROM certificates WHERE trainee_id=$1', [f.trainee])).rowCount,
+      (
+        await client.query('SELECT id FROM certificates WHERE trainee_id=$1', [
+          f.trainee,
+        ])
+      ).rowCount,
       0,
     );
 
@@ -130,7 +134,7 @@ test('optional, cancelled and unassigned modules do not block certification', as
       "INSERT INTO training_modules (title, slug) VALUES ('TEST: Unassigned', 'test-unassigned')",
     );
     await client.query(
-      "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order, is_active) SELECT id, 'TEST', 100, 1, true FROM training_modules WHERE slug IN ('test-unassigned', 'forklift-pedestrian-safety')",
+      "INSERT INTO assessments (training_module_id, title, pass_percentage, sequence_order, is_active) SELECT id, 'TEST', 100, 1, true FROM training_modules WHERE slug = 'test-unassigned'",
     );
     const cert = (
       await client.query<{ id: number }>(
@@ -148,16 +152,26 @@ test('optional, cancelled and unassigned modules do not block certification', as
       [{ training_assignment_id: required }],
     );
     await client.query(
-      "UPDATE certificates SET status = 'revoked', revoked_at = clock_timestamp() WHERE id = $1",
-      [cert],
-    );
-    await client.query(
-      "UPDATE training_assignments SET required = true, status = 'cancelled' WHERE id = $1",
+      `UPDATE training_assignments SET required = true, status = 'cancelled' WHERE id = $1`,
       [optional],
     );
-    await client.query(
-      "INSERT INTO certificates (trainee_id, certificate_number) VALUES ($1, 'TEST-CANCELLED')",
-      [f.trainee],
+    assert.equal(
+      (
+        await client.query<{ eligible: boolean }>(
+          `SELECT eligible FROM certification_eligibility WHERE trainee_id = $1`,
+          [f.trainee],
+        )
+      ).rows[0]!.eligible,
+      true,
+    );
+    assert.equal(
+      (
+        await client.query(
+          `SELECT id FROM available_certificates WHERE id = $1`,
+          [cert],
+        )
+      ).rowCount,
+      1,
     );
   }));
 
@@ -234,6 +248,13 @@ test('certificates preserve issuance evidence when a new required assignment is 
       1,
     );
     await complete(client, addedRequirement);
+    const forkliftAssessment = (
+      await client.query<{ id: number }>(
+        'SELECT id FROM assessments WHERE training_module_id=$1 AND is_active',
+        [f.forklift],
+      )
+    ).rows[0]!.id;
+    await attempt(client, addedRequirement, forkliftAssessment, 100);
     assert.equal(
       (
         await client.query(
@@ -298,7 +319,7 @@ test('certificate evidence cannot be inserted directly or rewritten', async () =
     );
   }));
 
-test('only one issued certificate per trainee; revocation allows a new issuance', async () =>
+test('one certificate per trainee and requirement snapshot; revocation does not permit duplicate snapshot issuance', async () =>
   isolated(async (client) => {
     const f = await fixture(client);
     const assignment = await assign(client, f.trainee, f.manual, f.admin);
@@ -326,8 +347,10 @@ test('only one issued certificate per trainee; revocation allows a new issuance'
       [cert],
       '23514',
     );
-    await client.query(
-      "INSERT INTO certificates (trainee_id, certificate_number) VALUES ($1, 'TEST-REISSUED')",
+    await rejectsSql(
+      client,
+      `INSERT INTO certificates (trainee_id, certificate_number) VALUES ($1, 'TEST-REISSUED')`,
       [f.trainee],
+      '23505',
     );
   }));

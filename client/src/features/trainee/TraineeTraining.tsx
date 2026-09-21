@@ -25,6 +25,32 @@ function statusLabel(status: DashboardAssignment['status']): string {
   return 'Not started';
 }
 
+function trainingAction(assignment: DashboardAssignment) {
+  const fallback = `/trainee/training/${assignment.assignmentId}`;
+  if (assignment.status === 'completed')
+    return {
+      label: 'Review training',
+      path: assignment.resumePath || fallback,
+    };
+  if (assignment.resumeStage === 'assessment')
+    return {
+      label: 'Continue to assessment',
+      path: assignment.resumePath || `${fallback}/assessment`,
+    };
+  if (assignment.resumeStage === 'scenario')
+    return {
+      label: 'Continue to scenario',
+      path: assignment.resumePath || `${fallback}/scenario`,
+    };
+  return {
+    label:
+      assignment.status === 'not_started'
+        ? 'Start training'
+        : 'Continue training',
+    path: assignment.resumePath || fallback,
+  };
+}
+
 function TrainingCard({
   assignment,
   order,
@@ -33,6 +59,7 @@ function TrainingCard({
   order: number;
 }) {
   const isManualHandling = assignment.title.toLowerCase().includes('manual');
+  const action = trainingAction(assignment);
   return (
     <article className="assigned-module-card">
       <div className="assigned-module-visual">
@@ -82,21 +109,9 @@ function TrainingCard({
             />
           </div>
         )}
-        {isManualHandling ? (
-          <Link
-            className="dashboard-action compact"
-            to={`/trainee/training/${assignment.assignmentId}`}
-          >
-            {assignment.learningCompletedSections
-              ? 'Continue Learning'
-              : 'Start Learning'}{' '}
-            <span aria-hidden="true">→</span>
-          </Link>
-        ) : (
-          <span className="module-coming-soon">
-            Training content coming in a later development phase
-          </span>
-        )}
+        <Link className="dashboard-action compact" to={action.path}>
+          {action.label} <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </article>
   );

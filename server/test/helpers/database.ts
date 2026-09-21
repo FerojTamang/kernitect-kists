@@ -20,7 +20,7 @@ before(async () => {
   assertLocalDevelopmentDatabase(env.databaseUrl);
   await inTransaction(pool, async (client) => {
     const applied = await migrate(client, schema);
-    assert.equal(applied.length, 15);
+    assert.equal(applied.length, 19);
     await seed(client, schema);
   });
   created = true;
@@ -125,6 +125,22 @@ async function complete(client: PoolClient, assignment: number): Promise<void> {
     percentage, started_at, completed_at, last_accessed_at)
     SELECT trainee_id, training_module_id, id, 100, now() - interval '1 hour', now(), now()
     FROM training_assignments WHERE id = $1`,
+    [assignment],
+  );
+  await client.query(
+    `INSERT INTO scenario_attempts (
+      trainee_id, training_assignment_id, training_module_id, scenario_id,
+      started_at, completed_at
+    )
+    SELECT ta.trainee_id, ta.id, ta.training_module_id, s.id,
+      now() - interval '30 minutes', now()
+    FROM training_assignments ta
+    JOIN scenarios s
+      ON s.training_module_id = ta.training_module_id
+     AND s.is_active
+    WHERE ta.id = $1
+    ON CONFLICT (training_assignment_id, scenario_id) DO UPDATE SET
+      completed_at = EXCLUDED.completed_at`,
     [assignment],
   );
 }

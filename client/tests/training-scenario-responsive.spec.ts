@@ -32,9 +32,15 @@ test('Manual Handling learning remains responsive across key breakpoints', async
 }) => {
   await signIn(page);
   await page.getByRole('link', { name: 'My Training' }).click();
-  await page
+  const manualHandlingCard = page
     .getByRole('region', { name: 'Assigned training modules' })
-    .getByRole('link', { name: /Start Learning|Continue Learning/ })
+    .locator('.assigned-module-card')
+    .filter({ hasText: 'Manual Handling' });
+
+  await manualHandlingCard
+    .getByRole('link', {
+      name: /Start training|Continue training|Continue to scenario|Continue to assessment|Review training/,
+    })
     .click();
 
   await expect(page).toHaveURL(/\/trainee\/training\/\d+$/);

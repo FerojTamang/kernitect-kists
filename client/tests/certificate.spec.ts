@@ -25,6 +25,7 @@ test('certificate page explains outstanding completion requirements', async ({
       body: JSON.stringify({
         eligible: false,
         certificate: null,
+        history: [],
         completion: {
           requiredAssignments: 2,
           completedAssignments: 1,
@@ -58,6 +59,7 @@ test('issued digital certificate displays evidence and supports print or PDF sav
           requiredAssessments: 1,
           passedAssessments: 1,
         },
+        history: [],
         certificate: {
           id: 700,
           certificateNumber: 'KISTS-20260917-ABCDEF123456',
@@ -88,7 +90,7 @@ test('issued digital certificate displays evidence and supports print or PDF sav
   await page.goto('/trainee/certificates');
   await expect(page.getByRole('heading', { name: 'My Certificates' })).toBeVisible();
   await expect(page.getByText('Certificates earned')).toBeVisible();
-  await expect(page.getByText('Latest certificate')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Current Certificate' })).toBeVisible();
   const libraryCard = page.locator('.certificate-library-card');
   await expect(libraryCard.getByText('17 September 2026')).toBeVisible();
   await expect(libraryCard.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
@@ -107,7 +109,7 @@ test('issued digital certificate displays evidence and supports print or PDF sav
     certificate.getByText('Alex Morgan', { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText('MANUAL HANDLING SAFETY TRAINING', { exact: true }),
+    certificate.getByText('Manual Handling', { exact: true }),
   ).toBeVisible();
   await expect(page.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
   await expect(

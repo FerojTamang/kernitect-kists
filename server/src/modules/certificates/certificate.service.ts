@@ -12,16 +12,19 @@ export class CertificateService {
     // Reconcile trainees who became eligible after their requirements changed.
     // The shared issuance operation is idempotent and preserves existing issues.
     await this.issuance.issueIfEligible(traineeId);
-    const [completion, certificate] = await Promise.all([
+    const [completion, eligible, requirements, portfolio] = await Promise.all([
       this.repository.completionSummary(traineeId),
-      this.repository.currentCertificate(traineeId),
+      this.repository.eligibility(traineeId),
+      this.repository.requirements(traineeId),
+      this.repository.certificatePortfolio(traineeId),
     ]);
 
-    const eligible =
-      completion.requiredAssignments > 0 &&
-      completion.completedAssignments === completion.requiredAssignments &&
-      completion.passedAssessments === completion.requiredAssessments;
-
-    return { eligible, certificate, completion };
+    return {
+      eligible,
+      certificate: portfolio.current,
+      history: portfolio.history,
+      requirements,
+      completion,
+    };
   }
 }

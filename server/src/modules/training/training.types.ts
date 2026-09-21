@@ -44,6 +44,8 @@ export interface TrainingModuleDetail {
   assignmentId: number;
   moduleId: number;
   moduleTitle: string;
+  moduleDescription: string;
+  hasScenario: boolean;
   status: TrainingModuleStatus;
   progress: TrainingProgressSnapshot;
   sections: TrainingSection[];

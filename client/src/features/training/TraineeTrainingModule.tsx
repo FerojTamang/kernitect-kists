@@ -15,6 +15,7 @@ import incorrectLiftingImage from '../../assets/training/manual-handling/incorre
 import assessLoadImage from '../../assets/training/manual-handling/assess-load-before-lifting.png';
 import equipmentImage from '../../assets/training/manual-handling/safe-handling-equipment.png';
 import injuryRiskImage from '../../assets/training/manual-handling/manual-handling-injury-risk.png';
+import forkliftImage from '../../assets/images/dashboard/forklift-pedestrian-safety.jpg';
 import { ApiError, apiRequest } from '../../services/api/request';
 import './training-module.css';
 
@@ -46,6 +47,8 @@ interface TrainingModuleResponse {
   assignmentId: number;
   moduleId: number;
   moduleTitle: string;
+  moduleDescription: string;
+  hasScenario: boolean;
   status: 'completed' | 'in_progress' | 'not_started';
   progress: {
     assignmentPercentage: number;
@@ -294,7 +297,7 @@ export function TraineeTrainingModule() {
 
           <div className="course-module-summary">
             <span>Safety Training Module</span>
-            <h2>Manual Handling</h2>
+            <h2>{module.moduleTitle}</h2>
             <p>
               {module.progress.completedSections} of{' '}
               {module.progress.totalSections} sections completed
@@ -336,7 +339,7 @@ export function TraineeTrainingModule() {
                     </span>
                     <span className="section-summary">
                       <strong>
-                        {section.title === 'Introduction'
+                        {module.hasScenario && section.title === 'Introduction'
                           ? 'Introduction to Manual Handling'
                           : section.title}
                       </strong>
@@ -368,11 +371,15 @@ export function TraineeTrainingModule() {
           {allComplete ? (
             <CompletionState
               assignmentId={module.assignmentId}
+              moduleTitle={module.moduleTitle}
+              hasScenario={module.hasScenario}
+              sectionCount={module.progress.totalSections}
               celebrating={showCelebration}
             />
           ) : (
             <SectionContent
               section={module.sections[activeIndex]}
+              isManualHandling={module.hasScenario}
               index={activeIndex}
               total={module.sections.length}
               progress={module.progress}
@@ -401,6 +408,7 @@ export function TraineeTrainingModule() {
 
 function SectionContent({
   section,
+  isManualHandling,
   index,
   total,
   progress,
@@ -415,6 +423,7 @@ function SectionContent({
   onAnswer,
 }: {
   section?: TrainingSection;
+  isManualHandling: boolean;
   index: number;
   total: number;
   progress: TrainingModuleResponse['progress'];
@@ -451,13 +460,19 @@ function SectionContent({
         className={`section-content-grid ${section.title === 'Safe Lifting Techniques' ? 'comparison-content' : ''}`}
       >
         <div className="section-copy">
-          <SectionBody section={section} />
+          <SectionBody section={section} isManualHandling={isManualHandling} />
         </div>
-        {section.title !== 'Safe Lifting Techniques' && (
+        {(!isManualHandling || section.title !== 'Safe Lifting Techniques') && (
           <img
             className="section-image"
-            src={sectionImageFor(section.title)}
-            alt={sectionImageAlt(section.title)}
+            src={
+              isManualHandling ? sectionImageFor(section.title) : forkliftImage
+            }
+            alt={
+              isManualHandling
+                ? sectionImageAlt(section.title)
+                : 'Forklift operating near a marked pedestrian area in a warehouse'
+            }
           />
         )}
       </div>
@@ -493,7 +508,9 @@ function SectionContent({
           </button>
         ) : (
           <span className="completion-hint">
-            Answer both questions correctly to complete this section.
+            {section.formativeQuestions.length > 0
+              ? `Answer all ${section.formativeQuestions.length} questions correctly to complete this section.`
+              : 'This section cannot be completed until its practice check is configured.'}
           </span>
         )}
       </div>
@@ -522,6 +539,22 @@ function KnowledgeCheck({
   checksComplete: boolean;
   showCompletionNotice: boolean;
 }) {
+  if (section.formativeQuestions.length === 0) {
+    return (
+      <section className="knowledge-check" role="status">
+        <div className="knowledge-check-heading">
+          <div>
+            <p className="content-kicker">Practice check</p>
+            <h3>Practice check unavailable</h3>
+          </div>
+        </div>
+        <p>
+          This section&apos;s questions are not configured. Contact your
+          administrator before continuing.
+        </p>
+      </section>
+    );
+  }
   return (
     <section
       className="knowledge-check"
@@ -623,7 +656,25 @@ function KnowledgeCheck({
   );
 }
 
-function SectionBody({ section }: { section: TrainingSection }) {
+function SectionBody({
+  section,
+  isManualHandling,
+}: {
+  section: TrainingSection;
+  isManualHandling: boolean;
+}) {
+  if (!isManualHandling)
+    return (
+      <>
+        <h3>{section.title}</h3>
+        <p>{section.body}</p>
+        <div className="info-panel">
+          Follow your workplace traffic plan, signs and site-specific
+          procedures. This awareness training does not replace practical
+          forklift operator training.
+        </div>
+      </>
+    );
   if (section.title === 'Introduction')
     return (
       <>
@@ -798,9 +849,15 @@ function sectionImageAlt(title: string): string {
 
 function CompletionState({
   assignmentId,
+  moduleTitle,
+  hasScenario,
+  sectionCount,
   celebrating,
 }: {
   assignmentId: number;
+  moduleTitle: string;
+  hasScenario: boolean;
+  sectionCount: number;
   celebrating: boolean;
 }) {
   return (
@@ -828,26 +885,36 @@ function CompletionState({
             </span>
             <strong>Congratulations!</strong>
             <span>
-              You&apos;ve completed the Manual Handling learning content.
+              You&apos;ve completed the {moduleTitle} learning content.
             </span>
-            <small>Next step: Interactive safety scenario</small>
+            <small>
+              Next step:{' '}
+              {hasScenario ? 'Interactive safety scenario' : 'Final assessment'}
+            </small>
           </div>
         </div>
       )}
       <span className="completion-check" aria-hidden="true">
         ✓
       </span>
-      <p className="content-kicker">Manual Handling</p>
+      <p className="content-kicker">{moduleTitle}</p>
       <h2>Learning content complete</h2>
-      <p>You&apos;ve completed the Manual Handling learning content.</p>
+      <p>You&apos;ve completed the {moduleTitle} learning content.</p>
       <p className="completion-progress">
-        5 of 5 sections completed · 100% learning progress
+        {sectionCount} of {sectionCount} sections completed · 100% learning
+        progress
       </p>
       <div className="next-stage">
         <strong>Next stage</strong>
-        <span>Interactive Warehouse Safety Scenario</span>
+        <span>
+          {hasScenario
+            ? 'Interactive Warehouse Safety Scenario'
+            : 'Final Assessment'}
+        </span>
         <small>
-          Apply what you learned in five warehouse safety decisions.
+          {hasScenario
+            ? 'Apply what you learned in five warehouse safety decisions.'
+            : 'Check your understanding in the final graded assessment.'}
         </small>
       </div>
       <div className="completion-actions">
@@ -856,9 +923,12 @@ function CompletionState({
         </Link>
         <Link
           className="dashboard-action"
-          to={`/trainee/training/${assignmentId}/scenario`}
+          to={`/trainee/training/${assignmentId}/${hasScenario ? 'scenario' : 'assessment'}`}
         >
-          Start Interactive Scenario <span aria-hidden="true">→</span>
+          {hasScenario
+            ? 'Start Interactive Scenario'
+            : 'Start Final Assessment'}{' '}
+          <span aria-hidden="true">→</span>
         </Link>
       </div>
     </section>

@@ -5,6 +5,8 @@ interface TrainingModuleRow {
   assignmentId: number;
   moduleId: number;
   moduleTitle: string;
+  moduleDescription: string;
+  hasScenario: boolean;
   percentage: string;
   startedAt: Date | null;
   assignmentCompletedAt: Date | null;
@@ -40,6 +42,8 @@ export class TrainingRepository {
   ): Promise<TrainingModuleRow[]> {
     const result = await this.database.query<TrainingModuleRow>(
       `SELECT a.id AS "assignmentId", m.id AS "moduleId", m.title AS "moduleTitle",
+        m.description AS "moduleDescription",
+        EXISTS (SELECT 1 FROM scenarios s WHERE s.training_module_id = m.id AND s.is_active) AS "hasScenario",
         COALESCE(p.percentage, 0)::text AS percentage,
         p.started_at AS "startedAt", p.completed_at AS "assignmentCompletedAt",
         p.last_accessed_at AS "lastAccessedAt",
@@ -54,7 +58,7 @@ export class TrainingRepository {
       LEFT JOIN training_content_completion cc
         ON cc.training_assignment_id = a.id AND cc.training_content_id = c.id
       WHERE a.id = $1 AND a.trainee_id = $2 AND a.status = 'active'
-        AND m.slug = 'manual-handling'
+        AND m.is_active
       ORDER BY c.sequence_order ASC, c.id ASC`,
       [assignmentId, userId],
     );
@@ -80,7 +84,7 @@ export class TrainingRepository {
       LEFT JOIN formative_responses fr
         ON fr.training_assignment_id = a.id AND fr.formative_question_id = fq.id
       WHERE a.id = $1 AND a.trainee_id = $2 AND a.status = 'active'
-        AND m.slug = 'manual-handling'
+        AND m.is_active
       ORDER BY c.sequence_order, fq.sequence_order, fo.sequence_order`,
       [assignmentId, userId],
     );
@@ -143,11 +147,10 @@ export class TrainingRepository {
       SELECT a.trainee_id, a.id, a.training_module_id, c.id, fq.id, fo.id, fo.is_correct
       FROM training_assignments a
       JOIN training_content c ON c.training_module_id = a.training_module_id
-      JOIN training_modules m ON m.id = a.training_module_id
       JOIN formative_questions fq ON fq.training_content_id = c.id
       JOIN formative_answer_options fo ON fo.formative_question_id = fq.id
       WHERE a.id = $1 AND a.trainee_id = $2 AND a.status = 'active'
-        AND m.slug = 'manual-handling' AND c.id = $3 AND fq.id = $4 AND fo.id = $5
+        AND c.id = $3 AND fq.id = $4 AND fo.id = $5
       ON CONFLICT (training_assignment_id, formative_question_id) DO UPDATE SET
         selected_option_id = EXCLUDED.selected_option_id,
         is_correct = EXCLUDED.is_correct,
@@ -156,5 +159,28 @@ export class TrainingRepository {
       [assignmentId, userId, contentId, questionId, optionId],
     );
     return result.rows[0];
+  }
+
+  async refreshProgress(userId: number, assignmentId: number): Promise<void> {
+    await this.database.query(
+      `WITH stage AS (
+        SELECT ta.id,
+          COUNT(DISTINCT c.id)::numeric AS section_total,
+          COUNT(DISTINCT cc.training_content_id)::numeric AS section_complete,
+          CASE WHEN EXISTS (SELECT 1 FROM scenarios s WHERE s.training_module_id=ta.training_module_id AND s.is_active) THEN 1 ELSE 0 END AS has_scenario,
+          CASE WHEN EXISTS (SELECT 1 FROM assessments a WHERE a.training_module_id=ta.training_module_id AND a.is_active) THEN 1 ELSE 0 END AS has_assessment
+        FROM training_assignments ta
+        LEFT JOIN training_content c ON c.training_module_id=ta.training_module_id AND c.is_active
+        LEFT JOIN training_content_completion cc ON cc.training_assignment_id=ta.id AND cc.training_content_id=c.id
+        WHERE ta.id=$1 AND ta.trainee_id=$2 AND ta.status='active'
+        GROUP BY ta.id, ta.training_module_id
+      )
+      UPDATE progress p SET
+        percentage = GREATEST(p.percentage, ROUND(100 * (stage.section_complete / NULLIF(stage.section_total, 0)) / (1 + stage.has_scenario + stage.has_assessment))),
+        started_at = COALESCE(p.started_at, clock_timestamp()),
+        last_accessed_at = clock_timestamp(), updated_at = clock_timestamp()
+      FROM stage WHERE p.training_assignment_id=stage.id AND p.percentage < 100`,
+      [assignmentId, userId],
+    );
   }
 }

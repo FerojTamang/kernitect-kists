@@ -63,6 +63,17 @@ test('final assessment remains responsive across key breakpoints', async ({
 }) => {
   let latestAttempt: unknown = null;
   await signIn(page);
+  await page.route('**/api/trainee/dashboard', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        assignedTraining: [
+          { assignmentId, required: true, status: 'completed' },
+        ],
+      }),
+    }),
+  );
   await page.route('**/api/trainee/certificates', (route) =>
     route.fulfill({
       status: 200,
@@ -70,6 +81,7 @@ test('final assessment remains responsive across key breakpoints', async ({
       body: JSON.stringify({
         eligible: true,
         completion: { requiredAssignments: 1, completedAssignments: 1, requiredAssessments: 1, passedAssessments: 1 },
+        history: [],
         certificate: {
           id: 700,
           certificateNumber: 'KISTS-20260917-RESPONSIVE',
@@ -193,7 +205,7 @@ test('final assessment remains responsive across key breakpoints', async ({
     });
   }
 
-  await page.getByRole('button', { name: 'View digital certificate →' }).click();
+  await page.getByRole('button', { name: /View digital certificate/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Digital Certificate' });
   for (const viewport of [
     { width: 1366, height: 768 },
@@ -256,6 +268,7 @@ test('issued certificate remains responsive across key breakpoints', async ({
           requiredAssessments: 1,
           passedAssessments: 1,
         },
+        history: [],
         certificate: {
           id: 700,
           certificateNumber:
@@ -285,7 +298,7 @@ test('issued certificate remains responsive across key breakpoints', async ({
   );
 
   await page.goto('/trainee/certificates');
-  await expect(page.getByRole('heading', { name: 'Issued Certificates' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Current Certificate' })).toBeVisible();
   for (const viewport of [...viewports, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
     await expectNoHorizontalOverflow(page);

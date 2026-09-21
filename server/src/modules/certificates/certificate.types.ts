@@ -22,6 +22,13 @@ export interface TraineeCertificate {
   training: CertificateTrainingEvidence[];
 }
 
+export interface CertificateRequirement {
+  assignmentId: number;
+  moduleId: number;
+  moduleTitle: string;
+  completed: boolean;
+}
+
 export interface CertificateCompletionSummary {
   requiredAssignments: number;
   completedAssignments: number;
@@ -32,5 +39,7 @@ export interface CertificateCompletionSummary {
 export interface TraineeCertificateStatus {
   eligible: boolean;
   certificate: TraineeCertificate | null;
+  history: TraineeCertificate[];
+  requirements: CertificateRequirement[];
   completion: CertificateCompletionSummary;
 }

@@ -86,6 +86,8 @@ function ContinueLearningCard({
       : assignment.nextAction === 'continue'
         ? 'Continue'
         : 'Review';
+  const resumePath =
+    assignment.resumePath || `/trainee/training/${assignment.assignmentId}`;
 
   return (
     <article className="continue-learning-card">
@@ -135,9 +137,7 @@ function ContinueLearningCard({
           <button
             className="dashboard-action compact"
             type="button"
-            onClick={() =>
-              navigate(`/trainee/training/${assignment.assignmentId}`)
-            }
+            onClick={() => navigate(resumePath)}
           >
             {actionLabel} <DashboardIcon name="arrow" />
           </button>
@@ -159,6 +159,8 @@ function AssignedTrainingCard({
       : assignment.nextAction === 'continue'
         ? 'Continue'
         : 'Review';
+  const resumePath =
+    assignment.resumePath || `/trainee/training/${assignment.assignmentId}`;
 
   return (
     <article className="mini-training-card">
@@ -186,9 +188,7 @@ function AssignedTrainingCard({
           <button
             className="dashboard-action compact small"
             type="button"
-            onClick={() =>
-              navigate(`/trainee/training/${assignment.assignmentId}`)
-            }
+            onClick={() => navigate(resumePath)}
           >
             {actionLabel}
             <DashboardIcon name="arrow" />

@@ -22,6 +22,17 @@ export class TraineeService {
       const learningProgressPercentage = learningTotalSections
         ? Math.round((learningCompletedSections / learningTotalSections) * 100)
         : 0;
+      const scenarioCompleted = Number(row.scenarioCompleted) || 0;
+      const scenarioTotal = Number(row.scenarioTotal) || 0;
+      const assessmentPassed = Number(row.assessmentPassed) || 0;
+      const assessmentTotal = Number(row.assessmentTotal) || 0;
+      const learningComplete =
+        learningTotalSections > 0 &&
+        learningCompletedSections >= learningTotalSections;
+      const scenarioComplete =
+        scenarioTotal === 0 || scenarioCompleted >= scenarioTotal;
+      const assessmentComplete =
+        assessmentTotal === 0 || assessmentPassed >= assessmentTotal;
       const status: AssignmentPresentationStatus =
         row.completedAt || progressPercentage >= 100
           ? 'completed'
@@ -34,6 +45,17 @@ export class TraineeService {
           : status === 'in_progress'
             ? 'continue'
             : 'start';
+      const resumeStage: TraineeDashboardAssignment['resumeStage'] =
+        !learningComplete
+          ? 'learning'
+          : !scenarioComplete
+            ? 'scenario'
+            : !assessmentComplete
+              ? 'assessment'
+              : 'learning';
+      const resumePath = `/trainee/training/${row.assignmentId}${
+        resumeStage === 'learning' ? '' : `/${resumeStage}`
+      }`;
       return {
         assignmentId: row.assignmentId,
         moduleId: row.moduleId,
@@ -45,6 +67,12 @@ export class TraineeService {
         learningProgressPercentage,
         learningCompletedSections,
         learningTotalSections,
+        scenarioCompleted,
+        scenarioTotal,
+        assessmentPassed,
+        assessmentTotal,
+        resumeStage,
+        resumePath,
         assignedAt: row.assignedAt.toISOString(),
         dueAt: row.dueAt?.toISOString() ?? null,
         nextAction,

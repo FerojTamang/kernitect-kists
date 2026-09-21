@@ -162,6 +162,44 @@ export class ScenarioRepository {
         )`,
       [attemptId, scenarioId],
     );
+    await this.database.query(
+      `WITH stage AS (
+        SELECT sa.training_assignment_id,
+          COUNT(DISTINCT c.id)::numeric AS section_total,
+          COUNT(DISTINCT cc.training_content_id)::numeric AS section_complete,
+          COUNT(DISTINCT s.id)::numeric AS scenario_total,
+          COUNT(DISTINCT completed_sa.scenario_id)
+            FILTER (WHERE completed_sa.completed_at IS NOT NULL)::numeric AS scenario_complete,
+          CASE WHEN EXISTS (
+            SELECT 1 FROM assessments a
+            WHERE a.training_module_id=sa.training_module_id AND a.is_active
+          ) THEN 1 ELSE 0 END AS has_assessment
+        FROM scenario_attempts sa
+        LEFT JOIN training_content c
+          ON c.training_module_id=sa.training_module_id AND c.is_active
+        LEFT JOIN training_content_completion cc
+          ON cc.training_assignment_id=sa.training_assignment_id
+         AND cc.training_content_id=c.id
+        LEFT JOIN scenarios s
+          ON s.training_module_id=sa.training_module_id AND s.is_active
+        LEFT JOIN scenario_attempts completed_sa
+          ON completed_sa.training_assignment_id=sa.training_assignment_id
+         AND completed_sa.scenario_id=s.id
+        WHERE sa.id=$1
+        GROUP BY sa.training_assignment_id,sa.training_module_id
+      )
+      UPDATE progress p SET percentage=GREATEST(
+        p.percentage,
+        ROUND(100 * (
+          stage.section_complete / NULLIF(stage.section_total,0)
+          + stage.scenario_complete / NULLIF(stage.scenario_total,0)
+        ) / (1 + stage.scenario_total + stage.has_assessment))
+      ), last_accessed_at=clock_timestamp(), updated_at=clock_timestamp()
+      FROM stage
+      WHERE p.training_assignment_id=stage.training_assignment_id
+        AND p.percentage < 100`,
+      [attemptId],
+    );
   }
 
   async findAttempt(
