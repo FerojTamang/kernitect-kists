@@ -196,3 +196,78 @@ export interface AdminProgressData {
   }>;
   records: AdminProgressRecord[];
 }
+
+export interface AdminTrainingModuleSummary {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  isActive: boolean;
+  learningSectionCount: number;
+  scenarioCount: number;
+  hazardCount: number;
+  assessmentCount: number;
+  questionCount: number;
+  passPercentage: number | null;
+  activeAssignmentCount: number;
+}
+
+export interface AdminTrainingLibraryData {
+  summary: {
+    totalModules: number;
+    activeModules: number;
+    draftModules: number;
+    assessmentQuestions: number;
+  };
+  modules: AdminTrainingModuleSummary[];
+}
+
+export interface AdminTrainingQuestion {
+  id: number;
+  questionText: string;
+  sequenceOrder: number;
+  options: Array<{
+    id: number;
+    optionText: string;
+    isCorrect: boolean;
+    sequenceOrder: number;
+  }>;
+}
+
+export interface AdminTrainingModuleDetail extends AdminTrainingModuleSummary {
+  learningSections: Array<{
+    id: number;
+    title: string;
+    contentType: string;
+    sequenceOrder: number;
+    isActive: boolean;
+  }>;
+  scenarios: Array<{
+    id: number;
+    title: string;
+    description: string;
+    isActive: boolean;
+    sequenceOrder: number;
+    hazardCount: number;
+  }>;
+  assessments: Array<{
+    id: number;
+    title: string;
+    description: string;
+    passPercentage: number;
+    isActive: boolean;
+    hasAttempts: boolean;
+    questions: AdminTrainingQuestion[];
+  }>;
+}
+
+export interface SaveTrainingModuleInput {
+  title: string;
+  description: string;
+  isActive?: boolean;
+}
+
+export interface SaveAssessmentQuestionInput {
+  questionText: string;
+  options: Array<{ optionText: string; isCorrect: boolean }>;
+}

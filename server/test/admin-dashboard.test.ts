@@ -421,6 +421,85 @@ test('administrator can list, create, edit and deactivate trainee accounts witho
   assert.equal(payload.summary.unassignedJobRole, 1);
 });
 
+test('administrator can manage module metadata and draft assessment questions safely', async () => {
+  const adminCookie = await login(adminEmail);
+  const headers = {
+    Cookie: adminCookie,
+    Origin: env.clientUrl,
+    'X-KISTS-Request': '1',
+    'Content-Type': 'application/json',
+  };
+  const libraryResponse = await fetch(`${base}/api/admin/training-content`, { headers: { Cookie: adminCookie } });
+  assert.equal(libraryResponse.status, 200);
+  const library = (await libraryResponse.json()) as {
+    summary: { totalModules: number; assessmentQuestions: number };
+    modules: Array<{ id: number; slug: string; questionCount: number }>;
+  };
+  assert.ok(library.summary.totalModules >= 2);
+  assert.ok(library.summary.assessmentQuestions >= 10);
+  const manual = library.modules.find((module) => module.slug === 'manual-handling');
+  assert.ok(manual);
+
+  const created = await fetch(`${base}/api/admin/training-content`, {
+    method: 'POST', headers,
+    body: JSON.stringify({ title: 'TEST Safe Loading', description: 'Draft authoring module.' }),
+  });
+  assert.equal(created.status, 201);
+  const createdId = ((await created.json()) as { id: number }).id;
+  const updated = await fetch(`${base}/api/admin/training-content/${createdId}`, {
+    method: 'PATCH', headers,
+    body: JSON.stringify({ title: 'TEST Safe Loading Updated', description: 'Updated metadata.', isActive: true }),
+  });
+  assert.equal(updated.status, 200);
+  const createdDetail = await fetch(`${base}/api/admin/training-content/${createdId}`, { headers: { Cookie: adminCookie } });
+  assert.equal(createdDetail.status, 200);
+  const savedModule = (await createdDetail.json()) as { title: string; description: string; isActive: boolean };
+  assert.equal(savedModule.title, 'TEST Safe Loading Updated');
+  assert.equal(savedModule.description, 'Updated metadata.');
+  assert.equal(savedModule.isActive, true);
+
+  const detailResponse = await fetch(`${base}/api/admin/training-content/${manual.id}`, { headers: { Cookie: adminCookie } });
+  const detail = (await detailResponse.json()) as { assessments: Array<{ id: number }> };
+  const assessmentId = detail.assessments[0]!.id;
+  const invalid = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`, {
+    method: 'POST', headers,
+    body: JSON.stringify({ questionText: 'Invalid', options: [{ optionText: 'Only', isCorrect: true }] }),
+  });
+  assert.equal(invalid.status, 400);
+  const added = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`, {
+    method: 'POST', headers,
+    body: JSON.stringify({ questionText: 'What is the safest choice?', options: [{ optionText: 'Plan the lift', isCorrect: true }, { optionText: 'Rush', isCorrect: false }] }),
+  });
+  assert.equal(added.status, 201);
+  const questionId = ((await added.json()) as { id: number }).id;
+  const edited = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${questionId}`, {
+    method: 'PATCH', headers,
+    body: JSON.stringify({ questionText: 'What should happen before lifting?', options: [{ optionText: 'Assess the load', isCorrect: true }, { optionText: 'Lift immediately', isCorrect: false }] }),
+  });
+  assert.equal(edited.status, 200);
+  const deleted = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${questionId}`, { method: 'DELETE', headers, body: '{}' });
+  assert.equal(deleted.status, 204);
+
+  const protectedQuestion = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`, {
+    method: 'POST', headers,
+    body: JSON.stringify({ questionText: 'Protected question', options: [{ optionText: 'Correct', isCorrect: true }, { optionText: 'Incorrect', isCorrect: false }] }),
+  });
+  assert.equal(protectedQuestion.status, 201);
+  const protectedQuestionId = ((await protectedQuestion.json()) as { id: number }).id;
+  await database.query(
+    `INSERT INTO assessment_attempts
+      (trainee_id,training_assignment_id,training_module_id,assessment_id,pass_percentage_snapshot,attempt_number)
+     SELECT ta.trainee_id,ta.id,ta.training_module_id,$1,a.pass_percentage,1
+     FROM training_assignments ta JOIN assessments a ON a.id=$1
+     WHERE ta.training_module_id=$2 LIMIT 1`,
+    [assessmentId, manual.id],
+  );
+  const blocked = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${protectedQuestionId}`, {
+    method: 'DELETE', headers, body: '{}',
+  });
+  assert.equal(blocked.status, 409);
+});
+
 test('trainee cannot access administrator user management and mutations require trusted requests', async () => {
   const traineeCookie = await login(traineeEmail);
   assert.equal(

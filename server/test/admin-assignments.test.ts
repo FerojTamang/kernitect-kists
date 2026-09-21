@@ -127,6 +127,10 @@ test('training assignment management is administrator-only and mutations require
 });
 
 test('administrator can create required and optional assignments with progress state and duplicate protection', async () => {
+  await database.query(
+    `INSERT INTO training_modules (title, slug, description, is_active)
+     VALUES ('Optional Test Training', 'optional-test-training', 'Active optional-assignment fixture.', true)`,
+  );
   const adminCookie = await login(adminEmail);
   const headers = {
     Cookie: adminCookie,
@@ -150,11 +154,17 @@ test('administrator can create required and optional assignments with progress s
   const manualHandling = initial.modules.find(
     (module) => module.slug === 'manual-handling',
   );
-  const forklift = initial.modules.find(
-    (module) => module.slug === 'forklift-pedestrian-safety',
+  const optionalModule = initial.modules.find(
+    (module) => module.slug === 'optional-test-training',
   );
   assert.ok(manualHandling);
-  assert.ok(forklift);
+  assert.ok(optionalModule);
+  assert.equal(
+    initial.modules.some(
+      (module) => module.slug === 'forklift-pedestrian-safety',
+    ),
+    false,
+  );
 
   const required = await fetch(`${base}/api/admin/assignments`, {
     method: 'POST',
@@ -201,7 +211,7 @@ test('administrator can create required and optional assignments with progress s
     headers,
     body: JSON.stringify({
       traineeId,
-      trainingModuleId: forklift.id,
+      trainingModuleId: optionalModule.id,
       required: false,
     }),
   });
@@ -237,14 +247,14 @@ test('administrator can create required and optional assignments with progress s
       .sort((left, right) => left.slug.localeCompare(right.slug)),
     [
       {
-        slug: 'forklift-pedestrian-safety',
-        required: false,
+        slug: 'manual-handling',
+        required: true,
         status: 'active',
         progress: 0,
       },
       {
-        slug: 'manual-handling',
-        required: true,
+        slug: 'optional-test-training',
+        required: false,
         status: 'active',
         progress: 0,
       },

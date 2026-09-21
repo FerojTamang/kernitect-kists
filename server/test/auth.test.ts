@@ -301,18 +301,22 @@ test('trainee dashboard is session-bound, role-protected and database-backed', a
   assert.equal(body.trainee.firstName, 'TEST');
   assert.equal('password_hash' in body, false);
   assert.equal('token_hash' in body, false);
-  assert.equal(body.summary.totalAssigned, 2);
+  assert.equal(body.summary.totalAssigned, 1);
   assert.equal(body.summary.inProgress, 1);
-  assert.equal(body.summary.notStarted, 1);
-  assert.equal(body.summary.overallProgressPercentage, 30);
+  assert.equal(body.summary.notStarted, 0);
+  assert.equal(body.summary.overallProgressPercentage, 60);
   assert.deepEqual(
     body.assignedTraining.map((assignment) => assignment.title),
-    ['Manual Handling', 'Forklift and Pedestrian Safety'],
+    ['Manual Handling'],
   );
   assert.equal(body.assignedTraining[0]?.progressPercentage, 60);
   assert.equal(body.assignedTraining[0]?.status, 'in_progress');
-  assert.equal(body.assignedTraining[1]?.progressPercentage, 0);
-  assert.equal(body.assignedTraining[1]?.status, 'not_started');
+  assert.equal(
+    body.assignedTraining.some(
+      (assignment) => assignment.title === 'Forklift and Pedestrian Safety',
+    ),
+    false,
+  );
   assert.equal(
     body.assignedTraining.some(
       (assignment) => assignment.assignmentId === otherTraineeId,
@@ -338,6 +342,9 @@ test('trainee dashboard is session-bound, role-protected and database-backed', a
 });
 
 test('trainee dashboard exposes only current active required training', async () => {
+  await database.query(
+    "UPDATE training_modules SET is_active=true WHERE slug='forklift-pedestrian-safety'",
+  );
   const forklift = await database.query<{ id: number }>(
     `UPDATE training_assignments ta SET required=false
      FROM training_modules m
@@ -364,6 +371,9 @@ test('trainee dashboard exposes only current active required training', async ()
     await database.query(
       'UPDATE training_assignments SET required=true WHERE id=$1',
       [forklift.rows[0]!.id],
+    );
+    await database.query(
+      "UPDATE training_modules SET is_active=false WHERE slug='forklift-pedestrian-safety'",
     );
   }
 });

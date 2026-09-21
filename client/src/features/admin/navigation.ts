@@ -17,7 +17,7 @@ export const adminNavigation: NavigationItem[] = [
     path: 'training',
     label: 'Training content',
     description:
-      'Tools for managing training content and learning activities will appear here.',
+      'Manage learning modules, interactive scenarios and assessments.',
   },
   {
     path: 'assignments',

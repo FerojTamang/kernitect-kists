@@ -41,6 +41,13 @@ export function createAdminRouter(
   router.get('/users/:id/avatar', controller.traineeAvatar);
   router.post('/users', requireTrustedMutation, controller.createTrainee);
   router.patch('/users/:id', requireTrustedMutation, controller.updateTrainee);
+  router.get('/training-content', controller.trainingLibrary);
+  router.post('/training-content', requireTrustedMutation, controller.createTrainingModule);
+  router.get('/training-content/:moduleId', controller.trainingModule);
+  router.patch('/training-content/:moduleId', requireTrustedMutation, controller.updateTrainingModule);
+  router.post('/training-content/:moduleId/assessments/:assessmentId/questions', requireTrustedMutation, controller.createAssessmentQuestion);
+  router.patch('/training-content/:moduleId/assessments/:assessmentId/questions/:questionId', requireTrustedMutation, controller.updateAssessmentQuestion);
+  router.delete('/training-content/:moduleId/assessments/:assessmentId/questions/:questionId', requireTrustedMutation, controller.deleteAssessmentQuestion);
   router.get('/assignments', controller.assignments);
   router.get('/progress', controller.progress);
   router.post(

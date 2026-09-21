@@ -25,6 +25,7 @@ import { AdminUsers } from './features/admin/AdminUsers';
 import { AdminAssignments } from './features/admin/AdminAssignments';
 import { AdminProgress } from './features/admin/AdminProgress';
 import { AdminSettings } from './features/admin/AdminSettings';
+import { AdminTrainingContent } from './features/admin/AdminTrainingContent';
 
 export function App() {
   return (
@@ -111,13 +112,16 @@ export function App() {
           <Route path="assignments" element={<AdminAssignments />} />
           <Route path="progress" element={<AdminProgress />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="training" element={<AdminTrainingContent />} />
+          <Route path="training/:moduleId" element={<AdminTrainingContent />} />
           {adminNavigation.map(
             (item) =>
               item.path !== 'dashboard' &&
               item.path !== 'users' &&
               item.path !== 'assignments' &&
               item.path !== 'progress' &&
-              item.path !== 'settings' && (
+              item.path !== 'settings' &&
+              item.path !== 'training' && (
                 <Route
                   key={item.path}
                   path={item.path}

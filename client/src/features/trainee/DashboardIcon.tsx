@@ -84,6 +84,15 @@ const paths: Record<string, ReactNode> = {
       <path d="M12 6v6l4 2" />
     </>
   ),
+  trophy: (
+    <path d="M8 4h8v4a4 4 0 0 1-8 0V4ZM8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v5M8 21h8M9 17h6" />
+  ),
+  eye: (
+    <>
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
   help: (
     <>
       <circle cx="12" cy="12" r="10" />

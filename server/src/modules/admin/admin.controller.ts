@@ -23,6 +23,14 @@ export class AdminController {
     res.json(await this.service.users());
   };
 
+  trainingLibrary: RequestHandler = async (_req,res) => { res.json(await this.service.trainingLibrary()); };
+  trainingModule: RequestHandler = async (req,res) => { res.json(await this.service.trainingModule(Number(req.params.moduleId))); };
+  createTrainingModule: RequestHandler = async (req,res) => { res.status(201).json(await this.service.createTrainingModule(req.body)); };
+  updateTrainingModule: RequestHandler = async (req,res) => { res.json(await this.service.updateTrainingModule(Number(req.params.moduleId),req.body)); };
+  createAssessmentQuestion: RequestHandler = async (req,res) => { res.status(201).json(await this.service.createAssessmentQuestion(Number(req.params.moduleId),Number(req.params.assessmentId),req.body)); };
+  updateAssessmentQuestion: RequestHandler = async (req,res) => { res.json(await this.service.updateAssessmentQuestion(Number(req.params.moduleId),Number(req.params.assessmentId),Number(req.params.questionId),req.body)); };
+  deleteAssessmentQuestion: RequestHandler = async (req,res) => { await this.service.deleteAssessmentQuestion(Number(req.params.moduleId),Number(req.params.assessmentId),Number(req.params.questionId)); res.status(204).send(); };
+
   createTrainee: RequestHandler = async (req, res) => {
     const result = await this.service.createTrainee(req.body);
     res.status(201).json(result);

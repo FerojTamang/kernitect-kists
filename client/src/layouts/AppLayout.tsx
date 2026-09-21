@@ -63,6 +63,15 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
     );
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const adminSectionLabelRaw = !isTrainee
+    ? navigation.find((item) =>
+        location.pathname.startsWith(`${basePath}/${item.path}`),
+      )?.label ?? 'Dashboard'
+    : '';
+  const adminSectionLabel =
+    adminSectionLabelRaw === 'Training content'
+      ? 'Training Content'
+      : adminSectionLabelRaw;
 
   const items =
     audience === 'Trainee'
@@ -201,7 +210,15 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
 
       <div className="workspace">
         <header className="topbar">
-          <span>Interactive Safety Training System</span>
+          {isTrainee ? (
+            <span>Interactive Safety Training System</span>
+          ) : (
+            <nav className="admin-shell-breadcrumb" aria-label="Breadcrumb">
+              <span>KISTS Administration</span>
+              <span aria-hidden="true">›</span>
+              <strong>{adminSectionLabel}</strong>
+            </nav>
+          )}
           {isTrainee ? (
             <span className="badge">{audience} preview</span>
           ) : (

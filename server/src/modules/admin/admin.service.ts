@@ -13,6 +13,8 @@ import type {
   CreateAssignmentInput,
   CreateTraineeInput,
   UpdateTraineeInput,
+  SaveAssessmentQuestionInput,
+  SaveTrainingModuleInput,
 } from './admin.types.js';
 
 export class AdminService {
@@ -107,6 +109,109 @@ export class AdminService {
       users,
     };
   }
+
+  async trainingLibrary() {
+    const modules = (await this.repository.trainingLibrary()).map((module) => ({
+      ...module,
+      passPercentage: module.passPercentage === null ? null : Number(module.passPercentage),
+    }));
+    return {
+      summary: {
+        totalModules: modules.length,
+        activeModules: modules.filter((module) => module.isActive).length,
+        draftModules: modules.filter((module) => !module.isActive).length,
+        assessmentQuestions: modules.reduce((sum, module) => sum + module.questionCount, 0),
+      },
+      modules,
+    };
+  }
+
+  async trainingModule(id: number) {
+    this.validateId(id, 'training module');
+    const [module, library] = await Promise.all([
+      this.repository.trainingModule(id),
+      this.repository.trainingLibrary(),
+    ]);
+    if (!module) throw new HttpError(404, 'Training module not found.', 'MODULE_NOT_FOUND');
+    const [learningSections, scenarios, assessmentRows] = await Promise.all([
+      this.repository.learningSections(id),
+      this.repository.moduleScenarios(id),
+      this.repository.moduleAssessments(id),
+    ]);
+    const questionRows = await this.repository.assessmentQuestions(assessmentRows.map((assessment) => assessment.id));
+    const assessments = assessmentRows.map((assessment) => {
+      const questions = new Map<number, { id:number; questionText:string; sequenceOrder:number; options:Array<{id:number;optionText:string;isCorrect:boolean;sequenceOrder:number}> }>();
+      for (const row of questionRows.filter((question) => question.assessmentId === assessment.id)) {
+        const question = questions.get(row.questionId) ?? { id:row.questionId, questionText:row.questionText, sequenceOrder:row.questionOrder, options:[] };
+        question.options.push({ id:row.optionId, optionText:row.optionText, isCorrect:row.isCorrect, sequenceOrder:row.optionOrder });
+        questions.set(row.questionId, question);
+      }
+      return { ...assessment, passPercentage:Number(assessment.passPercentage), questions:[...questions.values()] };
+    });
+    const summary = library.find((item) => item.id === id)!;
+    return { ...summary, passPercentage:summary.passPercentage===null?null:Number(summary.passPercentage), learningSections, scenarios, assessments };
+  }
+
+  async createTrainingModule(input: SaveTrainingModuleInput) {
+    const clean = this.validateModule(input, false);
+    const slugBase = clean.title.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'training-module';
+    try { return { id: await this.repository.createTrainingModule({ ...clean, slug:`${slugBase}-${Date.now().toString(36)}` }) }; }
+    catch (error) { if (this.isUniqueViolation(error)) throw new HttpError(409,'A training module with this title already exists.','MODULE_EXISTS'); throw error; }
+  }
+
+  async updateTrainingModule(id:number,input:SaveTrainingModuleInput) {
+    this.validateId(id,'training module');
+    const clean=this.validateModule(input,true);
+    if (!(await this.repository.updateTrainingModule(id,{...clean,isActive:input.isActive!})))
+      throw new HttpError(404,'Training module not found.','MODULE_NOT_FOUND');
+    return {id};
+  }
+
+  async createAssessmentQuestion(moduleId:number,assessmentId:number,input:SaveAssessmentQuestionInput) {
+    await this.assertEditableAssessment(moduleId,assessmentId);
+    const clean=this.validateQuestion(input);
+    return {id:await this.repository.createAssessmentQuestion(assessmentId,clean.questionText,clean.options)};
+  }
+
+  async updateAssessmentQuestion(moduleId:number,assessmentId:number,questionId:number,input:SaveAssessmentQuestionInput) {
+    await this.assertEditableAssessment(moduleId,assessmentId);
+    this.validateId(questionId,'question');
+    if (!(await this.repository.questionForAssessment(assessmentId,questionId))) throw new HttpError(404,'Assessment question not found.','QUESTION_NOT_FOUND');
+    const clean=this.validateQuestion(input);
+    await this.repository.updateAssessmentQuestion(assessmentId,questionId,clean.questionText,clean.options);
+    return {id:questionId};
+  }
+
+  async deleteAssessmentQuestion(moduleId:number,assessmentId:number,questionId:number) {
+    await this.assertEditableAssessment(moduleId,assessmentId);
+    this.validateId(questionId,'question');
+    if (!(await this.repository.deleteAssessmentQuestion(assessmentId,questionId))) throw new HttpError(404,'Assessment question not found.','QUESTION_NOT_FOUND');
+  }
+
+  private validateId(id:number,label:string) { if(!Number.isInteger(id)||id<=0) throw new HttpError(400,`Invalid ${label} identifier.`,'INVALID_ID'); }
+  private validateModule(input:SaveTrainingModuleInput,requireStatus:boolean) {
+    const title=typeof input?.title==='string'?input.title.trim():''; const description=typeof input?.description==='string'?input.description.trim():'';
+    if(!title||title.length>160) throw new HttpError(400,'Enter a module title up to 160 characters.','INVALID_MODULE');
+    if(description.length>2000) throw new HttpError(400,'Module description must be 2,000 characters or fewer.','INVALID_MODULE');
+    if(requireStatus&&typeof input.isActive!=='boolean') throw new HttpError(400,'Choose a module status.','INVALID_MODULE');
+    return {title,description};
+  }
+  private validateQuestion(input:SaveAssessmentQuestionInput) {
+    const questionText=typeof input?.questionText==='string'?input.questionText.trim():'';
+    if(!questionText||questionText.length>1000) throw new HttpError(400,'Enter a question up to 1,000 characters.','INVALID_QUESTION');
+    if(!Array.isArray(input.options)||input.options.length<2||input.options.length>8) throw new HttpError(400,'Provide between 2 and 8 answer options.','INVALID_QUESTION');
+    const options=input.options.map((option)=>({optionText:typeof option?.optionText==='string'?option.optionText.trim():'',isCorrect:option?.isCorrect===true}));
+    if(options.some((option)=>!option.optionText||option.optionText.length>500)) throw new HttpError(400,'Every answer option is required and must be 500 characters or fewer.','INVALID_QUESTION');
+    if(options.filter((option)=>option.isCorrect).length!==1) throw new HttpError(400,'Select exactly one correct answer.','INVALID_QUESTION');
+    return {questionText,options};
+  }
+  private async assertEditableAssessment(moduleId:number,assessmentId:number) {
+    this.validateId(moduleId,'training module'); this.validateId(assessmentId,'assessment');
+    const assessment=await this.repository.assessmentForModule(moduleId,assessmentId);
+    if(!assessment) throw new HttpError(404,'Assessment not found.','ASSESSMENT_NOT_FOUND');
+    if(assessment.hasAttempts) throw new HttpError(409,'Questions cannot be changed after assessment attempts have been recorded.','ASSESSMENT_HISTORY_EXISTS');
+  }
+  private isUniqueViolation(error:unknown) { return typeof error==='object'&&error!==null&&'code' in error&&error.code==='23505'; }
 
   private validatePerson(
     input: Pick<

@@ -10,10 +10,10 @@ INSERT INTO job_roles (name, description) VALUES
   ('Supervisor', 'Example workplace function for development')
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO training_modules (title, slug, description) VALUES
-  ('Manual Handling', 'manual-handling', 'Main planned A7 prototype module. Learning content requires client review.'),
-  ('Forklift and Pedestrian Safety', 'forklift-pedestrian-safety', 'Initial training scope. Learning content requires client review.')
-ON CONFLICT (slug) DO NOTHING;
+INSERT INTO training_modules (title, slug, description, is_active) VALUES
+  ('Manual Handling', 'manual-handling', 'Main planned A7 prototype module. Learning content requires client review.', true),
+  ('Forklift and Pedestrian Safety', 'forklift-pedestrian-safety', 'Initial training scope. Learning content requires client review.', false)
+ON CONFLICT (slug) DO UPDATE SET is_active = EXCLUDED.is_active;
 
 INSERT INTO training_content (training_module_id, title, content_type, body, sequence_order, is_active)
 SELECT id, 'Introduction', 'text',

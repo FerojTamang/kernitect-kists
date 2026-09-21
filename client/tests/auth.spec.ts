@@ -97,8 +97,9 @@ test('trainee login reaches the database-backed dashboard, persists on reload, a
   await expect(page).toHaveURL(/\/$/);
   await signIn(page);
   await expect(
-    page.locator('.sidebar-footer').getByText('Alex Morgan', { exact: true }),
+    page.getByRole('navigation', { name: 'Trainee navigation' }),
   ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Welcome back, Alex' }),
   ).toBeVisible();
@@ -107,7 +108,7 @@ test('trainee login reaches the database-backed dashboard, persists on reload, a
   ).toBeVisible();
   await expect(
     page.getByText('Forklift and Pedestrian Safety', { exact: true }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     page.getByText('Learning progress 0%', { exact: true }),
   ).toBeVisible();
@@ -116,7 +117,7 @@ test('trainee login reaches the database-backed dashboard, persists on reload, a
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.locator('.sidebar-footer').getByText('Alex Morgan', { exact: true }),
+    page.getByRole('heading', { name: 'Welcome back, Alex' }),
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
@@ -150,18 +151,21 @@ test('trainee login reaches the database-backed dashboard, persists on reload, a
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('administrator login redirects by system role and preserves dashboard placeholders', async ({
+test('administrator login opens current management navigation and Training Content', async ({
   page,
 }) => {
   await signIn(page, administrator);
   await expect(
-    page.locator('.sidebar-footer').getByText('KISTS Administrator', {
-      exact: true,
-    }),
+    page.getByRole('navigation', { name: 'Administrator navigation' }),
   ).toBeVisible();
   await expect(
-    page.getByText('Planned functionality', { exact: true }),
+    page.getByRole('link', { name: 'Open administrator settings' }),
   ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open administrator settings' })).toContainText('KISTS Administrator');
+  await page.getByRole('link', { name: 'Training content' }).click();
+  await expect(page).toHaveURL(/\/admin\/training$/);
+  await expect(page.getByRole('heading', { name: 'Training content' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Training library' })).toBeVisible();
   await page.goto('/trainee/dashboard');
   await expect(
     page.getByRole('heading', { name: 'Access denied' }),
