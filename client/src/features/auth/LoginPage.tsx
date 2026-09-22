@@ -83,7 +83,6 @@ export function LoginPage() {
               Safety Training System
             </p>
           </div>
-          <span className="purple-rule" aria-hidden="true" />
           <ul className="login-benefits">
             <li>
               <LoginIcon name="book" />
