@@ -161,7 +161,7 @@ export function LoginPage() {
                   spellCheck={false}
                   maxLength={254}
                   value={email}
-                  placeholder="you@example.com"
+                  placeholder="Enter your email"
                   onChange={(event) => setEmail(event.target.value)}
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? 'email-error' : undefined}

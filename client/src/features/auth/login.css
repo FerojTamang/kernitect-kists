@@ -472,6 +472,102 @@
     margin-right: auto;
   }
 }
+@media (min-width: 701px) and (max-height: 900px) {
+  .login-brand-copy {
+    padding-top: clamp(24px, 4vh, 36px);
+    padding-bottom: clamp(34px, 6vh, 54px);
+  }
+  .login-logo-frame {
+    width: min(250px, 100%);
+    margin-bottom: clamp(20px, 3.5vh, 34px);
+  }
+  .login-brand-title h2 {
+    font-size: clamp(54px, 4.6vw, 70px);
+    margin-bottom: 7px;
+  }
+  .login-brand-title p {
+    font-size: clamp(16px, 1.45vw, 21px);
+    margin-bottom: 20px;
+  }
+  .login-benefits {
+    margin: clamp(24px, 4vh, 34px) 0 clamp(28px, 5vh, 44px);
+    gap: clamp(14px, 2.4vh, 21px);
+  }
+  .login-benefits svg {
+    width: 26px;
+    height: 26px;
+  }
+  .login-brand-message {
+    font-size: clamp(20px, 1.6vw, 25px);
+  }
+  .login-form-area {
+    padding-top: 14px;
+    padding-bottom: 12px;
+  }
+  .login-help {
+    min-height: 36px;
+    margin-bottom: 10px;
+  }
+  .login-help span {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .login-form-card {
+    padding-top: clamp(24px, 3.4vh, 30px);
+    padding-bottom: clamp(22px, 3vh, 28px);
+  }
+  .login-eyebrow {
+    margin-bottom: 8px;
+  }
+  .login-form-card h1 {
+    font-size: clamp(29px, 2.25vw, 34px);
+    margin-bottom: 7px;
+  }
+  .login-description {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  .login-field {
+    margin-bottom: 15px;
+  }
+  .login-field > label {
+    margin-bottom: 6px;
+  }
+  .login-input-wrap input {
+    height: 50px;
+  }
+  .password-toggle {
+    top: 3px;
+  }
+  .login-options {
+    margin-bottom: 16px;
+  }
+  .sign-in-button {
+    min-height: 52px;
+  }
+  .login-divider {
+    margin: 17px 0;
+  }
+  .login-access-note {
+    padding: 14px 16px;
+  }
+  .login-access-note > svg {
+    width: 32px;
+    height: 32px;
+  }
+  .login-access-note p {
+    margin-top: 3px;
+  }
+  .login-footer {
+    padding-top: 14px;
+  }
+  .warehouse-caption {
+    padding: 24px 14px;
+  }
+  .warehouse-caption p {
+    font-size: 21px;
+  }
+}
 @media (max-width: 1350px) {
   .login-screen {
     grid-template-columns: 46% 54%;
@@ -590,5 +686,23 @@
     justify-content: center;
     text-align: center;
     padding: 26px 0 0;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1350px) and (max-height: 900px) {
+  .login-brand-copy {
+    padding-top: clamp(24px, 4vh, 36px);
+    padding-bottom: clamp(34px, 6vh, 54px);
+  }
+  .login-form-area {
+    padding-top: 14px;
+    padding-bottom: 12px;
+  }
+  .login-form-card {
+    padding-top: clamp(24px, 3.4vh, 30px);
+    padding-bottom: clamp(22px, 3vh, 28px);
+  }
+  .login-form-card h1 {
+    font-size: clamp(29px, 2.25vw, 34px);
   }
 }
