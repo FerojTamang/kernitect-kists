@@ -1,4 +1,44 @@
-.administrator-shell .admin-settings-page{width:min(100%,1240px)}
-.administrator-shell .admin-settings-page .settings-profile-card,.administrator-shell .admin-settings-page .settings-card{border-color:rgb(148 163 184 / 24%);box-shadow:0 12px 34px rgb(15 38 69 / 7%)}
-.administrator-shell .admin-settings-page .settings-secondary-grid{grid-template-columns:minmax(0,1fr)}
-.administrator-shell .admin-settings-page .settings-card{max-width:580px}
+.administrator-shell .admin-settings-page {
+  width: min(100%, 1240px);
+}
+.administrator-shell .admin-settings-page .settings-profile-card,
+.administrator-shell .admin-settings-page .settings-card {
+  border-color: rgb(148 163 184 / 24%);
+  box-shadow: 0 12px 34px rgb(15 38 69 / 7%);
+}
+.administrator-shell .admin-settings-page .settings-secondary-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.administrator-shell .admin-settings-page .settings-card {
+  max-width: 580px;
+}
+.admin-settings-page .admin-profile-name-form {
+  display: grid;
+  gap: 10px;
+}
+.admin-settings-page .admin-profile-name-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid #d9deea;
+  border-radius: 9px;
+  background: #fff;
+  color: #17213b;
+  font: inherit;
+}
+.admin-settings-page .admin-profile-name-form input:focus-visible {
+  outline: 3px solid #aaa0f7;
+  outline-offset: 2px;
+}
+.admin-settings-page .admin-profile-name-form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-settings-page .admin-profile-name-edit {
+  justify-self: start;
+}
+.admin-settings-page .settings-account-grid .settings-message {
+  margin: 4px 0 0;
+}

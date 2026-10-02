@@ -1,44 +1,574 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ApiError, apiRequest } from '../../services/api/request';
-import { AdminWorkflowNav } from './AdminWorkflowNav';
+import { DashboardIcon } from '../trainee/DashboardIcon';
 import './admin-users.css';
 
 type JobRole = { id: number; name: string; description: string };
-type TrainingModule = { id:number; title:string; slug:string; description:string };
-type User = { id:number; firstName:string; lastName:string; email:string; jobRoleId:number|null; jobRole:string|null; isActive:boolean; assignedCount:number; completedCount:number; progressPercentage:number; avatarUrl:string|null; requiredTrainingModuleIds:number[] };
-type Data = { summary:{total:number;active:number;inactive:number;unassignedJobRole:number}; jobRoles:JobRole[]; trainingModules:TrainingModule[]; users:User[] };
-type Form = { firstName:string; lastName:string; email:string; password:string; jobRoleId:string; isActive:boolean; requiredTrainingModuleIds:number[] };
-const emptyForm: Form = { firstName:'', lastName:'', email:'', password:'', jobRoleId:'', isActive:true, requiredTrainingModuleIds:[] };
+type TrainingModule = {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+};
+type User = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  jobRoleId: number | null;
+  jobRole: string | null;
+  isActive: boolean;
+  assignedCount: number;
+  completedCount: number;
+  progressPercentage: number;
+  avatarUrl: string | null;
+  requiredTrainingModuleIds: number[];
+};
+type Data = {
+  summary: {
+    total: number;
+    active: number;
+    inactive: number;
+    unassignedJobRole: number;
+  };
+  jobRoles: JobRole[];
+  trainingModules: TrainingModule[];
+  users: User[];
+};
+type Form = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  jobRoleId: string;
+  isActive: boolean;
+  requiredTrainingModuleIds: number[];
+};
+const emptyForm: Form = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  password: '',
+  jobRoleId: '',
+  isActive: true,
+  requiredTrainingModuleIds: [],
+};
 
 export function AdminUsers() {
-  const [data,setData]=useState<Data|null>(null); const [loading,setLoading]=useState(true); const [error,setError]=useState('');
-  const [search,setSearch]=useState(''); const [role,setRole]=useState('all'); const [status,setStatus]=useState('all');
-  const [open,setOpen]=useState(false); const [editing,setEditing]=useState<User|null>(null); const [form,setForm]=useState<Form>(emptyForm); const [formError,setFormError]=useState(''); const [saving,setSaving]=useState(false);
-  async function load(){setLoading(true);setError('');try{setData(await apiRequest<Data>('/admin/users'));}catch(e){if(!(e instanceof ApiError&&e.status===401))setError('We could not load trainee accounts. Please try again.');}finally{setLoading(false)}}
-  useEffect(()=>{
-    let cancelled=false;
+  const [data, setData] = useState<Data | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [role, setRole] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<User | null>(null);
+  const [form, setForm] = useState<Form>(emptyForm);
+  const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  async function load() {
+    setLoading(true);
+    setError('');
+    try {
+      setData(await apiRequest<Data>('/admin/users'));
+    } catch (e) {
+      if (!(e instanceof ApiError && e.status === 401))
+        setError('We could not load trainee accounts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    let cancelled = false;
     void apiRequest<Data>('/admin/users')
-      .then(nextData=>{if(!cancelled)setData(nextData)})
-      .catch(e=>{if(!cancelled&&!(e instanceof ApiError&&e.status===401))setError('We could not load trainee accounts. Please try again.')})
-      .finally(()=>{if(!cancelled)setLoading(false)});
-    return ()=>{cancelled=true};
-  },[]);
-  const users=useMemo(()=>data?.users.filter(u=>{const q=search.trim().toLowerCase(); return (!q||`${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(q))&&(role==='all'||String(u.jobRoleId??'none')===role)&&(status==='all'||String(u.isActive)===status)})??[],[data,search,role,status]);
-  function add(){setEditing(null);setForm(emptyForm);setFormError('');setOpen(true)}
-  function edit(u:User){setEditing(u);setForm({firstName:u.firstName,lastName:u.lastName,email:u.email,password:'',jobRoleId:u.jobRoleId?String(u.jobRoleId):'',isActive:u.isActive,requiredTrainingModuleIds:[...u.requiredTrainingModuleIds]});setFormError('');setOpen(true)}
-  function toggleRequiredTraining(moduleId:number){setForm(current=>({...current,requiredTrainingModuleIds:current.requiredTrainingModuleIds.includes(moduleId)?current.requiredTrainingModuleIds.filter(id=>id!==moduleId):[...current.requiredTrainingModuleIds,moduleId]}))}
-  async function save(e:React.FormEvent){e.preventDefault();setSaving(true);setFormError('');const body={firstName:form.firstName,lastName:form.lastName,email:form.email,jobRoleId:form.jobRoleId?Number(form.jobRoleId):null,isActive:form.isActive,...(editing?{requiredTrainingModuleIds:form.requiredTrainingModuleIds}:{password:form.password})};try{await apiRequest(editing?`/admin/users/${editing.id}`:'/admin/users',{method:editing?'PATCH':'POST',body:JSON.stringify(body)});setOpen(false);await load()}catch(e){setFormError(e instanceof ApiError?e.message:'The trainee account could not be saved.')}finally{setSaving(false)}}
-  if(loading)return <div className="admin-users"><div className="admin-users-state"><h1>Loading trainee accounts</h1><p>Preparing user and job-role information…</p></div></div>;
-  if(error||!data)return <div className="admin-users"><div className="admin-users-state"><h1>Users unavailable</h1><p>{error}</p><button className="admin-users-primary" onClick={()=>void load()}>Try again</button></div></div>;
-  return <div className="admin-users">
-    <header className="admin-users-header"><div><p className="admin-users-eyebrow">Workforce administration</p><h1>Users &amp; job roles</h1><p>Manage trainee accounts, workplace job roles and account access.</p></div><button className="admin-users-primary" onClick={add}>＋ Add trainee</button></header><AdminWorkflowNav />
-    <section className="admin-users-stats" aria-label="User account summary">
-      <article><span>👥</span><div><strong>{data.summary.total}</strong><p>Total trainees</p></div></article><article><span>✓</span><div><strong>{data.summary.active}</strong><p>Active accounts</p></div></article><article><span>○</span><div><strong>{data.summary.inactive}</strong><p>Inactive accounts</p></div></article><article><span>▣</span><div><strong>{data.summary.unassignedJobRole}</strong><p>Role not assigned</p></div></article>
-    </section>
-    <section className="admin-users-panel"><div className="admin-users-toolbar"><label className="admin-users-search"><span>⌕</span><input aria-label="Search trainees" placeholder="Search by name or email" value={search} onChange={e=>setSearch(e.target.value)}/></label><select aria-label="Filter by job role" value={role} onChange={e=>setRole(e.target.value)}><option value="all">All job roles</option><option value="none">Not assigned</option>{data.jobRoles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select><select aria-label="Filter by account status" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option><option value="true">Active</option><option value="false">Inactive</option></select></div>
-      <div className="admin-users-table-wrap"><table><thead><tr><th>Trainee</th><th>Workplace job role</th><th>Status</th><th>Assigned</th><th>Completion</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{users.map(u=><tr key={u.id}><td><div className="admin-users-identity"><span className="admin-users-avatar" aria-hidden="true">{u.avatarUrl?<img src={u.avatarUrl} alt=""/>:`${u.firstName[0]??''}${u.lastName[0]??''}`.toUpperCase()}</span><div><strong>{u.firstName} {u.lastName}</strong><small>{u.email}</small></div></div></td><td>{u.jobRole??<span className="admin-users-muted">Not assigned</span>}</td><td><span className={`admin-users-status ${u.isActive?'active':'inactive'}`}>{u.isActive?'Active':'Inactive'}</span></td><td>{u.assignedCount} module{u.assignedCount===1?'':'s'}</td><td><div className="admin-users-progress"><span><i style={{width:`${u.progressPercentage}%`}}/></span><b>{u.progressPercentage}%</b></div></td><td><button className="admin-users-edit" onClick={()=>edit(u)} aria-label={`Edit ${u.firstName} ${u.lastName}`}>Edit</button></td></tr>)}</tbody></table>{users.length===0?<p className="admin-users-empty">No trainees match these filters.</p>:null}</div>
-    </section>
-    <section className="admin-role-panel"><div><p className="admin-users-eyebrow">Workplace roles</p><h2>Job roles</h2><p>Existing database roles available for trainee allocation.</p></div><div className="admin-role-list">{data.jobRoles.map(r=><article key={r.id}><span>▣</span><div><strong>{r.name}</strong><small>{data.users.filter(u=>u.jobRoleId===r.id).length} trainee(s)</small></div></article>)}</div></section>
-    {open?<div className="admin-users-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setOpen(false)}}><aside className="admin-users-drawer" role="dialog" aria-modal="true" aria-labelledby="trainee-form-title"><button className="admin-users-close" aria-label="Close" onClick={()=>setOpen(false)}>×</button><p className="admin-users-eyebrow">Trainee account</p><h2 id="trainee-form-title">{editing?'Edit trainee':'Add trainee'}</h2><p>{editing?'Update account details, job role, required training or access status.':'Create a trainee account for the KISTS training portal.'}</p><div className="admin-users-info"><strong>System role: TRAINEE</strong><span>Workplace job role is separate from the KISTS permission role.</span></div><form onSubmit={save}><label>First name<input required value={form.firstName} onChange={e=>setForm({...form,firstName:e.target.value})}/></label><label>Last name<input required value={form.lastName} onChange={e=>setForm({...form,lastName:e.target.value})}/></label><label>Email address<input required type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>{!editing?<label>Initial password<input required type="password" minLength={12} value={form.password} onChange={e=>setForm({...form,password:e.target.value})}/><small>At least 12 characters.</small></label>:null}<label>Workplace job role<select value={form.jobRoleId} onChange={e=>setForm({...form,jobRoleId:e.target.value})}><option value="">Not assigned</option>{data.jobRoles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label>{editing?<fieldset className="admin-users-required"><legend>Required training</legend><p>Select the training this trainee is required to complete.</p>{data.trainingModules.length?data.trainingModules.map(module=><label key={module.id}><input type="checkbox" checked={form.requiredTrainingModuleIds.includes(module.id)} onChange={()=>toggleRequiredTraining(module.id)}/><span>{module.title}</span></label>):<small>No active training modules are available.</small>}</fieldset>:null}<label className="admin-users-toggle"><input type="checkbox" checked={form.isActive} onChange={e=>setForm({...form,isActive:e.target.checked})}/><span><strong>Active account</strong><small>Inactive trainees cannot sign in.</small></span></label>{formError?<p className="admin-users-form-error" role="alert">{formError}</p>:null}<button className="admin-users-primary" disabled={saving}>{saving?'Saving…':editing?'Save changes':'Create trainee'}</button><button type="button" className="admin-users-secondary" onClick={()=>setOpen(false)}>Cancel</button></form></aside></div>:null}
-  </div>
+      .then((nextData) => {
+        if (!cancelled) setData(nextData);
+      })
+      .catch((e) => {
+        if (!cancelled && !(e instanceof ApiError && e.status === 401))
+          setError('We could not load trainee accounts. Please try again.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const users = useMemo(
+    () =>
+      data?.users.filter((u) => {
+        const q = search.trim().toLowerCase();
+        return (
+          (!q ||
+            `${u.firstName} ${u.lastName} ${u.email}`
+              .toLowerCase()
+              .includes(q)) &&
+          (role === 'all' || String(u.jobRoleId ?? 'none') === role) &&
+          (status === 'all' || String(u.isActive) === status)
+        );
+      }) ?? [],
+    [data, search, role, status],
+  );
+  const filtersActive =
+    search.trim() !== '' || role !== 'all' || status !== 'all';
+  function add() {
+    setEditing(null);
+    setForm(emptyForm);
+    setFormError('');
+    setOpen(true);
+  }
+  function edit(u: User) {
+    setEditing(u);
+    setForm({
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      password: '',
+      jobRoleId: u.jobRoleId ? String(u.jobRoleId) : '',
+      isActive: u.isActive,
+      requiredTrainingModuleIds: [...u.requiredTrainingModuleIds],
+    });
+    setFormError('');
+    setOpen(true);
+  }
+  function toggleRequiredTraining(moduleId: number) {
+    setForm((current) => ({
+      ...current,
+      requiredTrainingModuleIds: current.requiredTrainingModuleIds.includes(
+        moduleId,
+      )
+        ? current.requiredTrainingModuleIds.filter((id) => id !== moduleId)
+        : [...current.requiredTrainingModuleIds, moduleId],
+    }));
+  }
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setFormError('');
+    const body = {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      jobRoleId: form.jobRoleId ? Number(form.jobRoleId) : null,
+      isActive: form.isActive,
+      ...(editing
+        ? { requiredTrainingModuleIds: form.requiredTrainingModuleIds }
+        : {
+            password: form.password,
+            requiredTrainingModuleIds: form.requiredTrainingModuleIds,
+          }),
+    };
+    try {
+      await apiRequest(
+        editing ? `/admin/users/${editing.id}` : '/admin/users',
+        { method: editing ? 'PATCH' : 'POST', body: JSON.stringify(body) },
+      );
+      setOpen(false);
+      await load();
+    } catch (e) {
+      setFormError(
+        e instanceof ApiError
+          ? e.message
+          : 'The trainee account could not be saved.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  if (loading)
+    return (
+      <div className="admin-users">
+        <div className="admin-users-state">
+          <h1>Loading trainee accounts</h1>
+          <p>Preparing user and job-role information…</p>
+        </div>
+      </div>
+    );
+  if (error || !data)
+    return (
+      <div className="admin-users">
+        <div className="admin-users-state">
+          <h1>Users unavailable</h1>
+          <p>{error}</p>
+          <button className="admin-users-primary" onClick={() => void load()}>
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  return (
+    <div className="admin-users">
+      <header className="admin-users-header">
+        <div>
+          <p className="admin-users-eyebrow">Workforce administration</p>
+          <h1>Users &amp; job roles</h1>
+          <p>
+            Manage trainee accounts, workplace job roles and account access.
+          </p>
+        </div>
+        <button className="admin-users-primary" onClick={add}>
+          ＋ Add trainee
+        </button>
+      </header>
+      <section className="admin-users-stats" aria-label="User account summary">
+        <article>
+          <span aria-hidden="true">
+            <DashboardIcon name="Users" />
+          </span>
+          <div>
+            <strong>{data.summary.total}</strong>
+            <p>Total trainees</p>
+          </div>
+        </article>
+        <article>
+          <span aria-hidden="true">
+            <DashboardIcon name="check" />
+          </span>
+          <div>
+            <strong>{data.summary.active}</strong>
+            <p>Active accounts</p>
+          </div>
+        </article>
+        <article>
+          <span aria-hidden="true">
+            <DashboardIcon name="clock" />
+          </span>
+          <div>
+            <strong>{data.summary.inactive}</strong>
+            <p>Inactive accounts</p>
+          </div>
+        </article>
+        <article>
+          <span aria-hidden="true">
+            <DashboardIcon name="person" />
+          </span>
+          <div>
+            <strong>{data.summary.unassignedJobRole}</strong>
+            <p>Role not assigned</p>
+          </div>
+        </article>
+      </section>
+      <section className="admin-users-panel">
+        <div
+          className={`admin-users-toolbar${filtersActive ? ' has-filters' : ''}`}
+        >
+          <label className="admin-users-search">
+            <span>⌕</span>
+            <input
+              aria-label="Search trainees"
+              placeholder="Search by name or email"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <select
+            aria-label="Filter by job role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
+            <option value="all">All job roles</option>
+            <option value="none">Not assigned</option>
+            {data.jobRoles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by account status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="all">All statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+          {filtersActive ? (
+            <button
+              className="admin-users-clear"
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setRole('all');
+                setStatus('all');
+              }}
+            >
+              Clear filters
+            </button>
+          ) : null}
+        </div>
+        <div className="admin-users-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Trainee</th>
+                <th>Workplace job role</th>
+                <th>Status</th>
+                <th>Assigned</th>
+                <th>Training completion</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td>
+                    <div className="admin-users-identity">
+                      <span className="admin-users-avatar" aria-hidden="true">
+                        {u.avatarUrl ? (
+                          <img src={u.avatarUrl} alt="" />
+                        ) : (
+                          `${u.firstName[0] ?? ''}${u.lastName[0] ?? ''}`.toUpperCase()
+                        )}
+                      </span>
+                      <div>
+                        <strong>
+                          {u.firstName} {u.lastName}
+                        </strong>
+                        <small>{u.email}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {u.jobRole ?? (
+                      <span className="admin-users-role-missing">
+                        Role not assigned
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <span
+                      className={`admin-users-status ${u.isActive ? 'active' : 'inactive'}`}
+                    >
+                      {u.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td>
+                    {u.assignedCount} module{u.assignedCount === 1 ? '' : 's'}
+                  </td>
+                  <td>
+                    <div className="admin-users-progress">
+                      <span>
+                        <i style={{ width: `${u.progressPercentage}%` }} />
+                      </span>
+                      <b>{u.progressPercentage}%</b>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="admin-users-actions">
+                      <Link className="admin-users-view" to="/admin/progress">
+                        View progress
+                      </Link>
+                      <button
+                        className="admin-users-edit"
+                        onClick={() => edit(u)}
+                        aria-label={`Edit ${u.firstName} ${u.lastName}`}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {users.length === 0 ? (
+            <p className="admin-users-empty">
+              No trainees match these filters.
+            </p>
+          ) : null}
+        </div>
+      </section>
+      <section className="admin-role-panel">
+        <div>
+          <p className="admin-users-eyebrow">Workplace roles</p>
+          <h2>Job roles</h2>
+          <p>Existing database roles available for trainee allocation.</p>
+        </div>
+        <div className="admin-role-list">
+          {data.jobRoles.map((r) => {
+            const traineeCount = data.users.filter(
+              (u) => u.jobRoleId === r.id,
+            ).length;
+            return (
+              <article key={r.id}>
+                <span aria-hidden="true">
+                  <DashboardIcon name="person" />
+                </span>
+                <div>
+                  <strong>{r.name}</strong>
+                  <small>
+                    {traineeCount} trainee{traineeCount === 1 ? '' : 's'}
+                  </small>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+      {open ? (
+        <div
+          className="admin-users-overlay"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+        >
+          <aside
+            className="admin-users-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="trainee-form-title"
+          >
+            <button
+              className="admin-users-close"
+              aria-label="Close"
+              onClick={() => setOpen(false)}
+            >
+              ×
+            </button>
+            <p className="admin-users-eyebrow">Trainee account</p>
+            <h2 id="trainee-form-title">
+              {editing ? 'Edit trainee' : 'Add trainee'}
+            </h2>
+            <p>
+              {editing
+                ? 'Update account details, job role, required training or access status.'
+                : 'Create a trainee account for the KISTS training portal.'}
+            </p>
+            <div className="admin-users-info">
+              <strong>System role: TRAINEE</strong>
+              <span>
+                Workplace job role is separate from the KISTS permission role.
+              </span>
+            </div>
+            <form onSubmit={save}>
+              <label>
+                First name
+                <input
+                  required
+                  value={form.firstName}
+                  onChange={(e) =>
+                    setForm({ ...form, firstName: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Last name
+                <input
+                  required
+                  value={form.lastName}
+                  onChange={(e) =>
+                    setForm({ ...form, lastName: e.target.value })
+                  }
+                />
+              </label>
+              <label>
+                Email address
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </label>
+              {!editing ? (
+                <label>
+                  Initial password
+                  <input
+                    required
+                    type="password"
+                    minLength={12}
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
+                  />
+                  <small>At least 12 characters.</small>
+                </label>
+              ) : null}
+              <label>
+                Workplace job role
+                <select
+                  value={form.jobRoleId}
+                  onChange={(e) =>
+                    setForm({ ...form, jobRoleId: e.target.value })
+                  }
+                >
+                  <option value="">Not assigned</option>
+                  {data.jobRoles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <fieldset
+                className={`admin-users-required${editing ? '' : ' admin-users-create-training'}`}
+              >
+                <legend>
+                  {editing ? 'Required training' : 'Assign training'}
+                </legend>
+                <p>
+                  {editing
+                    ? 'Select the training this trainee is required to complete.'
+                    : 'Optional — you can also assign training later. Selected modules will be required.'}
+                </p>
+                {data.trainingModules.length ? (
+                  data.trainingModules.map((module) => (
+                    <label key={module.id}>
+                      <input
+                        type="checkbox"
+                        checked={form.requiredTrainingModuleIds.includes(
+                          module.id,
+                        )}
+                        onChange={() => toggleRequiredTraining(module.id)}
+                      />
+                      <span>{module.title}</span>
+                    </label>
+                  ))
+                ) : (
+                  <small>No active training modules are available.</small>
+                )}
+              </fieldset>
+              <label className="admin-users-toggle">
+                <input
+                  type="checkbox"
+                  checked={form.isActive}
+                  onChange={(e) =>
+                    setForm({ ...form, isActive: e.target.checked })
+                  }
+                />
+                <span>
+                  <strong>Active account</strong>
+                  <small>Inactive trainees cannot sign in.</small>
+                </span>
+              </label>
+              {formError ? (
+                <p className="admin-users-form-error" role="alert">
+                  {formError}
+                </p>
+              ) : null}
+              <button className="admin-users-primary" disabled={saving}>
+                {saving
+                  ? 'Saving…'
+                  : editing
+                    ? 'Save changes'
+                    : 'Create trainee'}
+              </button>
+              <button
+                type="button"
+                className="admin-users-secondary"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </button>
+            </form>
+          </aside>
+        </div>
+      ) : null}
+    </div>
+  );
 }

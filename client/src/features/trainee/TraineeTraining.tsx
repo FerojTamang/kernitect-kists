@@ -64,7 +64,7 @@ function TrainingCard({
     <article className="assigned-module-card">
       <div className="assigned-module-visual">
         <img
-          className="assigned-module-image"
+          className={`assigned-module-image${isManualHandling ? ' manual-handling' : ''}`}
           src={isManualHandling ? manualHandlingImage : forkliftImage}
           alt={
             isManualHandling

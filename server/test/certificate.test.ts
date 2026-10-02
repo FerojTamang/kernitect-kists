@@ -167,9 +167,16 @@ test('admin requirement removal issues one certificate for a previously blocked 
     `SELECT id, slug FROM training_modules
      WHERE slug IN ('manual-handling', 'forklift-pedestrian-safety')`,
   );
-  const edgeManualId = modules.rows.find((module) => module.slug === 'manual-handling')!.id;
-  const edgeForkliftId = modules.rows.find((module) => module.slug === 'forklift-pedestrian-safety')!.id;
-  const edgeAssignments = await database.query<{ id: number; trainingModuleId: number }>(
+  const edgeManualId = modules.rows.find(
+    (module) => module.slug === 'manual-handling',
+  )!.id;
+  const edgeForkliftId = modules.rows.find(
+    (module) => module.slug === 'forklift-pedestrian-safety',
+  )!.id;
+  const edgeAssignments = await database.query<{
+    id: number;
+    trainingModuleId: number;
+  }>(
     `INSERT INTO training_assignments
       (trainee_id, training_module_id, assigned_by, required)
      VALUES ($1,$2,$4,true),($1,$3,$4,true)
@@ -204,7 +211,11 @@ test('admin requirement removal issues one certificate for a previously blocked 
   );
   assert.ok(passed?.attempt.passed);
   assert.equal(
-    (await database.query('SELECT id FROM certificates WHERE trainee_id=$1', [edgeTraineeId])).rowCount,
+    (
+      await database.query('SELECT id FROM certificates WHERE trainee_id=$1', [
+        edgeTraineeId,
+      ])
+    ).rowCount,
     0,
   );
 
@@ -227,7 +238,10 @@ test('admin requirement removal issues one certificate for a previously blocked 
     }),
   });
   assert.equal(update.status, 200);
-  const issued = await database.query<{ certificateNumber: string; issuedAt: Date }>(
+  const issued = await database.query<{
+    certificateNumber: string;
+    issuedAt: Date;
+  }>(
     `SELECT certificate_number AS "certificateNumber", issued_at AS "issuedAt"
      FROM certificates WHERE trainee_id=$1 AND status='issued'`,
     [edgeTraineeId],
@@ -243,12 +257,19 @@ test('admin requirement removal issues one certificate for a previously blocked 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      firstName: 'Alex', lastName: 'Edge', email: 'alex.edge@example.invalid',
-      jobRoleId: null, isActive: true, requiredTrainingModuleIds: [edgeManualId],
+      firstName: 'Alex',
+      lastName: 'Edge',
+      email: 'alex.edge@example.invalid',
+      jobRoleId: null,
+      isActive: true,
+      requiredTrainingModuleIds: [edgeManualId],
     }),
   });
   assert.equal(repeat.status, 200);
-  const unchanged = await database.query<{ certificateNumber: string; issuedAt: Date }>(
+  const unchanged = await database.query<{
+    certificateNumber: string;
+    issuedAt: Date;
+  }>(
     `SELECT certificate_number AS "certificateNumber", issued_at AS "issuedAt"
      FROM certificates WHERE trainee_id=$1 AND status='issued'`,
     [edgeTraineeId],

@@ -33,12 +33,18 @@ export class TraineeService {
         scenarioTotal === 0 || scenarioCompleted >= scenarioTotal;
       const assessmentComplete =
         assessmentTotal === 0 || assessmentPassed >= assessmentTotal;
-      const status: AssignmentPresentationStatus =
-        row.completedAt || progressPercentage >= 100
-          ? 'completed'
-          : row.startedAt || progressPercentage > 0
-            ? 'in_progress'
-            : 'not_started';
+      const moduleComplete =
+        learningComplete && scenarioComplete && assessmentComplete;
+      const status: AssignmentPresentationStatus = moduleComplete
+        ? 'completed'
+        : row.startedAt ||
+            row.completedAt ||
+            progressPercentage > 0 ||
+            learningCompletedSections > 0 ||
+            scenarioCompleted > 0 ||
+            assessmentPassed > 0
+          ? 'in_progress'
+          : 'not_started';
       const nextAction: TraineeDashboardAssignment['nextAction'] =
         status === 'completed'
           ? 'review'

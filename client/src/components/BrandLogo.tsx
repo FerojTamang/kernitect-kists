@@ -10,7 +10,13 @@ export function BrandLogo({
   return (
     <img
       className="brand-logo"
-      src={variant === 'transparent-white' ? transparentWhiteLogo : variant === 'dark' ? darkLogo : lightLogo}
+      src={
+        variant === 'transparent-white'
+          ? transparentWhiteLogo
+          : variant === 'dark'
+            ? darkLogo
+            : lightLogo
+      }
       alt="Kernitect"
     />
   );

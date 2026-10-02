@@ -13,6 +13,10 @@ import { createAssessmentRouter } from './modules/assessments/assessment.routes.
 import { createCertificateRouter } from './modules/certificates/certificate.routes.js';
 import { createAdminRouter } from './modules/admin/admin.routes.js';
 import { createSettingsRouter } from './modules/settings/settings.routes.js';
+import {
+  createAdminSupportRouter,
+  createTraineeSupportRouter,
+} from './modules/support/support.routes.js';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error-handler.js';
 import { apiRouter } from './routes/index.js';
@@ -34,6 +38,10 @@ export function createApp(database: Pool = pool) {
 
   app.use('/api/auth', createAuthRouter(authService));
   app.use('/api/trainee', createTraineeRouter(database, authService));
+  app.use(
+    '/api/trainee/support',
+    createTraineeSupportRouter(database, authService),
+  );
   app.use('/api/trainee/settings', createSettingsRouter(database, authService));
   app.use(
     '/api/admin/settings',
@@ -50,6 +58,10 @@ export function createApp(database: Pool = pool) {
     createCertificateRouter(database, authService),
   );
   app.use('/api/admin', createAdminRouter(database, authService));
+  app.use(
+    '/api/admin/support',
+    createAdminSupportRouter(database, authService),
+  );
   app.use('/api', apiRouter);
   app.use(notFound);
   app.use(errorHandler);

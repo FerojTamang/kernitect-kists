@@ -19,8 +19,14 @@ test('administrator dashboard shows live workforce training information and rema
   await expect(
     page.getByRole('heading', { name: 'Administrator dashboard' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open administrator settings' })).toBeVisible();
-  await expect(page.locator('.sidebar-footer').getByText('KISTS Administrator', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Open administrator settings' }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator('.sidebar-footer')
+      .getByText('KISTS Administrator', { exact: true }),
+  ).toHaveCount(0);
 
   const summary = page.getByRole('region', {
     name: 'Administrator training summary',
@@ -38,12 +44,24 @@ test('administrator dashboard shows live workforce training information and rema
   await expect(
     summary.getByText('Certificates issued', { exact: true }),
   ).toBeVisible();
-  await expect(summary.getByRole('link', { name: /Total trainees/ })).toHaveAttribute('href', '/admin/users');
-  await expect(summary.getByRole('link', { name: /Active assignments/ })).toHaveAttribute('href', '/admin/assignments');
-  await expect(summary.getByRole('link', { name: /Completed training/ })).toHaveAttribute('href', '/admin/progress');
-  await expect(summary.getByRole('link', { name: /Certificates issued/ })).toHaveAttribute('href', '/admin/progress');
-  await expect(page.getByText('Quick management shortcuts', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Outstanding assignments/ })).toHaveAttribute('href', '/admin/assignments');
+  await expect(
+    summary.getByRole('link', { name: /Total trainees/ }),
+  ).toHaveAttribute('href', '/admin/users');
+  await expect(
+    summary.getByRole('link', { name: /Active assignments/ }),
+  ).toHaveAttribute('href', '/admin/assignments');
+  await expect(
+    summary.getByRole('link', { name: /Completed training/ }),
+  ).toHaveAttribute('href', '/admin/progress');
+  await expect(
+    summary.getByRole('link', { name: /Certificates issued/ }),
+  ).toHaveAttribute('href', '/admin/progress');
+  await expect(
+    page.getByRole('heading', { name: 'Needs attention' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Outstanding assignments/ }),
+  ).toHaveAttribute('href', '/admin/assignments');
 
   await expect(
     page.getByRole('heading', { name: 'Training overview' }),
@@ -74,9 +92,15 @@ test('administrator dashboard shows live workforce training information and rema
     await page.setViewportSize(viewport);
     const layout = await page.evaluate(() => {
       const shell = document.querySelector<HTMLElement>('.administrator-shell');
-      const sidebar = document.querySelector<HTMLElement>('.administrator-shell > .sidebar');
-      const workspace = document.querySelector<HTMLElement>('.administrator-shell > .workspace');
-      const main = document.querySelector<HTMLElement>('.administrator-shell > .workspace > main');
+      const sidebar = document.querySelector<HTMLElement>(
+        '.administrator-shell > .sidebar',
+      );
+      const workspace = document.querySelector<HTMLElement>(
+        '.administrator-shell > .workspace',
+      );
+      const main = document.querySelector<HTMLElement>(
+        '.administrator-shell > .workspace > main',
+      );
       return {
         shellHeight: shell?.getBoundingClientRect().height,
         sidebarHeight: sidebar?.getBoundingClientRect().height,

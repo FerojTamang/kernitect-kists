@@ -161,6 +161,28 @@ export class AssessmentRepository {
       : null;
   }
 
+  async findSubmittedAnswers(
+    userId: number,
+    assignmentId: number,
+    assessmentId: number,
+    attemptId: number,
+  ): Promise<AssessmentSubmissionAnswer[]> {
+    const result = await this.database.query<AssessmentSubmissionAnswer>(
+      `SELECT ar.question_id AS "questionId",
+        ar.selected_answer_option_id AS "optionId"
+      FROM assessment_responses ar
+      JOIN assessment_attempts aa ON aa.id = ar.assessment_attempt_id
+      WHERE aa.id = $1
+        AND aa.trainee_id = $2
+        AND aa.training_assignment_id = $3
+        AND aa.assessment_id = $4
+        AND aa.submitted_at IS NOT NULL
+      ORDER BY ar.question_id`,
+      [attemptId, userId, assignmentId, assessmentId],
+    );
+    return result.rows;
+  }
+
   async submitAssessment(
     userId: number,
     assignmentId: number,

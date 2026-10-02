@@ -53,7 +53,7 @@ export class ScenarioRepository {
       LEFT JOIN training_content_completion cc
         ON cc.training_assignment_id = a.id AND cc.training_content_id = c.id
       WHERE a.id = $1 AND a.trainee_id = $2 AND a.status = 'active'
-        AND m.slug = 'manual-handling'
+        AND m.is_active
       GROUP BY a.id, a.training_module_id, s.id, s.title, s.description,
         s.resource_reference, s.sequence_order
       ORDER BY s.sequence_order ASC
@@ -80,6 +80,25 @@ export class ScenarioRepository {
         scenario_id = EXCLUDED.scenario_id
       RETURNING id, started_at AS "startedAt", completed_at AS "completedAt"`,
       [assignmentId, userId, scenarioId],
+    );
+    return result.rows[0];
+  }
+
+  async findAssignmentAttempt(
+    userId: number,
+    assignmentId: number,
+    scenarioId: number,
+  ): Promise<ScenarioAttemptRow | undefined> {
+    const result = await this.database.query<ScenarioAttemptRow>(
+      `SELECT sa.id, sa.started_at AS "startedAt",
+        sa.completed_at AS "completedAt"
+      FROM scenario_attempts sa
+      JOIN training_assignments ta ON ta.id = sa.training_assignment_id
+      WHERE sa.training_assignment_id = $1
+        AND sa.scenario_id = $2
+        AND ta.trainee_id = $3
+        AND ta.status = 'active'`,
+      [assignmentId, scenarioId, userId],
     );
     return result.rows[0];
   }

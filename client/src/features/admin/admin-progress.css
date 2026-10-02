@@ -171,7 +171,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   background: #fff;
@@ -182,17 +182,19 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 .admin-progress table {
   width: 100%;
-  min-width: 1060px;
+  min-width: 1000px;
   border-collapse: collapse;
 }
 
 .admin-progress th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   padding: 12px 14px;
   background: #f8fafc;
   color: #64748b;
@@ -212,6 +214,12 @@
 .admin-progress td strong,
 .admin-progress td small {
   display: block;
+}
+
+.admin-progress td small.admin-progress-certificate-id {
+  color: #8390a3;
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
 }
 
 .admin-progress td small {
@@ -502,14 +510,17 @@
   }
 }
 
-
 /* Step 10A — admin presentation polish. Monitoring behavior remains unchanged. */
 .admin-progress {
   --admin-accent: #6c5ce7;
   --admin-ink: #172033;
   --admin-border: #e4e8f0;
   background:
-    radial-gradient(circle at 92% 2%, rgba(108, 92, 231, 0.08), transparent 30rem),
+    radial-gradient(
+      circle at 92% 2%,
+      rgba(108, 92, 231, 0.08),
+      transparent 30rem
+    ),
     linear-gradient(180deg, #fafbfe 0%, #f6f8fc 100%);
 }
 
@@ -640,6 +651,7 @@
   color: #687386;
   font-size: 0.68rem;
   letter-spacing: 0.055em;
+  box-shadow: inset 0 -1px #e9edf3;
 }
 
 .admin-progress tbody tr {
@@ -737,10 +749,8 @@
   }
 }
 
-
-/* Step 10C-1 tablet hotfix: use the existing progress card view before the
-   1060px desktop monitoring table can exceed the reduced workspace width. */
-@media (min-width: 761px) and (max-width: 1100px) {
+/* Use the existing compact view before the table exceeds the workspace. */
+@media (min-width: 761px) and (max-width: 1380px) {
   .admin-progress-table-wrap {
     display: none;
   }

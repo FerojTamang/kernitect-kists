@@ -29,7 +29,6 @@ interface ModuleRow {
   slug: string;
   assignedCount: number;
   completedCount: number;
-  averageProgress: string;
 }
 
 interface AssignmentRow {
@@ -136,8 +135,7 @@ export class AdminRepository {
         ) AS "completedAssignments",
         (
           SELECT COUNT(*)::int
-          FROM certificates c
-          WHERE c.status = 'issued'
+          FROM available_certificates c
         ) AS "certificatesIssued"`,
     );
 
@@ -218,16 +216,7 @@ export class AdminRepository {
           WHERE ta.status = 'active'
             AND p.completed_at IS NOT NULL
             AND p.percentage = 100
-        )::int AS "completedCount",
-        COALESCE(
-          ROUND(
-            AVG(COALESCE(p.percentage, 0)) FILTER (
-              WHERE ta.status = 'active'
-            ),
-            0
-          ),
-          0
-        )::text AS "averageProgress"
+        )::int AS "completedCount"
       FROM training_modules m
       LEFT JOIN training_assignments ta
         ON ta.training_module_id = m.id
@@ -247,10 +236,18 @@ export class AdminRepository {
 
   async users() {
     const result = await this.database.query<{
-      id: number; firstName: string; lastName: string; email: string;
-      jobRoleId: number | null; jobRole: string | null; isActive: boolean;
-      assignedCount: number; completedCount: number; progressPercentage: string;
-      avatarUrl: string | null; requiredTrainingModuleIds: number[];
+      id: number;
+      firstName: string;
+      lastName: string;
+      email: string;
+      jobRoleId: number | null;
+      jobRole: string | null;
+      isActive: boolean;
+      assignedCount: number;
+      completedCount: number;
+      progressPercentage: string;
+      avatarUrl: string | null;
+      requiredTrainingModuleIds: number[];
     }>(`SELECT u.id, u.first_name AS "firstName", u.last_name AS "lastName", u.email,
       u.job_role_id AS "jobRoleId", j.name AS "jobRole", u.is_active AS "isActive",
       CASE WHEN u.avatar_filename IS NULL THEN NULL ELSE '/api/admin/users/' || u.id || '/avatar' END AS "avatarUrl",
@@ -270,30 +267,127 @@ export class AdminRepository {
   }
 
   async jobRoles() {
-    return (await this.database.query<{ id: number; name: string; description: string }>(
-      `SELECT id, name, description FROM job_roles ORDER BY name`,
-    )).rows;
+    return (
+      await this.database.query<{
+        id: number;
+        name: string;
+        description: string;
+      }>(`SELECT id, name, description FROM job_roles ORDER BY name`)
+    ).rows;
   }
 
-  async createTrainee(input: { firstName: string; lastName: string; email: string; passwordHash: string; jobRoleId: number | null; isActive: boolean }) {
-    const result = await this.database.query<{ id: number }>(`INSERT INTO users
+  async createTrainee(input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    passwordHash: string;
+    jobRoleId: number | null;
+    isActive: boolean;
+  }) {
+    const result = await this.database.query<{ id: number }>(
+      `INSERT INTO users
       (system_role_id, job_role_id, first_name, last_name, email, password_hash, is_active)
       SELECT r.id, $1, $2, $3, $4, $5, $6 FROM system_roles r WHERE r.name = 'trainee'
-      RETURNING id`, [input.jobRoleId, input.firstName, input.lastName, input.email, input.passwordHash, input.isActive]);
+      RETURNING id`,
+      [
+        input.jobRoleId,
+        input.firstName,
+        input.lastName,
+        input.email,
+        input.passwordHash,
+        input.isActive,
+      ],
+    );
     return result.rows[0]!.id;
   }
 
-  async updateTrainee(id: number, input: { firstName: string; lastName: string; email: string; jobRoleId: number | null; isActive: boolean }) {
-    const result = await this.database.query<{ id: number }>(`UPDATE users u SET
+  async createTraineeWithAssignments(
+    input: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      passwordHash: string;
+      jobRoleId: number | null;
+      isActive: boolean;
+    },
+    requiredTrainingModuleIds: number[],
+    assignedBy: number,
+  ): Promise<number | null> {
+    // One statement makes account, assignments and progress all-or-nothing.
+    const result = await this.database.query<{ id: number }>(
+      `WITH selected_modules AS (
+        SELECT m.id FROM training_modules m
+        WHERE m.is_active AND m.id = ANY($8::int[])
+      ), created_user AS (
+        INSERT INTO users
+          (system_role_id, job_role_id, first_name, last_name, email, password_hash, is_active)
+        SELECT r.id, $1, $2, $3, $4, $5, $6
+        FROM system_roles r WHERE r.name = 'trainee'
+          AND (SELECT COUNT(*) FROM selected_modules) = cardinality($8::int[])
+        RETURNING id
+      ), inserted_assignments AS (
+        INSERT INTO training_assignments
+          (trainee_id, training_module_id, assigned_by, required, status)
+        SELECT created_user.id, selected_modules.id, $7, true, 'active'
+        FROM created_user CROSS JOIN selected_modules
+        RETURNING id, trainee_id, training_module_id
+      ), inserted_progress AS (
+        INSERT INTO progress
+          (trainee_id, training_module_id, training_assignment_id)
+        SELECT trainee_id, training_module_id, id FROM inserted_assignments
+        RETURNING id
+      )
+      SELECT id FROM created_user`,
+      [
+        input.jobRoleId,
+        input.firstName,
+        input.lastName,
+        input.email,
+        input.passwordHash,
+        input.isActive,
+        assignedBy,
+        requiredTrainingModuleIds,
+      ],
+    );
+    return result.rows[0]?.id ?? null;
+  }
+
+  async updateTrainee(
+    id: number,
+    input: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      jobRoleId: number | null;
+      isActive: boolean;
+    },
+  ) {
+    const result = await this.database.query<{ id: number }>(
+      `UPDATE users u SET
       first_name=$2, last_name=$3, email=$4, job_role_id=$5, is_active=$6, updated_at=now()
       FROM system_roles r WHERE u.id=$1 AND r.id=u.system_role_id AND r.name='trainee'
-      RETURNING u.id`, [id, input.firstName, input.lastName, input.email, input.jobRoleId, input.isActive]);
+      RETURNING u.id`,
+      [
+        id,
+        input.firstName,
+        input.lastName,
+        input.email,
+        input.jobRoleId,
+        input.isActive,
+      ],
+    );
     return result.rows.length > 0;
   }
 
   async updateTraineeWithRequirements(
     id: number,
-    input: { firstName: string; lastName: string; email: string; jobRoleId: number | null; isActive: boolean },
+    input: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      jobRoleId: number | null;
+      isActive: boolean;
+    },
     requiredTrainingModuleIds: number[],
     assignedBy: number,
   ) {
@@ -325,20 +419,36 @@ export class AdminRepository {
           AND NOT (ta.training_module_id = ANY($7::int[]))
       )
       SELECT id FROM updated_user`,
-      [id, input.firstName, input.lastName, input.email, input.jobRoleId, input.isActive, requiredTrainingModuleIds, assignedBy],
+      [
+        id,
+        input.firstName,
+        input.lastName,
+        input.email,
+        input.jobRoleId,
+        input.isActive,
+        requiredTrainingModuleIds,
+        assignedBy,
+      ],
     );
     return result.rows.length > 0;
   }
 
   async activeTrainingModuleCount(ids: number[]) {
-    return Number((await this.database.query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count FROM training_modules WHERE is_active AND id = ANY($1::int[])`,
-      [ids],
-    )).rows[0]?.count ?? 0);
+    return Number(
+      (
+        await this.database.query<{ count: string }>(
+          `SELECT COUNT(*)::text AS count FROM training_modules WHERE is_active AND id = ANY($1::int[])`,
+          [ids],
+        )
+      ).rows[0]?.count ?? 0,
+    );
   }
 
   async jobRoleExists(id: number) {
-    return (await this.database.query(`SELECT 1 FROM job_roles WHERE id=$1`, [id])).rowCount === 1;
+    return (
+      (await this.database.query(`SELECT 1 FROM job_roles WHERE id=$1`, [id]))
+        .rowCount === 1
+    );
   }
 
   async assignments(): Promise<AssignmentRow[]> {
@@ -576,12 +686,21 @@ export class AdminRepository {
   }
 
   async trainingLibrary() {
-    return (await this.database.query<{
-      id:number; title:string; slug:string; description:string; isActive:boolean;
-      learningSectionCount:number; scenarioCount:number; hazardCount:number;
-      assessmentCount:number; questionCount:number; passPercentage:string|null;
-      activeAssignmentCount:number;
-    }>(`SELECT m.id,m.title,m.slug,m.description,m.is_active AS "isActive",
+    return (
+      await this.database.query<{
+        id: number;
+        title: string;
+        slug: string;
+        description: string;
+        isActive: boolean;
+        learningSectionCount: number;
+        scenarioCount: number;
+        hazardCount: number;
+        assessmentCount: number;
+        questionCount: number;
+        passPercentage: string | null;
+        activeAssignmentCount: number;
+      }>(`SELECT m.id,m.title,m.slug,m.description,m.is_active AS "isActive",
       COUNT(DISTINCT c.id) FILTER (WHERE c.is_active)::int AS "learningSectionCount",
       COUNT(DISTINCT s.id)::int AS "scenarioCount",COUNT(DISTINCT h.id)::int AS "hazardCount",
       COUNT(DISTINCT a.id)::int AS "assessmentCount",COUNT(DISTINCT q.id)::int AS "questionCount",
@@ -589,80 +708,206 @@ export class AdminRepository {
       COUNT(DISTINCT ta.id) FILTER (WHERE ta.status='active')::int AS "activeAssignmentCount"
       FROM training_modules m LEFT JOIN training_content c ON c.training_module_id=m.id
       LEFT JOIN scenarios s ON s.training_module_id=m.id LEFT JOIN hazards h ON h.scenario_id=s.id
-      LEFT JOIN assessments a ON a.training_module_id=m.id LEFT JOIN questions q ON q.assessment_id=a.id
+      LEFT JOIN LATERAL (
+        SELECT id,pass_percentage FROM assessments
+        WHERE training_module_id=m.id AND is_active
+        ORDER BY sequence_order ASC LIMIT 1
+      ) a ON true LEFT JOIN questions q ON q.assessment_id=a.id
       LEFT JOIN training_assignments ta ON ta.training_module_id=m.id
-      GROUP BY m.id ORDER BY m.created_at,m.id`)).rows;
+      GROUP BY m.id ORDER BY m.created_at,m.id`)
+    ).rows;
   }
 
-  async trainingModule(id:number) {
-    return (await this.database.query<{id:number;title:string;slug:string;description:string;isActive:boolean}>(
-      `SELECT id,title,slug,description,is_active AS "isActive" FROM training_modules WHERE id=$1`,[id])).rows[0];
+  async trainingModule(id: number) {
+    return (
+      await this.database.query<{
+        id: number;
+        title: string;
+        slug: string;
+        description: string;
+        isActive: boolean;
+      }>(
+        `SELECT id,title,slug,description,is_active AS "isActive" FROM training_modules WHERE id=$1`,
+        [id],
+      )
+    ).rows[0];
   }
-  async learningSections(moduleId:number) {
-    return (await this.database.query<{id:number;title:string;contentType:string;sequenceOrder:number;isActive:boolean}>(
-      `SELECT id,title,content_type AS "contentType",sequence_order AS "sequenceOrder",is_active AS "isActive"
-       FROM training_content WHERE training_module_id=$1 ORDER BY sequence_order,id`,[moduleId])).rows;
+  async learningSections(moduleId: number) {
+    return (
+      await this.database.query<{
+        id: number;
+        title: string;
+        contentType: string;
+        sequenceOrder: number;
+        isActive: boolean;
+      }>(
+        `SELECT id,title,content_type AS "contentType",sequence_order AS "sequenceOrder",is_active AS "isActive"
+       FROM training_content WHERE training_module_id=$1 ORDER BY sequence_order,id`,
+        [moduleId],
+      )
+    ).rows;
   }
-  async moduleScenarios(moduleId:number) {
-    return (await this.database.query<{id:number;title:string;description:string;isActive:boolean;sequenceOrder:number;hazardCount:number}>(
-      `SELECT s.id,s.title,s.description,s.is_active AS "isActive",s.sequence_order AS "sequenceOrder",
+  async moduleScenarios(moduleId: number) {
+    return (
+      await this.database.query<{
+        id: number;
+        title: string;
+        description: string;
+        isActive: boolean;
+        sequenceOrder: number;
+        hazardCount: number;
+      }>(
+        `SELECT s.id,s.title,s.description,s.is_active AS "isActive",s.sequence_order AS "sequenceOrder",
        COUNT(h.id)::int AS "hazardCount" FROM scenarios s LEFT JOIN hazards h ON h.scenario_id=s.id
-       WHERE s.training_module_id=$1 GROUP BY s.id ORDER BY s.sequence_order,s.id`,[moduleId])).rows;
+       WHERE s.training_module_id=$1 GROUP BY s.id ORDER BY s.sequence_order,s.id`,
+        [moduleId],
+      )
+    ).rows;
   }
-  async moduleAssessments(moduleId:number) {
-    return (await this.database.query<{id:number;title:string;description:string;passPercentage:string;isActive:boolean;hasAttempts:boolean}>(
-      `SELECT a.id,a.title,a.description,a.pass_percentage::text AS "passPercentage",a.is_active AS "isActive",
+  async moduleAssessments(moduleId: number) {
+    return (
+      await this.database.query<{
+        id: number;
+        title: string;
+        description: string;
+        passPercentage: string;
+        isActive: boolean;
+        hasAttempts: boolean;
+      }>(
+        `SELECT a.id,a.title,a.description,a.pass_percentage::text AS "passPercentage",a.is_active AS "isActive",
        EXISTS(SELECT 1 FROM assessment_attempts aa WHERE aa.assessment_id=a.id) AS "hasAttempts"
-       FROM assessments a WHERE a.training_module_id=$1 ORDER BY a.sequence_order,a.id`,[moduleId])).rows;
+       FROM assessments a WHERE a.training_module_id=$1 ORDER BY a.sequence_order,a.id`,
+        [moduleId],
+      )
+    ).rows;
   }
-  async assessmentQuestions(assessmentIds:number[]) {
+  async assessmentQuestions(assessmentIds: number[]) {
     if (!assessmentIds.length) return [];
-    return (await this.database.query<{assessmentId:number;questionId:number;questionText:string;questionOrder:number;optionId:number;optionText:string;isCorrect:boolean;optionOrder:number}>(
-      `SELECT q.assessment_id AS "assessmentId",q.id AS "questionId",q.question_text AS "questionText",
+    return (
+      await this.database.query<{
+        assessmentId: number;
+        questionId: number;
+        questionText: string;
+        questionOrder: number;
+        optionId: number;
+        optionText: string;
+        isCorrect: boolean;
+        optionOrder: number;
+      }>(
+        `SELECT q.assessment_id AS "assessmentId",q.id AS "questionId",q.question_text AS "questionText",
        q.sequence_order AS "questionOrder",o.id AS "optionId",o.option_text AS "optionText",
        o.is_correct AS "isCorrect",o.sequence_order AS "optionOrder"
        FROM questions q JOIN answer_options o ON o.question_id=q.id
-       WHERE q.assessment_id=ANY($1::int[]) ORDER BY q.assessment_id,q.sequence_order,o.sequence_order`,[assessmentIds])).rows;
+       WHERE q.assessment_id=ANY($1::int[]) ORDER BY q.assessment_id,q.sequence_order,o.sequence_order`,
+        [assessmentIds],
+      )
+    ).rows;
   }
-  async createTrainingModule(input:{title:string;slug:string;description:string}) {
-    return (await this.database.query<{id:number}>(
-      `INSERT INTO training_modules(title,slug,description,is_active) VALUES($1,$2,$3,false) RETURNING id`,
-      [input.title,input.slug,input.description])).rows[0]!.id;
+  async createTrainingModule(input: {
+    title: string;
+    slug: string;
+    description: string;
+  }) {
+    return (
+      await this.database.query<{ id: number }>(
+        `INSERT INTO training_modules(title,slug,description,is_active) VALUES($1,$2,$3,false) RETURNING id`,
+        [input.title, input.slug, input.description],
+      )
+    ).rows[0]!.id;
   }
-  async updateTrainingModule(id:number,input:{title:string;description:string;isActive:boolean}) {
-    return (await this.database.query(
-      `UPDATE training_modules SET title=$2,description=$3,is_active=$4,updated_at=now() WHERE id=$1`,
-      [id,input.title,input.description,input.isActive])).rowCount===1;
+  async updateTrainingModule(
+    id: number,
+    input: { title: string; description: string; isActive: boolean },
+  ) {
+    return (
+      (
+        await this.database.query(
+          `UPDATE training_modules SET title=$2,description=$3,is_active=$4,updated_at=now() WHERE id=$1`,
+          [id, input.title, input.description, input.isActive],
+        )
+      ).rowCount === 1
+    );
   }
-  async assessmentForModule(moduleId:number,assessmentId:number) {
-    return (await this.database.query<{hasAttempts:boolean}>(
-      `SELECT EXISTS(SELECT 1 FROM assessment_attempts aa WHERE aa.assessment_id=a.id) AS "hasAttempts"
-       FROM assessments a WHERE a.id=$2 AND a.training_module_id=$1`,[moduleId,assessmentId])).rows[0];
+  async assessmentForModule(moduleId: number, assessmentId: number) {
+    return (
+      await this.database.query<{ hasAttempts: boolean }>(
+        `SELECT EXISTS(SELECT 1 FROM assessment_attempts aa WHERE aa.assessment_id=a.id) AS "hasAttempts"
+       FROM assessments a WHERE a.id=$2 AND a.training_module_id=$1`,
+        [moduleId, assessmentId],
+      )
+    ).rows[0];
   }
-  async questionForAssessment(assessmentId:number,questionId:number) {
-    return (await this.database.query(`SELECT 1 FROM questions WHERE id=$2 AND assessment_id=$1`,[assessmentId,questionId])).rowCount===1;
+  async questionForAssessment(assessmentId: number, questionId: number) {
+    return (
+      (
+        await this.database.query(
+          `SELECT 1 FROM questions WHERE id=$2 AND assessment_id=$1`,
+          [assessmentId, questionId],
+        )
+      ).rowCount === 1
+    );
   }
-  async createAssessmentQuestion(assessmentId:number,questionText:string,options:Array<{optionText:string;isCorrect:boolean}>) {
-    return (await this.database.query<{id:number}>(`WITH next_order AS(
+  async createAssessmentQuestion(
+    assessmentId: number,
+    questionText: string,
+    options: Array<{ optionText: string; isCorrect: boolean }>,
+  ) {
+    return (
+      await this.database.query<{ id: number }>(
+        `WITH next_order AS(
       SELECT COALESCE(MAX(sequence_order),0)+1 AS value FROM questions WHERE assessment_id=$1),inserted AS(
       INSERT INTO questions(assessment_id,question_text,question_type,sequence_order)
       SELECT $1,$2,'single_choice',value FROM next_order RETURNING id),option_values AS(
       SELECT * FROM jsonb_to_recordset($3::jsonb) AS value("optionText" text,"isCorrect" boolean,"sequenceOrder" integer)),saved AS(
       INSERT INTO answer_options(question_id,option_text,is_correct,sequence_order)
       SELECT inserted.id,value."optionText",value."isCorrect",value."sequenceOrder" FROM inserted CROSS JOIN option_values value)
-      SELECT id FROM inserted`,[assessmentId,questionText,JSON.stringify(options.map((o,i)=>({...o,sequenceOrder:i+1})))] )).rows[0]!.id;
+      SELECT id FROM inserted`,
+        [
+          assessmentId,
+          questionText,
+          JSON.stringify(
+            options.map((o, i) => ({ ...o, sequenceOrder: i + 1 })),
+          ),
+        ],
+      )
+    ).rows[0]!.id;
   }
-  async updateAssessmentQuestion(assessmentId:number,questionId:number,questionText:string,options:Array<{optionText:string;isCorrect:boolean}>) {
-    return (await this.database.query<{id:number}>(`WITH updated AS(
+  async updateAssessmentQuestion(
+    assessmentId: number,
+    questionId: number,
+    questionText: string,
+    options: Array<{ optionText: string; isCorrect: boolean }>,
+  ) {
+    return (
+      (
+        await this.database.query<{ id: number }>(
+          `WITH updated AS(
       UPDATE questions SET question_text=$3,updated_at=now() WHERE id=$2 AND assessment_id=$1 RETURNING id),deleted AS(
       DELETE FROM answer_options WHERE question_id IN(SELECT id FROM updated) RETURNING id),option_values AS(
       SELECT * FROM jsonb_to_recordset($4::jsonb) AS value("optionText" text,"isCorrect" boolean,"sequenceOrder" integer)),saved AS(
       INSERT INTO answer_options(question_id,option_text,is_correct,sequence_order)
       SELECT updated.id,value."optionText",value."isCorrect",value."sequenceOrder" FROM updated CROSS JOIN option_values value
       CROSS JOIN(SELECT COUNT(*) FROM deleted) completed_delete) SELECT id FROM updated`,
-      [assessmentId,questionId,questionText,JSON.stringify(options.map((o,i)=>({...o,sequenceOrder:i+1})))] )).rows.length===1;
+          [
+            assessmentId,
+            questionId,
+            questionText,
+            JSON.stringify(
+              options.map((o, i) => ({ ...o, sequenceOrder: i + 1 })),
+            ),
+          ],
+        )
+      ).rows.length === 1
+    );
   }
-  async deleteAssessmentQuestion(assessmentId:number,questionId:number) {
-    return (await this.database.query(`DELETE FROM questions WHERE id=$2 AND assessment_id=$1`,[assessmentId,questionId])).rowCount===1;
+  async deleteAssessmentQuestion(assessmentId: number, questionId: number) {
+    return (
+      (
+        await this.database.query(
+          `DELETE FROM questions WHERE id=$2 AND assessment_id=$1`,
+          [assessmentId, questionId],
+        )
+      ).rowCount === 1
+    );
   }
 }

@@ -236,8 +236,7 @@ export class CertificateRepository {
 
     const entries = [...certificates.values()];
     return {
-      current:
-        entries.find((entry) => entry.isCurrent)?.certificate ?? null,
+      current: entries.find((entry) => entry.isCurrent)?.certificate ?? null,
       history: entries
         .filter((entry) => !entry.isCurrent)
         .map((entry) => entry.certificate),

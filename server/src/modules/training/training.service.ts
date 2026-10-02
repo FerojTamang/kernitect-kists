@@ -4,6 +4,7 @@ import type {
   FormativeAnswerResult,
   FormativeQuestion,
   TrainingModuleDetail,
+  TrainingScenarioStatus,
   TrainingModuleStatus,
 } from './training.types.js';
 import { TrainingRepository } from './training.repository.js';
@@ -29,10 +30,17 @@ export class TrainingService {
     }
 
     await this.repository.touchProgress(user.id, assignmentId);
-    const questionRows = await this.repository.findFormativeQuestions(
-      user.id,
-      assignmentId,
-    );
+    const [questionRows, progression] = await Promise.all([
+      this.repository.findFormativeQuestions(user.id, assignmentId),
+      this.repository.findModuleProgression(user.id, assignmentId),
+    ]);
+    if (!progression) {
+      throw new HttpError(
+        404,
+        'That learning module is not available for your account.',
+        'MODULE_NOT_FOUND',
+      );
+    }
     const questionsByContent = new Map<number, FormativeQuestion[]>();
     for (const row of questionRows) {
       const questions = questionsByContent.get(row.contentId) ?? [];
@@ -62,13 +70,6 @@ export class TrainingService {
       0,
       Math.min(100, Number(firstRow.percentage) || 0),
     );
-    const status: TrainingModuleStatus =
-      firstRow.assignmentCompletedAt || assignmentPercentage >= 100
-        ? 'completed'
-        : firstRow.startedAt || assignmentPercentage > 0
-          ? 'in_progress'
-          : 'not_started';
-
     const sections = rows
       .filter((row) => row.sectionId !== null)
       .map((row) => ({
@@ -91,6 +92,23 @@ export class TrainingService {
     const learningProgressPercentage = sections.length
       ? Math.round((completedSections.length / sections.length) * 100)
       : 0;
+    const scenarioStatus: TrainingScenarioStatus =
+      progression.activeScenarioCount > 0 &&
+      progression.completedScenarioCount === progression.activeScenarioCount
+        ? 'completed'
+        : progression.scenarioStarted
+          ? 'in_progress'
+          : 'not_started';
+    const fullModuleComplete =
+      sections.length > 0 &&
+      completedSections.length === sections.length &&
+      (!firstRow.hasScenario || scenarioStatus === 'completed') &&
+      (!progression.hasAssessment || progression.assessmentPassed);
+    const status: TrainingModuleStatus = fullModuleComplete
+      ? 'completed'
+      : firstRow.startedAt || assignmentPercentage > 0
+        ? 'in_progress'
+        : 'not_started';
 
     return {
       assignmentId: firstRow.assignmentId,
@@ -98,6 +116,8 @@ export class TrainingService {
       moduleTitle: firstRow.moduleTitle,
       moduleDescription: firstRow.moduleDescription,
       hasScenario: firstRow.hasScenario,
+      scenarioStatus,
+      assessmentPassed: progression.assessmentPassed,
       status,
       progress: {
         assignmentPercentage,

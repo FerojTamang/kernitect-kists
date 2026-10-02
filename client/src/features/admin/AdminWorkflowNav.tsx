@@ -29,17 +29,34 @@ const workflowSteps = [
   },
 ] as const;
 
-export function AdminWorkflowNav() {
+export function AdminWorkflowNav({
+  dashboard = false,
+}: { dashboard?: boolean } = {}) {
   const { pathname } = useLocation();
+  const steps = dashboard
+    ? [
+        workflowSteps[1],
+        workflowSteps[2],
+        { ...workflowSteps[3], label: 'Progress & results' },
+        {
+          to: '/admin/training',
+          label: 'Training content',
+          linkLabel: 'Open training content',
+          detail: 'Modules & assessments',
+        },
+      ]
+    : workflowSteps;
 
   return (
     <nav className="admin-workflow-nav" aria-label="Administrator workflow">
       <div className="admin-workflow-heading">
-        <span>Quick management shortcuts</span>
+        <span>
+          {dashboard ? 'Quick actions' : 'Quick management shortcuts'}
+        </span>
         <small>Open the administrator tools you use most.</small>
       </div>
       <ol>
-        {workflowSteps.map((item) => {
+        {steps.map((item) => {
           const current = pathname === item.to;
           return (
             <li key={item.to}>
@@ -49,7 +66,15 @@ export function AdminWorkflowNav() {
                 aria-current={current ? 'page' : undefined}
                 className={current ? 'is-current' : undefined}
               >
-                <span className="admin-workflow-step" aria-hidden="true"><DashboardIcon name={item.label === 'Progress' ? 'Progress & results' : item.label} /></span>
+                <span className="admin-workflow-step" aria-hidden="true">
+                  <DashboardIcon
+                    name={
+                      item.label === 'Progress'
+                        ? 'Progress & results'
+                        : item.label
+                    }
+                  />
+                </span>
                 <span className="admin-workflow-copy">
                   <strong>{item.label}</strong>
                   <small>{item.detail}</small>

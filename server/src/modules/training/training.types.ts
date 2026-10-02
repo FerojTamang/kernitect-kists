@@ -2,6 +2,8 @@ export type TrainingContentType =
   'text' | 'image' | 'video' | 'document' | 'link';
 
 export type TrainingModuleStatus = 'completed' | 'in_progress' | 'not_started';
+export type TrainingScenarioStatus =
+  'not_started' | 'in_progress' | 'completed';
 
 export interface TrainingSection {
   id: number;
@@ -46,6 +48,8 @@ export interface TrainingModuleDetail {
   moduleTitle: string;
   moduleDescription: string;
   hasScenario: boolean;
+  scenarioStatus: TrainingScenarioStatus;
+  assessmentPassed: boolean;
   status: TrainingModuleStatus;
   progress: TrainingProgressSnapshot;
   sections: TrainingSection[];

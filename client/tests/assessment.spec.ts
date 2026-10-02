@@ -86,7 +86,12 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
       contentType: 'application/json',
       body: JSON.stringify({
         eligible: true,
-        completion: { requiredAssignments: 1, completedAssignments: 1, requiredAssessments: 1, passedAssessments: 1 },
+        completion: {
+          requiredAssignments: 1,
+          completedAssignments: 1,
+          requiredAssessments: 1,
+          passedAssessments: 1,
+        },
         history: [],
         certificate: {
           id: 700,
@@ -94,7 +99,14 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
           issuedAt: '2026-09-17T12:00:00.000Z',
           traineeName: 'Alex Morgan',
           status: 'issued',
-          training: [{ assignmentId, moduleTitle: 'Manual Handling', completedAt: '2026-09-17T11:59:00.000Z', assessments: [] }],
+          training: [
+            {
+              assignmentId,
+              moduleTitle: 'Manual Handling',
+              completedAt: '2026-09-17T11:59:00.000Z',
+              assessments: [],
+            },
+          ],
         },
       }),
     }),
@@ -147,9 +159,7 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   await expect(
     page.getByRole('heading', { name: 'Manual Handling Final Assessment' }),
   ).toBeVisible();
-  await expect(
-    page.getByText('10 Questions · Prototype pass mark 75%'),
-  ).toBeVisible();
+  await expect(page.getByText('10 Questions · 75% Pass mark')).toBeVisible();
   await expect(page.getByText('0 of 10 answered')).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Submit final assessment' }),
@@ -206,7 +216,9 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   });
 
   const assessmentUrl = page.url();
-  const certificateButton = page.getByRole('button', { name: /View digital certificate/ });
+  const certificateButton = page.getByRole('button', {
+    name: /View digital certificate/,
+  });
   await certificateButton.click();
   await expect(page).toHaveURL(assessmentUrl);
   const dialog = page.getByRole('dialog', { name: 'Digital Certificate' });
@@ -214,10 +226,14 @@ test('final assessment UI supports fail, retry, pass and persisted completion', 
   await expect(dialog.getByText('Alex Morgan', { exact: true })).toBeVisible();
   await expect(dialog.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
   await expect(dialog.getByText('17 September 2026')).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Download certificate' })).toBeVisible();
+  await expect(
+    dialog.getByRole('button', { name: 'Download certificate' }),
+  ).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Assessment passed' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Assessment passed' }),
+  ).toBeVisible();
   await expect(certificateButton).toBeFocused();
 
   await certificateButton.click();

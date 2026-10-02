@@ -210,7 +210,9 @@ async function completeLearning(): Promise<void> {
   );
 }
 
-async function completeScenario(): Promise<void> {
+async function completeScenario(
+  targetAssignmentId = assignmentId,
+): Promise<void> {
   await database.query(
     `INSERT INTO scenario_attempts
       (trainee_id, training_assignment_id, training_module_id, scenario_id,
@@ -231,7 +233,7 @@ async function completeScenario(): Promise<void> {
          scenario_attempts.completed_at,
          EXCLUDED.completed_at
        )`,
-    [assignmentId],
+    [targetAssignmentId],
   );
 }
 
@@ -473,7 +475,7 @@ test('final assessment is gated, server-scored, retryable and completes training
   );
 });
 
-test('Forklift assessment requires learning, skips scenario gating, and completes only after a pass', async () => {
+test('Forklift assessment requires learning and scenario completion before a pass', async () => {
   const cookie = await login();
   const endpoint = `${base}/api/trainee/training/${forkliftAssignmentId}/assessment`;
   const locked = await fetch(endpoint, { headers: { Cookie: cookie } });
@@ -489,6 +491,14 @@ test('Forklift assessment requires learning, skips scenario gating, and complete
     [forkliftAssignmentId],
   );
 
+  const scenarioLocked = await fetch(endpoint, { headers: { Cookie: cookie } });
+  assert.equal(scenarioLocked.status, 409);
+  assert.equal(
+    ((await scenarioLocked.json()) as { error: { code: string } }).error.code,
+    'ASSESSMENT_SCENARIO_LOCKED',
+  );
+  await completeScenario(forkliftAssignmentId);
+
   const available = await fetch(endpoint, { headers: { Cookie: cookie } });
   assert.equal(available.status, 200);
   const detail = (await available.json()) as {
@@ -498,7 +508,7 @@ test('Forklift assessment requires learning, skips scenario gating, and complete
     assessment: { passPercentage: number };
   };
   assert.equal(detail.moduleTitle, 'Forklift and Pedestrian Safety');
-  assert.equal(detail.hasScenario, false);
+  assert.equal(detail.hasScenario, true);
   assert.equal(detail.questions.length, 10);
   assert.equal(detail.assessment.passPercentage, 75);
 

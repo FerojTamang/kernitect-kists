@@ -23,11 +23,11 @@ export const requireTrustedMutation: RequestHandler = (req, res, next) => {
   requireTrustedRequest(req, res, (error?: unknown) => {
     if (error) return next(error);
     if (!req.is('application/json'))
-    throw new HttpError(
-      415,
-      'Use application/json for this request.',
-      'UNSUPPORTED_MEDIA_TYPE',
-    );
+      throw new HttpError(
+        415,
+        'Use application/json for this request.',
+        'UNSUPPORTED_MEDIA_TYPE',
+      );
     next();
   });
 };

@@ -209,7 +209,9 @@ test('administrator can inspect assignment learning, scenario, assessment and ce
 
   assert.ok(payload.summary.activeAssignments >= 1);
   assert.ok(payload.summary.inProgressAssignments >= 1);
-  assert.ok(payload.modules.some((module) => module.slug === 'manual-handling'));
+  assert.ok(
+    payload.modules.some((module) => module.slug === 'manual-handling'),
+  );
 
   const record = payload.records.find(
     (candidate) => candidate.assignmentId === assignmentId,

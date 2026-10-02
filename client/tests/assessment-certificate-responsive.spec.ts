@@ -80,7 +80,12 @@ test('final assessment remains responsive across key breakpoints', async ({
       contentType: 'application/json',
       body: JSON.stringify({
         eligible: true,
-        completion: { requiredAssignments: 1, completedAssignments: 1, requiredAssessments: 1, passedAssessments: 1 },
+        completion: {
+          requiredAssignments: 1,
+          completedAssignments: 1,
+          requiredAssessments: 1,
+          passedAssessments: 1,
+        },
         history: [],
         certificate: {
           id: 700,
@@ -88,7 +93,14 @@ test('final assessment remains responsive across key breakpoints', async ({
           issuedAt: '2026-09-17T12:00:00.000Z',
           traineeName: 'Alex Morgan',
           status: 'issued',
-          training: [{ assignmentId, moduleTitle: 'Manual Handling', completedAt: '2026-09-17T11:59:00.000Z', assessments: [] }],
+          training: [
+            {
+              assignmentId,
+              moduleTitle: 'Manual Handling',
+              completedAt: '2026-09-17T11:59:00.000Z',
+              assessments: [],
+            },
+          ],
         },
       }),
     }),
@@ -215,20 +227,39 @@ test('final assessment remains responsive across key breakpoints', async ({
   ]) {
     await page.setViewportSize(viewport);
     const modalBody = dialog.locator('.certificate-modal-content');
-    const certificate = dialog.getByRole('article', { name: 'KISTS digital certificate' });
-    const [bodyBox, certificateBox] = await Promise.all([modalBody.boundingBox(), certificate.boundingBox()]);
+    const certificate = dialog.getByRole('article', {
+      name: 'KISTS digital certificate',
+    });
+    const [bodyBox, certificateBox] = await Promise.all([
+      modalBody.boundingBox(),
+      certificate.boundingBox(),
+    ]);
     expect(bodyBox).not.toBeNull();
     expect(certificateBox).not.toBeNull();
-    expect(certificateBox?.y ?? 0).toBeGreaterThanOrEqual((bodyBox?.y ?? 0) - 0.5);
-    expect((certificateBox?.y ?? 0) + (certificateBox?.height ?? 0)).toBeLessThanOrEqual((bodyBox?.y ?? 0) + (bodyBox?.height ?? 0) + 0.5);
-    expect(await modalBody.evaluate((element) => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
-    await expect(certificate.getByText('Ram Kumar Tamang', { exact: true }).last()).toBeVisible();
-    await expect(certificate.getByLabel('Safer people, brighter tomorrow')).toBeVisible();
+    expect(certificateBox?.y ?? 0).toBeGreaterThanOrEqual(
+      (bodyBox?.y ?? 0) - 0.5,
+    );
+    expect(
+      (certificateBox?.y ?? 0) + (certificateBox?.height ?? 0),
+    ).toBeLessThanOrEqual((bodyBox?.y ?? 0) + (bodyBox?.height ?? 0) + 0.5);
+    expect(
+      await modalBody.evaluate(
+        (element) => element.scrollHeight <= element.clientHeight + 1,
+      ),
+    ).toBe(true);
+    await expect(
+      certificate.getByText('Ram Kumar Tamang', { exact: true }).last(),
+    ).toBeVisible();
+    await expect(
+      certificate.getByLabel('Safer people, brighter tomorrow'),
+    ).toBeVisible();
   }
   for (const viewport of [...viewports, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('article', { name: 'KISTS digital certificate' })).toBeVisible();
+    await expect(
+      dialog.getByRole('article', { name: 'KISTS digital certificate' }),
+    ).toBeVisible();
     await expectNoHorizontalOverflow(page);
   }
   await page.emulateMedia({ media: 'print' });
@@ -240,15 +271,19 @@ test('final assessment remains responsive across key breakpoints', async ({
     'display',
     'none',
   );
-  expect(await modalPrintRoot.evaluate((element) => {
-    const box = element.getBoundingClientRect();
-    return box.width / box.height;
-  })).toBeCloseTo(297 / 210, 2);
+  expect(
+    await modalPrintRoot.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return box.width / box.height;
+    }),
+  ).toBeCloseTo(297 / 210, 2);
   const modalPdf = await page.pdf({
     preferCSSPageSize: true,
     printBackground: true,
   });
-  expect(modalPdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+  expect(modalPdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(
+    1,
+  );
   await page.emulateMedia({ media: 'screen' });
 });
 
@@ -298,7 +333,9 @@ test('issued certificate remains responsive across key breakpoints', async ({
   );
 
   await page.goto('/trainee/certificates');
-  await expect(page.getByRole('heading', { name: 'Current Certificate' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Current Certificate' }),
+  ).toBeVisible();
   for (const viewport of [...viewports, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
     await expectNoHorizontalOverflow(page);
@@ -310,17 +347,23 @@ test('issued certificate remains responsive across key breakpoints', async ({
   ).toBeVisible();
 
   await page.emulateMedia({ media: 'print' });
-  const detailPrintRoot = page.locator('.certificate-viewer-page .certificate-print-root');
+  const detailPrintRoot = page.locator(
+    '.certificate-viewer-page .certificate-print-root',
+  );
   await expect(detailPrintRoot).toHaveCSS('visibility', 'visible');
-  expect(await detailPrintRoot.evaluate((element) => {
-    const box = element.getBoundingClientRect();
-    return box.width / box.height;
-  })).toBeCloseTo(297 / 210, 2);
+  expect(
+    await detailPrintRoot.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return box.width / box.height;
+    }),
+  ).toBeCloseTo(297 / 210, 2);
   const detailPdf = await page.pdf({
     preferCSSPageSize: true,
     printBackground: true,
   });
-  expect(detailPdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(1);
+  expect(detailPdf.toString('latin1').match(/\/Type\s*\/Page\b/g)).toHaveLength(
+    1,
+  );
   await page.emulateMedia({ media: 'screen' });
 
   for (const viewport of [
@@ -330,13 +373,21 @@ test('issued certificate remains responsive across key breakpoints', async ({
     { width: 1920, height: 1080 },
   ]) {
     await page.setViewportSize(viewport);
-    await expect(page.getByRole('link', { name: 'Back to Certificates' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Download certificate' })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Back to Certificates' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Download certificate' }),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
-    const desktopCertificate = page.getByRole('article', { name: 'KISTS digital certificate' });
+    const desktopCertificate = page.getByRole('article', {
+      name: 'KISTS digital certificate',
+    });
     const desktopBox = await desktopCertificate.boundingBox();
     expect(desktopBox).not.toBeNull();
-    expect((desktopBox?.y ?? 0) + (desktopBox?.height ?? 0)).toBeLessThanOrEqual(viewport.height + 0.5);
+    expect(
+      (desktopBox?.y ?? 0) + (desktopBox?.height ?? 0),
+    ).toBeLessThanOrEqual(viewport.height + 0.5);
   }
 
   for (const viewport of viewports) {

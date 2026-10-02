@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { apiRequest, ApiError } from '../../services/api/request';
 import { AdminWorkflowNav } from './AdminWorkflowNav';
 import { DashboardIcon } from '../trainee/DashboardIcon';
+import manualHandlingImage from '../../assets/images/dashboard/manual-handling.jpg';
+import forkliftImage from '../../assets/images/dashboard/forklift-pedestrian-safety.jpg';
 import './admin-dashboard.css';
 
 interface AdminDashboardData {
@@ -32,6 +34,7 @@ interface AdminDashboardData {
     latestAssessmentScore: number | null;
     latestAssessmentPassed: boolean | null;
     certificateIssued: boolean;
+    currentStage: string;
   }>;
   modules: Array<{
     id: number;
@@ -39,8 +42,12 @@ interface AdminDashboardData {
     slug: string;
     assignedCount: number;
     completedCount: number;
-    averageProgress: number;
+    completionRate: number;
   }>;
+  attention: {
+    traineesInProgress: number;
+    assessmentsAwaitingCompletion: number;
+  };
 }
 
 function SummaryCard({
@@ -101,16 +108,6 @@ function DashboardState({
   );
 }
 
-function traineeStatus(
-  assignedCount: number,
-  completedCount: number,
-  progressPercentage: number,
-) {
-  if (assignedCount > 0 && completedCount === assignedCount) return 'Complete';
-  if (progressPercentage > 0) return 'In progress';
-  return 'Not started';
-}
-
 export function AdminDashboard() {
   const [dashboard, setDashboard] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,7 +158,7 @@ export function AdminDashboard() {
 
   if (!dashboard) return null;
 
-  const { summary, trainees, modules } = dashboard;
+  const { summary, trainees, modules, attention } = dashboard;
   const outstandingAssignments = Math.max(
     summary.activeAssignments - summary.completedAssignments,
     0,
@@ -169,14 +166,6 @@ export function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
-      <div className="admin-top-row">
-        <div>
-          <p className="admin-context-label">Management workspace</p>
-          <span className="admin-context-value">KISTS Administrator</span>
-        </div>
-
-      </div>
-
       <section className="admin-hero">
         <div>
           <p className="admin-eyebrow">Workforce safety training</p>
@@ -206,8 +195,6 @@ export function AdminDashboard() {
           </small>
         </div>
       </section>
-
-      <AdminWorkflowNav />
 
       <section
         className="admin-summary-grid"
@@ -262,22 +249,34 @@ export function AdminDashboard() {
               modules.map((module) => (
                 <article className="admin-module-row" key={module.id}>
                   <div className="admin-module-icon" aria-hidden="true">
-                    {module.slug.includes('forklift') ? '▰' : '◫'}
+                    {module.slug.includes('forklift') ||
+                    module.slug.includes('manual') ? (
+                      <img
+                        src={
+                          module.slug.includes('forklift')
+                            ? forkliftImage
+                            : manualHandlingImage
+                        }
+                        alt=""
+                      />
+                    ) : (
+                      <DashboardIcon name="Training content" />
+                    )}
                   </div>
                   <div className="admin-module-copy">
                     <div className="admin-module-title-row">
                       <strong>{module.title}</strong>
-                      <span>{module.averageProgress}%</span>
+                      <span>{module.completionRate}%</span>
                     </div>
                     <div
                       className="admin-module-progress"
                       role="progressbar"
-                      aria-label={`${module.title} average progress`}
+                      aria-label={`${module.title} completion rate`}
                       aria-valuemin={0}
                       aria-valuemax={100}
-                      aria-valuenow={module.averageProgress}
+                      aria-valuenow={module.completionRate}
                     >
-                      <span style={{ width: `${module.averageProgress}%` }} />
+                      <span style={{ width: `${module.completionRate}%` }} />
                     </div>
                     <small>
                       {module.assignedCount} assigned · {module.completedCount}{' '}
@@ -299,26 +298,39 @@ export function AdminDashboard() {
           </div>
 
           <Link className="admin-attention-metric" to="/admin/assignments">
-            <span>Outstanding assignments</span>
             <strong>{outstandingAssignments}</strong>
-          </Link>
-          <Link className="admin-attention-metric" to="/admin/users">
-            <span>Trainee accounts</span>
-            <strong>{summary.activeTrainees}</strong>
+            <span>
+              Outstanding assignments
+              <small>Active training still to be completed</small>
+            </span>
+            <span className="admin-attention-arrow" aria-hidden="true">
+              →
+            </span>
           </Link>
           <Link className="admin-attention-metric" to="/admin/progress">
-            <span>Certificates issued</span>
-            <strong>{summary.certificatesIssued}</strong>
+            <strong>{attention.traineesInProgress}</strong>
+            <span>
+              Trainees in progress
+              <small>Training currently underway</small>
+            </span>
+            <span className="admin-attention-arrow" aria-hidden="true">
+              →
+            </span>
           </Link>
-
-          <div className="admin-quick-actions">
-            <p>Quick actions</p>
-            <Link to="/admin/users">Manage trainees</Link>
-            <Link to="/admin/assignments">Assign training</Link>
-            <Link to="/admin/progress">Review progress & results</Link>
-          </div>
+          <Link className="admin-attention-metric" to="/admin/progress">
+            <strong>{attention.assessmentsAwaitingCompletion}</strong>
+            <span>
+              Assessments awaiting completion
+              <small>Scenario complete; assessment outstanding</small>
+            </span>
+            <span className="admin-attention-arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
         </aside>
       </div>
+
+      <AdminWorkflowNav dashboard />
 
       <section className="admin-panel admin-trainee-panel">
         <div className="admin-panel-heading">
@@ -339,19 +351,13 @@ export function AdminDashboard() {
                   <th scope="col">Trainee</th>
                   <th scope="col">Job role</th>
                   <th scope="col">Training</th>
-                  <th scope="col">Progress</th>
+                  <th scope="col">Current stage</th>
                   <th scope="col">Latest assessment</th>
                   <th scope="col">Certificate</th>
                 </tr>
               </thead>
               <tbody>
                 {trainees.map((trainee) => {
-                  const status = traineeStatus(
-                    trainee.assignedCount,
-                    trainee.completedCount,
-                    trainee.progressPercentage,
-                  );
-
                   return (
                     <tr key={trainee.id}>
                       <td>
@@ -375,11 +381,16 @@ export function AdminDashboard() {
                       </td>
                       <td>
                         <span
-                          className={`admin-status admin-status-${status
-                            .toLowerCase()
-                            .replaceAll(' ', '-')}`}
+                          className={`admin-status ${
+                            trainee.currentStage === 'Complete'
+                              ? 'admin-status-complete'
+                              : trainee.currentStage === 'Not assigned'
+                                ? 'admin-status-not-started'
+                                : 'admin-status-in-progress'
+                          }`}
+                          data-stage={trainee.currentStage}
                         >
-                          {status}
+                          {trainee.currentStage}
                         </span>
                       </td>
                       <td>

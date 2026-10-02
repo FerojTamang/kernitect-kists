@@ -161,11 +161,19 @@ test('administrator login opens current management navigation and Training Conte
   await expect(
     page.getByRole('link', { name: 'Open administrator settings' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open administrator settings' })).toContainText('KISTS Administrator');
-  await page.getByRole('link', { name: 'Training content' }).click();
+  await expect(
+    page.getByRole('link', { name: 'Open administrator settings' }),
+  ).toContainText('Administrator');
+  await page
+    .getByRole('link', { name: 'Training content', exact: true })
+    .click();
   await expect(page).toHaveURL(/\/admin\/training$/);
-  await expect(page.getByRole('heading', { name: 'Training content' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Training library' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Training content' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Training library' }),
+  ).toBeVisible();
   await page.goto('/trainee/dashboard');
   await expect(
     page.getByRole('heading', { name: 'Access denied' }),
@@ -404,11 +412,8 @@ test('trainee completes the five-section Manual Handling learning journey with f
     .click();
   await expect(page).toHaveURL(/\/trainee\/training\/\d+$/);
   await expect(
-    page.getByRole('link', {
-      name: 'My Training',
-      exact: true,
-    }),
-  ).toHaveClass(/active/);
+    page.getByRole('link', { name: 'Back to My Training' }),
+  ).toHaveAttribute('href', '/trainee/training');
   const sectionList = page.getByRole('navigation', {
     name: 'Complete each section',
   });
@@ -424,6 +429,40 @@ test('trainee completes the five-section Manual Handling learning journey with f
   await expect(
     page.getByRole('heading', { name: 'What is manual handling?' }),
   ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Manual Handling in Practice' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('img', { name: 'Warehouse worker carrying a box safely' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('img', {
+      name: 'Warehouse worker moving boxes using a trolley',
+    }),
+  ).toBeVisible();
+  await expect(page.getByText('Carrying a load safely')).toBeVisible();
+  await expect(
+    page.getByText('Using suitable equipment to move loads'),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Key Learning Points' }),
+  ).toBeVisible();
+  const exampleCards = page.locator('.section-one-image-grid figure');
+  const leftExample = await exampleCards.nth(0).boundingBox();
+  const rightExample = await exampleCards.nth(1).boundingBox();
+  expect(leftExample).not.toBeNull();
+  expect(rightExample).not.toBeNull();
+  expect(rightExample!.x).toBeGreaterThan(leftExample!.x);
+  expect(Math.abs(rightExample!.y - leftExample!.y)).toBeLessThan(2);
+  const learningPoints = await page
+    .locator('.section-one-points')
+    .boundingBox();
+  const knowledgeCheck = await page.locator('.knowledge-check').boundingBox();
+  expect(learningPoints).not.toBeNull();
+  expect(knowledgeCheck).not.toBeNull();
+  expect(knowledgeCheck!.y).toBeGreaterThanOrEqual(
+    learningPoints!.y + learningPoints!.height - 1,
+  );
   const answer = async (question: string, option: string) => {
     const questionCard = page
       .getByText(question, { exact: true })
@@ -567,7 +606,169 @@ test('trainee completes the five-section Manual Handling learning journey with f
   await expect(
     page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
   ).toBeVisible();
+  const completedModuleUrl = page.url();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const sidebarBounds = await page
+    .locator('.course-learning-sidebar')
+    .boundingBox();
+  const headerBounds = await page
+    .locator('.course-player-header')
+    .boundingBox();
+  expect(sidebarBounds).not.toBeNull();
+  expect(headerBounds).not.toBeNull();
+  expect(sidebarBounds!.y).toBe(0);
+  expect(headerBounds!.x).toBeGreaterThanOrEqual(
+    sidebarBounds!.x + sidebarBounds!.width - 1,
+  );
+  await expect(
+    page
+      .locator('.course-player-header')
+      .getByText('5 of 5 sections completed'),
+  ).toBeVisible();
+  await expect(
+    page.locator('.course-player-header').getByText('Section 1 of 5'),
+  ).toHaveCount(0);
+  const completedPath = page.getByRole('navigation', { name: 'Learning Path' });
+  await expect(completedPath.getByText('Current section')).toHaveCount(0);
+  await expect(
+    page.locator('.course-learning-sidebar').getByText('Completion Summary'),
+  ).toHaveCount(0);
+  let reviewSubmissions = 0;
+  const countReviewSubmissions = (
+    request: import('@playwright/test').Request,
+  ) => {
+    if (request.method() === 'POST' && request.url().endsWith('/answer'))
+      reviewSubmissions++;
+  };
+  page.on('request', countReviewSubmissions);
+  await completedPath
+    .getByRole('button', { name: /Introduction to Manual Handling/ })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'What is manual handling?' }),
+  ).toBeVisible();
+  await expect(page.getByText('Review Mode')).toBeVisible();
+  await expect(
+    page.locator('.course-review-learning .section-one-image-grid figure'),
+  ).toHaveCount(2);
+  await expect(
+    page.locator('.course-review-learning').getByRole('heading', {
+      name: 'Key Learning Points',
+    }),
+  ).toBeVisible();
+  const desktopLearning = await page
+    .locator('.course-review-learning')
+    .boundingBox();
+  const desktopCheck = await page.locator('.course-review-check').boundingBox();
+  expect(desktopLearning).not.toBeNull();
+  expect(desktopCheck).not.toBeNull();
+  expect(desktopCheck!.y).toBeGreaterThanOrEqual(
+    desktopLearning!.y + desktopLearning!.height - 1,
+  );
+  const savedAnswer = page.getByRole('radio', {
+    name: 'Lifting, pushing, pulling and carrying objects',
+  });
+  await expect(savedAnswer).toBeChecked();
+  await expect(savedAnswer).toBeDisabled();
+  await expect(
+    page.getByText('Correct. This is the safer workplace approach.').first(),
+  ).toBeVisible();
+  await mkdir('.local/verification', { recursive: true });
+  await page.screenshot({
+    path: '.local/verification/training-review-desktop.png',
+  });
+  await expect(
+    page.getByRole('progressbar', { name: 'Learning content progress' }),
+  ).toHaveAttribute('aria-valuenow', '100');
+  await page
+    .getByRole('button', { name: 'Return to Completion Summary' })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
+  ).toBeVisible();
+  expect(reviewSubmissions).toBe(0);
+  page.off('request', countReviewSubmissions);
+  await page.setViewportSize({ width: 768, height: 960 });
+  await completedPath
+    .getByRole('button', { name: /Risks and Injuries/ })
+    .click();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole('button', { name: 'Return to Completion Summary' })
+    .click();
+  const logoLink = page.getByRole('link', {
+    name: 'Return to trainee dashboard',
+  });
+  await logoLink.focus();
+  await expect(logoLink).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/trainee\/dashboard$/);
+  await page.goto(completedModuleUrl);
+  await expect(
+    page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /Start Interactive Scenario/ }),
+  ).toHaveAttribute('href', /\/scenario$/);
   await page.setViewportSize({ width: 390, height: 844 });
+  await page
+    .getByRole('button', { name: 'Learning Path', exact: true })
+    .click();
+  await expect(completedPath).toBeVisible();
+  await completedPath
+    .getByRole('button', { name: /Practical Examples/ })
+    .click();
+  await expect(page.getByText('Review Mode')).toBeVisible();
+  const mobileLearning = await page
+    .locator('.course-review-learning')
+    .boundingBox();
+  const mobileCheck = await page.locator('.course-review-check').boundingBox();
+  expect(mobileLearning).not.toBeNull();
+  expect(mobileCheck).not.toBeNull();
+  expect(mobileCheck!.y).toBeGreaterThanOrEqual(
+    mobileLearning!.y + mobileLearning!.height - 1,
+  );
+  expect(
+    (await page.locator('.is-reviewing .section-state-pill').boundingBox())!
+      .width,
+  ).toBeLessThan(150);
+  await page.waitForFunction(() => {
+    const sidebar = document.querySelector('.course-learning-sidebar');
+    return sidebar && sidebar.getBoundingClientRect().right <= 0;
+  });
+  await page.screenshot({
+    path: '.local/verification/training-review-mobile.png',
+  });
+  await page
+    .getByRole('button', { name: 'Return to Completion Summary' })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Learning content complete', level: 2 }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole('button', { name: 'Learning Path', exact: true })
+    .click();
+  await completedPath
+    .getByRole('button', { name: /Introduction to Manual Handling/ })
+    .click();
+  const mobileExamples = page.locator('.section-one-image-grid figure');
+  const firstMobileExample = await mobileExamples.nth(0).boundingBox();
+  const secondMobileExample = await mobileExamples.nth(1).boundingBox();
+  expect(firstMobileExample).not.toBeNull();
+  expect(secondMobileExample).not.toBeNull();
+  expect(secondMobileExample!.y).toBeGreaterThanOrEqual(
+    firstMobileExample!.y + firstMobileExample!.height - 1,
+  );
+  await expect(savedAnswer).toBeDisabled();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -635,7 +836,7 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
   await expect(page.getByText('✓ Safety point complete')).toBeVisible();
   await page
     .getByRole('button', {
-      name: 'Continue exploring 360° warehouse',
+      name: 'Continue to next safety point →',
       exact: true,
     })
     .click();
@@ -648,9 +849,6 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
   ] as const;
 
   for (const [point, decision] of decisions) {
-    await page
-      .getByRole('button', { name: new RegExp(`Safety point ${point}:`) })
-      .click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page
       .locator('.kists-360-hotspot')
@@ -662,7 +860,10 @@ test('trainee completes the interactive Manual Handling warehouse scenario', asy
     await expect(page.getByText('✓ Safety point complete')).toBeVisible();
     await page
       .getByRole('button', {
-        name: 'Continue exploring 360° warehouse',
+        name:
+          point === 5
+            ? 'Complete safety inspection →'
+            : 'Continue to next safety point →',
         exact: true,
       })
       .click();

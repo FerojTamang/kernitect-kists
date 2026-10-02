@@ -4,6 +4,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { useAuth } from '../features/auth/auth.context';
 import type { NavigationItem } from '../types/navigation';
 import { DashboardIcon } from '../features/trainee/DashboardIcon';
+import { SupportNotifications } from '../features/support/SupportNotifications';
 import './admin-shell.css';
 
 interface AppLayoutProps {
@@ -64,9 +65,9 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
   const [signingOut, setSigningOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const adminSectionLabelRaw = !isTrainee
-    ? navigation.find((item) =>
+    ? (navigation.find((item) =>
         location.pathname.startsWith(`${basePath}/${item.path}`),
-      )?.label ?? 'Dashboard'
+      )?.label ?? 'Dashboard')
     : '';
   const adminSectionLabel =
     adminSectionLabelRaw === 'Training content'
@@ -155,9 +156,19 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
 
       <aside className="sidebar">
         <div className="brand-block">
-          <div className="dashboard-logo-frame">
-            <BrandLogo variant="transparent-white" />
-          </div>
+          {isTrainee ? (
+            <Link
+              className="dashboard-logo-frame trainee-logo-link"
+              to="/trainee/dashboard"
+              aria-label="Go to Dashboard"
+            >
+              <BrandLogo variant="transparent-white" />
+            </Link>
+          ) : (
+            <div className="dashboard-logo-frame">
+              <BrandLogo variant="transparent-white" />
+            </div>
+          )}
           <div className="brand-tagline">PEOPLE | SAFETY | PROGRESS</div>
           <div className="brand-copy">
             <div className="brand-name">KISTS</div>
@@ -222,12 +233,30 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
           {isTrainee ? (
             <span className="badge">{audience} preview</span>
           ) : (
-            <Link className="admin-shell-profile" to="/admin/settings" aria-label="Open administrator settings">
-              <span className="admin-shell-avatar" aria-hidden="true">
-                {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : `${user?.firstName[0] ?? ''}${user?.lastName[0] ?? ''}`.toUpperCase()}
-              </span>
-              <span><strong>{user ? `${user.firstName} ${user.lastName}`.trim() : 'KISTS Administrator'}</strong><small>Administrator</small></span>
-            </Link>
+            <div className="admin-shell-actions">
+              <SupportNotifications role="admin" />
+              <Link
+                className="admin-shell-profile"
+                to="/admin/settings"
+                aria-label="Open administrator settings"
+              >
+                <span className="admin-shell-avatar" aria-hidden="true">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" />
+                  ) : (
+                    `${user?.firstName[0] ?? ''}${user?.lastName[0] ?? ''}`.toUpperCase()
+                  )}
+                </span>
+                <span>
+                  <strong>
+                    {user
+                      ? `${user.firstName} ${user.lastName}`.trim()
+                      : 'KISTS Administrator'}
+                  </strong>
+                  <small>Administrator</small>
+                </span>
+              </Link>
+            </div>
           )}
         </header>
         <main id="main-content" tabIndex={-1}>

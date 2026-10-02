@@ -6,7 +6,7 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { BrandLogo } from '../../components/BrandLogo';
 import { useAuth } from '../auth/auth.context';
 import type {
@@ -69,6 +69,11 @@ interface AssessmentSubmissionResult {
   correctAnswers: number;
   totalQuestions: number;
   attempt: AssessmentAttemptSummary;
+}
+
+interface SubmittedAssessmentReview {
+  attempt: AssessmentAttemptSummary;
+  answers: { questionId: number; optionId: number }[];
 }
 
 function AssessmentState({
@@ -171,6 +176,8 @@ function assessmentConfettiStyle(index: number): CSSProperties {
 
 export function TraineeAssessment() {
   const { assignmentId } = useParams();
+  const [searchParams] = useSearchParams();
+  const reviewRequested = searchParams.get('review') === '1';
   const { user } = useAuth();
   const [detail, setDetail] = useState<TrainingAssessmentDetail | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -181,6 +188,11 @@ export function TraineeAssessment() {
   const [errorCode, setErrorCode] = useState<string | undefined>();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [reviewing, setReviewing] = useState(false);
+  const [submittedReview, setSubmittedReview] =
+    useState<SubmittedAssessmentReview | null>(null);
+  const [submittedReviewError, setSubmittedReviewError] = useState<
+    string | null
+  >(null);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
   const [issuedCertificate, setIssuedCertificate] =
@@ -243,25 +255,61 @@ export function TraineeAssessment() {
       ),
     [detail?.questions],
   );
-  const answeredCount = useMemo(
-    () => questions.filter((question) => answers[question.id]).length,
-    [answers, questions],
-  );
-
-  const allAnswered = Boolean(
-    detail && questions.length > 0 && answeredCount === questions.length,
-  );
-
   const passedAttempt = result?.attempt.passed
     ? result.attempt
     : detail?.latestAttempt?.passed
       ? detail.latestAttempt
       : null;
+  const submittedReviewActive = reviewRequested && Boolean(passedAttempt);
+  const savedAnswers = useMemo(
+    () =>
+      Object.fromEntries(
+        submittedReview?.answers.map(({ questionId, optionId }) => [
+          questionId,
+          optionId,
+        ]) ?? [],
+      ) as Record<number, number>,
+    [submittedReview],
+  );
+  const displayedAnswers = submittedReviewActive ? savedAnswers : answers;
+  const answeredCount = useMemo(
+    () => questions.filter((question) => displayedAnswers[question.id]).length,
+    [displayedAnswers, questions],
+  );
+  const allAnswered = Boolean(
+    detail && questions.length > 0 && answeredCount === questions.length,
+  );
   const moduleTitle = detail?.moduleTitle || 'Manual Handling';
   const hasScenario = detail?.hasScenario ?? true;
   const traineeFullName = user
     ? `${user.firstName} ${user.lastName}`.trim()
     : '';
+
+  useEffect(() => {
+    if (!reviewRequested || !detail?.latestAttempt?.passed) return;
+    let active = true;
+    void apiRequest<SubmittedAssessmentReview>(
+      `/trainee/training/${detail.assignmentId}/assessment/review`,
+    )
+      .then((payload) => {
+        if (active) {
+          setSubmittedReview(payload);
+          setSubmittedReviewError(null);
+        }
+      })
+      .catch((requestError) => {
+        if (active) {
+          setSubmittedReviewError(
+            requestError instanceof ApiError
+              ? requestError.message
+              : 'We could not load your submitted answers.',
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [detail, reviewRequested]);
 
   useEffect(() => {
     if (!passedAttempt || !detail) return;
@@ -312,7 +360,7 @@ export function TraineeAssessment() {
   );
 
   async function submitAssessment() {
-    if (!detail || !allAnswered || submitting) return;
+    if (reviewRequested || !detail || !allAnswered || submitting) return;
 
     setSubmitting(true);
     setError(null);
@@ -410,7 +458,50 @@ export function TraineeAssessment() {
 
   if (!detail) return null;
 
-  if (passedAttempt) {
+  if (reviewRequested && !passedAttempt) {
+    return (
+      <AssessmentState
+        title="Assessment review unavailable"
+        detail="A submitted passing assessment is required before you can review answers."
+      >
+        <Link
+          className="assessment-button secondary"
+          to={`/trainee/training/${detail.assignmentId}`}
+        >
+          Back to module
+        </Link>
+      </AssessmentState>
+    );
+  }
+
+  if (
+    submittedReviewActive &&
+    (!submittedReview ||
+      submittedReview.attempt.id !== passedAttempt?.id ||
+      submittedReviewError)
+  ) {
+    return (
+      <AssessmentState
+        title={
+          submittedReviewError
+            ? 'Assessment review unavailable'
+            : 'Loading submitted assessment'
+        }
+        detail={submittedReviewError ?? 'Loading your saved answers...'}
+      >
+        {submittedReviewError && (
+          <Link
+            className="assessment-button secondary"
+            to={`/trainee/training/${detail.assignmentId}`}
+          >
+            Back to module
+          </Link>
+        )}
+      </AssessmentState>
+    );
+  }
+
+  if (passedAttempt && !submittedReviewActive) {
     return (
       <div className="assessment-page assessment-result-player passed-state">
         <AssessmentPassConfetti />
@@ -559,7 +650,7 @@ export function TraineeAssessment() {
 
   return (
     <div
-      className={`assessment-page assessment-player${progressCollapsed ? ' progress-collapsed' : ''}${progressOpen ? ' progress-open' : ''}`}
+      className={`assessment-page assessment-player${submittedReviewActive ? ' assessment-submitted-review' : ''}${progressCollapsed ? ' progress-collapsed' : ''}${progressOpen ? ' progress-open' : ''}`}
     >
       <aside
         className="assessment-progress-sidebar"
@@ -571,8 +662,20 @@ export function TraineeAssessment() {
             to="/trainee/dashboard"
             aria-label="Go to trainee dashboard"
           >
-            <BrandLogo variant="dark" />
+            <BrandLogo variant="transparent-white" />
           </Link>
+          <button
+            type="button"
+            className="assessment-progress-collapse"
+            aria-label={
+              progressCollapsed
+                ? 'Expand assessment progress'
+                : 'Collapse assessment progress'
+            }
+            onClick={() => setProgressCollapsed((current) => !current)}
+          >
+            <span aria-hidden="true">{progressCollapsed ? '›' : '‹'}</span>
+          </button>
           <button
             type="button"
             className="assessment-progress-close"
@@ -582,25 +685,11 @@ export function TraineeAssessment() {
             ×
           </button>
         </div>
-        <button
-          type="button"
-          className="assessment-progress-collapse"
-          aria-label={
-            progressCollapsed
-              ? 'Expand assessment progress'
-              : 'Collapse assessment progress'
-          }
-          onClick={() => setProgressCollapsed((current) => !current)}
-        >
-          <span aria-hidden="true">{progressCollapsed ? '›' : '‹'}</span>
-        </button>
         <div className="assessment-module-summary">
           <p>{moduleTitle}</p>
           <h2>Final Assessment</h2>
-          <span>
-            {questions.length} Questions · Prototype pass mark{' '}
-            {detail.assessment.passPercentage}%
-          </span>
+          <span>{questions.length} Questions</span>
+          <span>Pass mark {detail.assessment.passPercentage}%</span>
           <span>
             {answeredCount} of {questions.length} answered
           </span>
@@ -612,28 +701,52 @@ export function TraineeAssessment() {
           className="assessment-question-nav"
           aria-label="Assessment questions"
         >
-          <p>Assessment progress</p>
+          <p>Question Navigator</p>
           <ol>
             {questions.map((question, index) => {
-              const answered = Boolean(answers[question.id]);
+              const answered = Boolean(displayedAnswers[question.id]);
               const current = !reviewing && currentQuestionIndex === index;
               return (
-                <li key={question.id}>
+                <li
+                  key={question.id}
+                  className={`${current ? 'current' : ''}${answered ? ' answered' : ''}`}
+                >
                   <button
                     type="button"
                     className={`${current ? 'current' : ''}${answered ? ' answered' : ''}`}
                     aria-current={current ? 'step' : undefined}
                     aria-label={`Question ${index + 1}${answered ? ', answered' : ', unanswered'}${current ? ', current' : ''}`}
+                    title={
+                      progressCollapsed
+                        ? `Question ${index + 1}${answered ? ', answered' : ', unanswered'}`
+                        : undefined
+                    }
                     onClick={() => {
                       setCurrentQuestionIndex(index);
                       setReviewing(false);
                       setProgressOpen(false);
                     }}
                   >
-                    <span>
-                      {answered ? '✓' : String(index + 1).padStart(2, '0')}
+                    <span
+                      className="assessment-nav-marker"
+                      data-number={String(index + 1).padStart(2, '0')}
+                      aria-hidden="true"
+                    >
+                      {answered ? '✓' : null}
                     </span>
-                    {current ? <small>Current</small> : null}
+                    <span className="assessment-nav-number" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span className="assessment-nav-copy">
+                      <strong>Question {index + 1}</strong>
+                      <small>
+                        {current
+                          ? 'Current question'
+                          : answered
+                            ? 'Answered'
+                            : 'Not answered'}
+                      </small>
+                    </span>
                   </button>
                 </li>
               );
@@ -642,10 +755,16 @@ export function TraineeAssessment() {
         </nav>
         <Link
           className="assessment-back-link"
-          to={`/trainee/training/${detail.assignmentId}${hasScenario ? '/scenario' : ''}`}
+          to={`/trainee/training/${detail.assignmentId}${submittedReviewActive ? '' : hasScenario ? '/scenario' : ''}`}
         >
           <span aria-hidden="true">←</span>
-          <span>{hasScenario ? 'Back to Scenario' : 'Back to Learning'}</span>
+          <span>
+            {submittedReviewActive
+              ? 'Back to Module'
+              : hasScenario
+                ? 'Back to Scenario'
+                : 'Back to Learning'}
+          </span>
         </Link>
       </aside>
       <button
@@ -666,24 +785,47 @@ export function TraineeAssessment() {
           Questions
         </button>
         <div>
-          <p className="eyebrow">My Training / {moduleTitle} / Assessment</p>
+          <p className="eyebrow">Final Assessment</p>
           <h1>{detail.assessment.title}</h1>
-          <p>{detail.assessment.description}</p>
+          <p>
+            {submittedReviewActive
+              ? `Reviewing submitted assessment. Score: ${passedAttempt?.scorePercentage}%. Saved answers cannot be changed.`
+              : 'Select the safest response for each question. Your result will be calculated after submission.'}
+          </p>
         </div>
         <div className="assessment-header-progress">
+          <span>
+            {questions.length} Questions · {detail.assessment.passPercentage}%
+            Pass mark
+          </span>
           <span>
             {reviewing
               ? 'Review answers'
               : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
           </span>
-          <strong>{answerProgress}%</strong>
+          <strong>{answerProgress}% complete</strong>
         </div>
         <Link
           className="assessment-button secondary"
-          to={`/trainee/training/${detail.assignmentId}${hasScenario ? '/scenario' : ''}`}
+          to={`/trainee/training/${detail.assignmentId}${submittedReviewActive ? '' : hasScenario ? '/scenario' : ''}`}
         >
-          ← Back to {hasScenario ? 'scenario' : 'learning'}
+          ← Back to{' '}
+          {submittedReviewActive
+            ? 'module'
+            : hasScenario
+              ? 'scenario'
+              : 'learning'}
         </Link>
+        <div
+          className="assessment-header-track"
+          role="progressbar"
+          aria-label="Questions answered"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={answerProgress}
+        >
+          <span style={{ width: `${answerProgress}%` }} />
+        </div>
       </header>
 
       <section
@@ -706,7 +848,9 @@ export function TraineeAssessment() {
         </div>
       </section>
 
-      {detail.latestAttempt && !detail.latestAttempt.passed ? (
+      {detail.latestAttempt &&
+      !detail.latestAttempt.passed &&
+      !submittedReviewActive ? (
         <section className="assessment-previous-attempt card" role="status">
           <strong>
             Previous attempt: {detail.latestAttempt.scorePercentage}%
@@ -722,7 +866,7 @@ export function TraineeAssessment() {
         className="assessment-form"
         onSubmit={(event) => {
           event.preventDefault();
-          void submitAssessment();
+          if (!submittedReviewActive) void submitAssessment();
         }}
       >
         {questions.map((question, index) => (
@@ -732,8 +876,15 @@ export function TraineeAssessment() {
             hidden={reviewing || currentQuestionIndex !== index}
           >
             <legend>
-              <span>
-                Question {index + 1} of {questions.length}
+              <span className="assessment-question-meta">
+                <span>
+                  Question {index + 1} of {questions.length}
+                </span>
+                <span className="assessment-choice-badge">
+                  {question.questionType === 'true_false'
+                    ? 'True or false'
+                    : 'Single choice'}
+                </span>
               </span>
               {question.questionText}
             </legend>
@@ -741,20 +892,23 @@ export function TraineeAssessment() {
             <div className="assessment-options">
               {question.options.map((option) => (
                 <label
-                  className={`assessment-option ${answers[question.id] === option.id ? 'selected' : ''}`}
+                  className={`assessment-option ${displayedAnswers[question.id] === option.id ? 'selected' : ''}`}
                   key={option.id}
                 >
                   <input
                     type="radio"
                     name={`assessment-question-${question.id}`}
                     value={option.id}
-                    checked={answers[question.id] === option.id}
-                    onChange={() =>
-                      setAnswers((current) => ({
-                        ...current,
-                        [question.id]: option.id,
-                      }))
-                    }
+                    checked={displayedAnswers[question.id] === option.id}
+                    disabled={submittedReviewActive}
+                    onChange={() => {
+                      if (!submittedReviewActive) {
+                        setAnswers((current) => ({
+                          ...current,
+                          [question.id]: option.id,
+                        }));
+                      }
+                    }}
                   />
                   <span>{option.optionText}</span>
                 </label>
@@ -770,19 +924,28 @@ export function TraineeAssessment() {
               >
                 ← Previous
               </button>
-              <button
-                className="assessment-button primary"
-                type="button"
-                onClick={() => {
-                  if (index === questions.length - 1) {
-                    setReviewing(true);
-                  } else {
-                    setCurrentQuestionIndex(index + 1);
-                  }
-                }}
-              >
-                {index === questions.length - 1 ? 'Review answers' : 'Next →'}
-              </button>
+              {submittedReviewActive && index === questions.length - 1 ? (
+                <Link
+                  className="assessment-button primary"
+                  to={`/trainee/training/${detail.assignmentId}/assessment`}
+                >
+                  Back to result
+                </Link>
+              ) : (
+                <button
+                  className="assessment-button primary"
+                  type="button"
+                  onClick={() => {
+                    if (index === questions.length - 1) {
+                      setReviewing(true);
+                    } else {
+                      setCurrentQuestionIndex(index + 1);
+                    }
+                  }}
+                >
+                  {index === questions.length - 1 ? 'Review answers' : 'Next →'}
+                </button>
+              )}
             </div>
           </fieldset>
         ))}
@@ -829,7 +992,10 @@ export function TraineeAssessment() {
           </div>
         ) : null}
 
-        <section className="assessment-submit card" hidden={!reviewing}>
+        <section
+          className="assessment-submit card"
+          hidden={!reviewing || submittedReviewActive}
+        >
           <div>
             <strong>
               {allAnswered

@@ -204,7 +204,7 @@ test('administrator dashboard is role-protected and reports database-backed work
       title: string;
       assignedCount: number;
       completedCount: number;
-      averageProgress: number;
+      completionRate: number;
     }>;
   };
 
@@ -235,7 +235,7 @@ test('administrator dashboard is role-protected and reports database-backed work
   assert.ok(manualHandling);
   assert.equal(manualHandling.assignedCount, 1);
   assert.equal(manualHandling.completedCount, 0);
-  assert.equal(manualHandling.averageProgress, 0);
+  assert.equal(manualHandling.completionRate, 0);
 });
 
 test('administrator can list, create, edit and deactivate trainee accounts without exposing password hashes', async () => {
@@ -332,10 +332,9 @@ test('administrator can list, create, edit and deactivate trainee accounts witho
     },
     { firstName: 'Updated', isActive: false, jobRole: null },
   );
-  assert.deepEqual(
-    changed?.requiredTrainingModuleIds,
-    [initial.trainingModules[0]!.id],
-  );
+  assert.deepEqual(changed?.requiredTrainingModuleIds, [
+    initial.trainingModules[0]!.id,
+  ]);
   assert.equal(changed?.assignedCount, 1);
 
   const removedRequirement = await fetch(`${base}/api/admin/users/${id}`, {
@@ -429,7 +428,9 @@ test('administrator can manage module metadata and draft assessment questions sa
     'X-KISTS-Request': '1',
     'Content-Type': 'application/json',
   };
-  const libraryResponse = await fetch(`${base}/api/admin/training-content`, { headers: { Cookie: adminCookie } });
+  const libraryResponse = await fetch(`${base}/api/admin/training-content`, {
+    headers: { Cookie: adminCookie },
+  });
   assert.equal(libraryResponse.status, 200);
   const library = (await libraryResponse.json()) as {
     summary: { totalModules: number; assessmentQuestions: number };
@@ -437,55 +438,123 @@ test('administrator can manage module metadata and draft assessment questions sa
   };
   assert.ok(library.summary.totalModules >= 2);
   assert.ok(library.summary.assessmentQuestions >= 10);
-  const manual = library.modules.find((module) => module.slug === 'manual-handling');
+  const manual = library.modules.find(
+    (module) => module.slug === 'manual-handling',
+  );
   assert.ok(manual);
 
   const created = await fetch(`${base}/api/admin/training-content`, {
-    method: 'POST', headers,
-    body: JSON.stringify({ title: 'TEST Safe Loading', description: 'Draft authoring module.' }),
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      title: 'TEST Safe Loading',
+      description: 'Draft authoring module.',
+    }),
   });
   assert.equal(created.status, 201);
   const createdId = ((await created.json()) as { id: number }).id;
-  const updated = await fetch(`${base}/api/admin/training-content/${createdId}`, {
-    method: 'PATCH', headers,
-    body: JSON.stringify({ title: 'TEST Safe Loading Updated', description: 'Updated metadata.', isActive: true }),
-  });
+  const updated = await fetch(
+    `${base}/api/admin/training-content/${createdId}`,
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        title: 'TEST Safe Loading Updated',
+        description: 'Updated metadata.',
+        isActive: true,
+      }),
+    },
+  );
   assert.equal(updated.status, 200);
-  const createdDetail = await fetch(`${base}/api/admin/training-content/${createdId}`, { headers: { Cookie: adminCookie } });
+  const createdDetail = await fetch(
+    `${base}/api/admin/training-content/${createdId}`,
+    { headers: { Cookie: adminCookie } },
+  );
   assert.equal(createdDetail.status, 200);
-  const savedModule = (await createdDetail.json()) as { title: string; description: string; isActive: boolean };
+  const savedModule = (await createdDetail.json()) as {
+    title: string;
+    description: string;
+    isActive: boolean;
+  };
   assert.equal(savedModule.title, 'TEST Safe Loading Updated');
   assert.equal(savedModule.description, 'Updated metadata.');
   assert.equal(savedModule.isActive, true);
 
-  const detailResponse = await fetch(`${base}/api/admin/training-content/${manual.id}`, { headers: { Cookie: adminCookie } });
-  const detail = (await detailResponse.json()) as { assessments: Array<{ id: number }> };
+  const detailResponse = await fetch(
+    `${base}/api/admin/training-content/${manual.id}`,
+    { headers: { Cookie: adminCookie } },
+  );
+  const detail = (await detailResponse.json()) as {
+    assessments: Array<{ id: number }>;
+  };
   const assessmentId = detail.assessments[0]!.id;
-  const invalid = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`, {
-    method: 'POST', headers,
-    body: JSON.stringify({ questionText: 'Invalid', options: [{ optionText: 'Only', isCorrect: true }] }),
-  });
+  const invalid = await fetch(
+    `${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        questionText: 'Invalid',
+        options: [{ optionText: 'Only', isCorrect: true }],
+      }),
+    },
+  );
   assert.equal(invalid.status, 400);
-  const added = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`, {
-    method: 'POST', headers,
-    body: JSON.stringify({ questionText: 'What is the safest choice?', options: [{ optionText: 'Plan the lift', isCorrect: true }, { optionText: 'Rush', isCorrect: false }] }),
-  });
+  const added = await fetch(
+    `${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        questionText: 'What is the safest choice?',
+        options: [
+          { optionText: 'Plan the lift', isCorrect: true },
+          { optionText: 'Rush', isCorrect: false },
+        ],
+      }),
+    },
+  );
   assert.equal(added.status, 201);
   const questionId = ((await added.json()) as { id: number }).id;
-  const edited = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${questionId}`, {
-    method: 'PATCH', headers,
-    body: JSON.stringify({ questionText: 'What should happen before lifting?', options: [{ optionText: 'Assess the load', isCorrect: true }, { optionText: 'Lift immediately', isCorrect: false }] }),
-  });
+  const edited = await fetch(
+    `${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${questionId}`,
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        questionText: 'What should happen before lifting?',
+        options: [
+          { optionText: 'Assess the load', isCorrect: true },
+          { optionText: 'Lift immediately', isCorrect: false },
+        ],
+      }),
+    },
+  );
   assert.equal(edited.status, 200);
-  const deleted = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${questionId}`, { method: 'DELETE', headers, body: '{}' });
+  const deleted = await fetch(
+    `${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${questionId}`,
+    { method: 'DELETE', headers, body: '{}' },
+  );
   assert.equal(deleted.status, 204);
 
-  const protectedQuestion = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`, {
-    method: 'POST', headers,
-    body: JSON.stringify({ questionText: 'Protected question', options: [{ optionText: 'Correct', isCorrect: true }, { optionText: 'Incorrect', isCorrect: false }] }),
-  });
+  const protectedQuestion = await fetch(
+    `${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions`,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        questionText: 'Protected question',
+        options: [
+          { optionText: 'Correct', isCorrect: true },
+          { optionText: 'Incorrect', isCorrect: false },
+        ],
+      }),
+    },
+  );
   assert.equal(protectedQuestion.status, 201);
-  const protectedQuestionId = ((await protectedQuestion.json()) as { id: number }).id;
+  const protectedQuestionId = (
+    (await protectedQuestion.json()) as { id: number }
+  ).id;
   await database.query(
     `INSERT INTO assessment_attempts
       (trainee_id,training_assignment_id,training_module_id,assessment_id,pass_percentage_snapshot,attempt_number)
@@ -494,9 +563,14 @@ test('administrator can manage module metadata and draft assessment questions sa
      WHERE ta.training_module_id=$2 LIMIT 1`,
     [assessmentId, manual.id],
   );
-  const blocked = await fetch(`${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${protectedQuestionId}`, {
-    method: 'DELETE', headers, body: '{}',
-  });
+  const blocked = await fetch(
+    `${base}/api/admin/training-content/${manual.id}/assessments/${assessmentId}/questions/${protectedQuestionId}`,
+    {
+      method: 'DELETE',
+      headers,
+      body: '{}',
+    },
+  );
   assert.equal(blocked.status, 409);
 });
 
@@ -517,4 +591,120 @@ test('trainee cannot access administrator user management and mutations require 
     body: '{}',
   });
   assert.equal(response.status, 403);
+});
+
+test('Add trainee optionally creates required assignments atomically', async () => {
+  const adminCookie = await login(adminEmail);
+  const headers = {
+    Cookie: adminCookie,
+    Origin: env.clientUrl,
+    'X-KISTS-Request': '1',
+    'Content-Type': 'application/json',
+  };
+  const usersResponse = await fetch(`${base}/api/admin/users`, {
+    headers: { Cookie: adminCookie },
+  });
+  assert.equal(usersResponse.status, 200);
+  const usersData = (await usersResponse.json()) as {
+    trainingModules: Array<{ id: number; slug: string }>;
+  };
+  const manual = usersData.trainingModules.find(
+    (module) => module.slug === 'manual-handling',
+  );
+  const forklift = usersData.trainingModules.find(
+    (module) => module.slug === 'forklift-pedestrian-safety',
+  );
+  assert.ok(manual && forklift);
+  const create = (email: string, requiredTrainingModuleIds: number[]) =>
+    fetch(`${base}/api/admin/users`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        firstName: 'New',
+        lastName: 'Trainee',
+        email,
+        password: 'StrongPassword123!',
+        jobRoleId: null,
+        isActive: true,
+        requiredTrainingModuleIds,
+      }),
+    });
+
+  const empty = await create('no.training@example.invalid', []);
+  assert.equal(empty.status, 201);
+  const emptyId = ((await empty.json()) as { id: number }).id;
+  assert.equal(
+    (
+      await database.query(
+        'SELECT id FROM training_assignments WHERE trainee_id=$1',
+        [emptyId],
+      )
+    ).rowCount,
+    0,
+  );
+
+  const assigned = await create('assigned.training@example.invalid', [
+    manual.id,
+    forklift.id,
+    manual.id,
+  ]);
+  assert.equal(assigned.status, 201);
+  const assignedId = ((await assigned.json()) as { id: number }).id;
+  const rows = await database.query<{
+    trainingModuleId: number;
+    assignedBy: number;
+    required: boolean;
+    progressId: number | null;
+  }>(
+    `SELECT ta.training_module_id AS "trainingModuleId",
+       ta.assigned_by AS "assignedBy", ta.required,
+       p.id AS "progressId"
+     FROM training_assignments ta
+     LEFT JOIN progress p ON p.training_assignment_id=ta.id
+     WHERE ta.trainee_id=$1 ORDER BY ta.training_module_id`,
+    [assignedId],
+  );
+  assert.deepEqual(
+    rows.rows.map((row) => row.trainingModuleId),
+    [manual.id, forklift.id].sort((a, b) => a - b),
+  );
+  assert.ok(rows.rows.every((row) => row.required && row.progressId !== null));
+  const administrator = await database.query<{ id: number }>(
+    'SELECT id FROM users WHERE email=$1',
+    [adminEmail],
+  );
+  assert.ok(
+    rows.rows.every((row) => row.assignedBy === administrator.rows[0]!.id),
+  );
+  const assignmentList = await fetch(`${base}/api/admin/assignments`, {
+    headers: { Cookie: adminCookie },
+  });
+  assert.equal(assignmentList.status, 200);
+  assert.equal(
+    (
+      (await assignmentList.json()) as {
+        assignments: Array<{ traineeId: number }>;
+      }
+    ).assignments.filter((assignment) => assignment.traineeId === assignedId)
+      .length,
+    2,
+  );
+
+  const inactive = await database.query<{ id: number }>(
+    `INSERT INTO training_modules (title, slug, description, is_active)
+     VALUES ('Unavailable Training', 'unavailable-training', '', false) RETURNING id`,
+  );
+  const rejected = await create('partial.training@example.invalid', [
+    manual.id,
+    inactive.rows[0]!.id,
+  ]);
+  assert.equal(rejected.status, 400);
+  assert.equal(
+    (
+      await database.query('SELECT id FROM users WHERE email=$1', [
+        'partial.training@example.invalid',
+      ])
+    ).rowCount,
+    0,
+  );
 });

@@ -62,6 +62,58 @@ test('Manual Handling learning remains responsive across key breakpoints', async
   }
 });
 
+test('completed Forklift learning keeps the final assessment action', async ({
+  page,
+}) => {
+  await signIn(page);
+  const assignmentId = 999999;
+  await page.route(`**/api/trainee/training/${assignmentId}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        assignmentId,
+        moduleId: 2,
+        moduleTitle: 'Forklift and Pedestrian Safety',
+        moduleDescription: '',
+        hasScenario: false,
+        status: 'in_progress',
+        progress: {
+          assignmentPercentage: 50,
+          learningProgressPercentage: 100,
+          completedSections: 8,
+          totalSections: 8,
+          startedAt: null,
+          completedAt: null,
+          lastAccessedAt: null,
+        },
+        sections: Array.from({ length: 8 }, (_, index) => ({
+          id: index + 1,
+          title: `Section ${index + 1}`,
+          contentType: 'text',
+          body: '',
+          resourceReference: null,
+          sequenceOrder: index + 1,
+          isActive: true,
+          completedAt: '2026-01-01T00:00:00.000Z',
+          formativeQuestions: [],
+        })),
+        resumeSectionIndex: 0,
+      }),
+    }),
+  );
+  await page.goto(`/trainee/training/${assignmentId}`);
+  await expect(
+    page
+      .locator('.course-player-header')
+      .getByText('8 of 8 sections completed'),
+  ).toBeVisible();
+  await page.getByRole('link', { name: /Start Final Assessment/ }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/trainee/training/${assignmentId}/assessment$`),
+  );
+});
+
 test('Manual Handling 360 scenario remains responsive across key breakpoints', async ({
   page,
 }) => {

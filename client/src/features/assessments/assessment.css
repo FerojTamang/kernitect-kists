@@ -351,7 +351,10 @@
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .assessment-question:hover {
@@ -377,7 +380,11 @@
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 2px 0 rgb(15 23 42 / 2%);
-  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
 }
 
 .assessment-option:hover {
@@ -395,7 +402,9 @@
 .assessment-option.selected {
   border-color: #6c5ce7;
   background: linear-gradient(135deg, #f7f5ff, #eef2ff);
-  box-shadow: inset 3px 0 0 #6c5ce7, 0 8px 20px rgb(108 92 231 / 8%);
+  box-shadow:
+    inset 3px 0 0 #6c5ce7,
+    0 8px 20px rgb(108 92 231 / 8%);
 }
 
 .assessment-option input {
@@ -418,7 +427,10 @@
 .assessment-button {
   min-height: 44px;
   border-radius: 10px;
-  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
 }
 
 .assessment-button:not(:disabled):hover {

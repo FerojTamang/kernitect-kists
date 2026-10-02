@@ -320,8 +320,15 @@
   text-decoration: none;
 }
 
-.admin-summary-card:hover{border-color:#cfd8e6;box-shadow:0 12px 28px rgba(15,23,42,.07)}
-.admin-summary-card:focus-visible,.admin-attention-metric:focus-visible{outline:3px solid rgba(108,92,231,.24);outline-offset:2px}
+.admin-summary-card:hover {
+  border-color: #cfd8e6;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+}
+.admin-summary-card:focus-visible,
+.admin-attention-metric:focus-visible {
+  outline: 3px solid rgba(108, 92, 231, 0.24);
+  outline-offset: 2px;
+}
 
 .admin-summary-icon {
   display: grid;
@@ -335,7 +342,10 @@
   font-size: 1.15rem;
 }
 
-.admin-summary-icon svg{width:23px;height:23px}
+.admin-summary-icon svg {
+  width: 23px;
+  height: 23px;
+}
 
 .admin-summary-card > div {
   display: grid;
@@ -404,18 +414,31 @@
   border: 1px solid #edf0f5;
   border-radius: 12px;
   background: #fafbfc;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.admin-module-row:hover {
+  border-color: #dcd8f5;
+  box-shadow: 0 5px 14px rgba(49, 46, 129, 0.06);
 }
 
 .admin-module-icon {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: 10px;
-  color: #5b4fd6;
   background: #efedff;
-  font-weight: 800;
+  overflow: hidden;
+}
+
+.admin-module-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .admin-module-copy {
@@ -437,9 +460,10 @@
 }
 
 .admin-module-title-row span {
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 700;
+  flex: 0 0 auto;
+  color: #4438b5;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .admin-module-copy small {
@@ -457,25 +481,54 @@
 }
 
 .admin-attention-metric {
-  display: flex;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 0;
+  gap: 11px;
+  padding: 12px 6px;
   border-bottom: 1px solid #eef2f7;
-  color:inherit;
-  text-decoration:none;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
 }
 
-.admin-attention-metric:hover{color:#315fc0}
+.admin-attention-metric:hover {
+  color: #4f46c7;
+  background: #f7f6ff;
+}
 
-.admin-attention-metric span {
-  color: #64748b;
+.admin-attention-metric > span:not(.admin-attention-arrow) {
+  display: grid;
+  gap: 3px;
+  color: #26334b;
   font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.admin-attention-metric small {
+  color: #7b879a;
+  font-size: 0.69rem;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .admin-attention-metric strong {
-  font-size: 1.15rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  color: #5145bb;
+  background: #f0edff;
+  font-size: 1.02rem;
+}
+
+.admin-attention-arrow {
+  color: #6c5ce7;
+  font-size: 1rem;
 }
 
 .admin-quick-actions {
@@ -583,6 +636,16 @@
 .admin-status-not-started {
   color: #475569;
   background: #e2e8f0;
+}
+
+.admin-status[data-stage='360° Scenario'] {
+  color: #155e87;
+  background: #e5f5ff;
+}
+
+.admin-status[data-stage='Final Assessment'] {
+  color: #6d48a8;
+  background: #f2eaff;
 }
 
 .admin-certificate-yes {
@@ -706,5 +769,135 @@
 
   .admin-table {
     min-width: 0;
+  }
+}
+
+/* Keep dashboard status visible before secondary navigation. */
+.admin-dashboard {
+  padding-top: 16px;
+}
+
+.admin-dashboard .admin-hero {
+  gap: 22px;
+  margin-bottom: 14px;
+  padding: 14px 24px;
+}
+
+.admin-dashboard .admin-eyebrow {
+  margin-bottom: 5px;
+}
+
+.admin-dashboard .admin-hero h1 {
+  margin-bottom: 4px;
+}
+
+.admin-dashboard .admin-hero > div:first-child > p:last-child {
+  line-height: 1.45;
+}
+
+.admin-dashboard .admin-hero-status {
+  padding: 10px 14px;
+}
+
+.admin-dashboard .admin-hero-status > strong {
+  margin: 2px 0 6px;
+}
+
+.admin-dashboard .admin-hero-status small {
+  margin-top: 6px;
+}
+
+.admin-dashboard .admin-summary-grid {
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-dashboard .admin-summary-card {
+  min-height: 98px;
+  padding: 14px 16px;
+}
+
+.admin-dashboard .admin-dashboard-grid {
+  margin-bottom: 14px;
+}
+
+.admin-dashboard .admin-workflow-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+}
+
+.admin-dashboard .admin-workflow-heading {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.admin-dashboard .admin-workflow-heading > span {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.admin-dashboard .admin-workflow-heading small {
+  display: none;
+}
+
+.admin-dashboard .admin-workflow-nav ol {
+  flex: 1;
+  gap: 7px;
+}
+
+.admin-dashboard .admin-workflow-nav a {
+  min-height: 44px;
+  gap: 7px;
+  padding: 6px 8px;
+}
+
+.admin-dashboard .admin-workflow-step {
+  flex-basis: 27px;
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+}
+
+.admin-dashboard .admin-workflow-step svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-dashboard .admin-workflow-copy strong {
+  font-size: 0.76rem;
+}
+
+.admin-dashboard .admin-workflow-copy small {
+  font-size: 0.65rem;
+}
+
+@media (max-width: 1100px) {
+  .admin-dashboard .admin-workflow-nav {
+    display: block;
+  }
+
+  .admin-dashboard .admin-workflow-heading {
+    margin-bottom: 7px;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-dashboard .admin-hero {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-dashboard .admin-workflow-nav ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-dashboard .admin-workflow-nav ol {
+    grid-template-columns: 1fr;
   }
 }

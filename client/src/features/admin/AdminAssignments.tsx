@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api/request';
-import { AdminWorkflowNav } from './AdminWorkflowNav';
 import './admin-assignments.css';
 
 type AssignmentStatus = 'active' | 'cancelled';
@@ -24,6 +23,7 @@ type Assignment = {
   assignedByLastName: string;
   progressPercentage: number;
   completedAt: string | null;
+  progressStage: string;
 };
 
 type TraineeOption = {
@@ -128,7 +128,8 @@ export function AdminAssignments() {
     () =>
       data?.assignments.filter((assignment) => {
         const query = search.trim().toLowerCase();
-        const searchable = `${assignment.traineeFirstName} ${assignment.traineeLastName} ${assignment.traineeEmail} ${assignment.trainingModuleTitle} ${assignment.traineeJobRole ?? ''}`.toLowerCase();
+        const searchable =
+          `${assignment.traineeFirstName} ${assignment.traineeLastName} ${assignment.traineeEmail} ${assignment.trainingModuleTitle} ${assignment.traineeJobRole ?? ''}`.toLowerCase();
         return (
           (!query || searchable.includes(query)) &&
           (moduleFilter === 'all' ||
@@ -140,6 +141,11 @@ export function AdminAssignments() {
       }) ?? [],
     [data, moduleFilter, requirementFilter, search, statusFilter],
   );
+  const hasActiveFilters =
+    search.trim() !== '' ||
+    moduleFilter !== 'all' ||
+    requirementFilter !== 'all' ||
+    statusFilter !== 'all';
 
   function openDialog() {
     setForm(emptyForm);
@@ -217,8 +223,6 @@ export function AdminAssignments() {
         </button>
       </header>
 
-      <AdminWorkflowNav />
-
       <section
         className="admin-assignments-stats"
         aria-label="Training assignment summary"
@@ -254,7 +258,9 @@ export function AdminAssignments() {
       </section>
 
       <section className="admin-assignments-panel">
-        <div className="admin-assignments-toolbar">
+        <div
+          className={`admin-assignments-toolbar${hasActiveFilters ? ' has-active-filters' : ''}`}
+        >
           <label className="admin-assignments-search">
             <span>⌕</span>
             <input
@@ -294,6 +300,20 @@ export function AdminAssignments() {
             <option value="active">Active</option>
             <option value="cancelled">Cancelled</option>
           </select>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              className="admin-assignments-clear"
+              onClick={() => {
+                setSearch('');
+                setModuleFilter('all');
+                setRequirementFilter('all');
+                setStatusFilter('all');
+              }}
+            >
+              Clear filters
+            </button>
+          ) : null}
         </div>
 
         <div className="admin-assignments-table-wrap">
@@ -303,7 +323,7 @@ export function AdminAssignments() {
                 <th>Trainee</th>
                 <th>Training module</th>
                 <th>Requirement</th>
-                <th>Status</th>
+                <th>Assignment status</th>
                 <th>Progress</th>
                 <th>Assigned</th>
               </tr>
@@ -313,8 +333,7 @@ export function AdminAssignments() {
                 <tr key={assignment.id}>
                   <td>
                     <strong>
-                      {assignment.traineeFirstName}{' '}
-                      {assignment.traineeLastName}
+                      {assignment.traineeFirstName} {assignment.traineeLastName}
                     </strong>
                     <small>{assignment.traineeEmail}</small>
                     <small>
@@ -349,9 +368,9 @@ export function AdminAssignments() {
                       </span>
                       <b>{assignment.progressPercentage}%</b>
                     </div>
-                    {assignment.completedAt ? (
-                      <small>Completed</small>
-                    ) : null}
+                    <small className="admin-assignment-stage">
+                      {assignment.progressStage}
+                    </small>
                   </td>
                   <td>
                     <span>{formatDate(assignment.assignedAt)}</span>
@@ -376,15 +395,14 @@ export function AdminAssignments() {
         <div>
           <span>i</span>
           <div>
-            <strong>Assignment integrity</strong>
+            <strong>Assignment rules</strong>
             <p>
               Each trainee can receive a training module only once. Required
-              assignments contribute to the existing certification rules;
-              optional assignments do not block certification.
+              assignments contribute to certification requirements; optional
+              assignments do not block certification.
             </p>
           </div>
         </div>
-        <p>{data.summary.total} assignment record(s) in the database.</p>
       </section>
 
       {dialogOpen ? (
@@ -410,9 +428,7 @@ export function AdminAssignments() {
             </button>
             <p className="admin-assignments-eyebrow">New assignment</p>
             <h2 id="assignment-form-title">Assign training</h2>
-            <p>
-              Create a database-backed training assignment for one trainee.
-            </p>
+            <p>Create a database-backed training assignment for one trainee.</p>
 
             <div className="admin-assignments-info">
               <strong>Create training assignment</strong>
@@ -503,10 +519,7 @@ export function AdminAssignments() {
                 </p>
               ) : null}
 
-              <button
-                className="admin-assignments-primary"
-                disabled={saving}
-              >
+              <button className="admin-assignments-primary" disabled={saving}>
                 {saving ? 'Assigning…' : 'Assign training'}
               </button>
               <button

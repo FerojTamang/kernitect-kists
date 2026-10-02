@@ -33,6 +33,14 @@ interface FormativeQuestionRow {
   answeredCorrectly: boolean;
 }
 
+interface ModuleProgressionRow {
+  activeScenarioCount: number;
+  completedScenarioCount: number;
+  scenarioStarted: boolean;
+  hasAssessment: boolean;
+  assessmentPassed: boolean;
+}
+
 export class TrainingRepository {
   constructor(private readonly database: Pick<Pool, 'query'>) {}
 
@@ -89,6 +97,42 @@ export class TrainingRepository {
       [assignmentId, userId],
     );
     return result.rows;
+  }
+
+  async findModuleProgression(
+    userId: number,
+    assignmentId: number,
+  ): Promise<ModuleProgressionRow | undefined> {
+    const result = await this.database.query<ModuleProgressionRow>(
+      `SELECT
+        (SELECT COUNT(*)::int FROM scenarios s
+          WHERE s.training_module_id = a.training_module_id AND s.is_active)
+          AS "activeScenarioCount",
+        (SELECT COUNT(*)::int FROM scenario_attempts sa
+          JOIN scenarios s ON s.id = sa.scenario_id AND s.is_active
+          WHERE sa.training_assignment_id = a.id
+            AND sa.completed_at IS NOT NULL) AS "completedScenarioCount",
+        EXISTS (SELECT 1 FROM scenario_attempts sa
+          JOIN scenarios s ON s.id = sa.scenario_id AND s.is_active
+          WHERE sa.training_assignment_id = a.id) AS "scenarioStarted",
+        EXISTS (SELECT 1 FROM assessments assessment
+          WHERE assessment.training_module_id = a.training_module_id
+            AND assessment.is_active) AS "hasAssessment",
+        NOT EXISTS (SELECT 1 FROM assessments assessment
+          WHERE assessment.training_module_id = a.training_module_id
+            AND assessment.is_active
+            AND NOT EXISTS (SELECT 1 FROM assessment_attempts attempt
+              WHERE attempt.training_assignment_id = a.id
+                AND attempt.assessment_id = assessment.id
+                AND attempt.submitted_at IS NOT NULL AND attempt.passed))
+          AS "assessmentPassed"
+      FROM training_assignments a
+      JOIN training_modules m ON m.id = a.training_module_id
+      WHERE a.id = $1 AND a.trainee_id = $2 AND a.status = 'active'
+        AND m.is_active`,
+      [assignmentId, userId],
+    );
+    return result.rows[0];
   }
 
   async touchProgress(userId: number, assignmentId: number): Promise<void> {

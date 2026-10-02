@@ -5,6 +5,7 @@ import type {
   AssessmentQuestion,
   AssessmentSubmissionAnswer,
   AssessmentSubmissionResult,
+  SubmittedAssessmentReview,
   TrainingAssessmentDetail,
 } from './assessment.types.js';
 
@@ -105,6 +106,47 @@ export class AssessmentService {
       questions,
       latestAttempt,
     };
+  }
+
+  async getSubmittedReview(
+    user: AuthUser,
+    assignmentId: number,
+  ): Promise<SubmittedAssessmentReview> {
+    const assessment = await this.getAssessment(user, assignmentId);
+    const attempt = assessment.latestAttempt;
+    if (!attempt?.passed) {
+      throw new HttpError(
+        404,
+        'A submitted passing assessment is not available for review.',
+        'ASSESSMENT_REVIEW_NOT_FOUND',
+      );
+    }
+
+    const answers = await this.repository.findSubmittedAnswers(
+      user.id,
+      assignmentId,
+      assessment.assessment.id,
+      attempt.id,
+    );
+    if (
+      answers.length !== assessment.questions.length ||
+      answers.some(
+        (answer) =>
+          !assessment.questions.some(
+            (question) =>
+              question.id === answer.questionId &&
+              question.options.some((option) => option.id === answer.optionId),
+          ),
+      )
+    ) {
+      throw new HttpError(
+        409,
+        'The submitted answers cannot be displayed with the current questions.',
+        'ASSESSMENT_REVIEW_UNAVAILABLE',
+      );
+    }
+
+    return { attempt, answers };
   }
 
   async submitAssessment(

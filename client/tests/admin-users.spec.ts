@@ -42,11 +42,18 @@ test('administrator users page lists trainees, filters accounts and opens the tr
     page
       .locator('tr')
       .filter({ hasText: first.email })
-      .getByText(`${first.assignedCount} module${first.assignedCount === 1 ? '' : 's'}`),
+      .getByText(
+        `${first.assignedCount} module${first.assignedCount === 1 ? '' : 's'}`,
+      ),
   ).toBeVisible();
-  const identity = page.locator('.admin-users-identity').filter({ hasText: first.email });
+  const identity = page
+    .locator('.admin-users-identity')
+    .filter({ hasText: first.email });
   if (first.avatarUrl) {
-    await expect(identity.locator('img')).toHaveAttribute('src', first.avatarUrl);
+    await expect(identity.locator('img')).toHaveAttribute(
+      'src',
+      first.avatarUrl,
+    );
   } else {
     await expect(identity.locator('.admin-users-avatar')).toHaveText(
       `${first.firstName[0] ?? ''}${first.lastName[0] ?? ''}`.toUpperCase(),
@@ -56,7 +63,9 @@ test('administrator users page lists trainees, filters accounts and opens the tr
     .getByRole('button', { name: `Edit ${first.firstName} ${first.lastName}` })
     .click();
   let dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('group', { name: 'Required training' })).toBeVisible();
+  await expect(
+    dialog.getByRole('group', { name: 'Required training' }),
+  ).toBeVisible();
   for (const module of data.trainingModules) {
     const checkbox = dialog.getByRole('checkbox', { name: module.title });
     await expect(checkbox).toBeVisible();
@@ -67,7 +76,9 @@ test('administrator users page lists trainees, filters accounts and opens the tr
     }
   }
   const changedModule = data.trainingModules[0]!;
-  const wasRequired = first.requiredTrainingModuleIds.includes(changedModule.id);
+  const wasRequired = first.requiredTrainingModuleIds.includes(
+    changedModule.id,
+  );
   await dialog.getByRole('checkbox', { name: changedModule.title }).click();
   await dialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(dialog).toBeHidden();

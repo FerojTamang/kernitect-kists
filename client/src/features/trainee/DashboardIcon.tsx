@@ -60,6 +60,12 @@ const paths: Record<string, ReactNode> = {
     </>
   ),
   'Progress & results': <path d="M3 21V13h4v8m3 0V8h4v13m3 0V3h4v18H3" />,
+  'Support messages': (
+    <>
+      <path d="M4 4h16v12H8l-4 4V4Z" />
+      <path d="M8 8h8M8 12h5" />
+    </>
+  ),
   check: (
     <>
       <circle cx="12" cy="12" r="9" />

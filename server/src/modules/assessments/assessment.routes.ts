@@ -27,6 +27,7 @@ export function createAssessmentRouter(
   router.use(requireAuthentication(authService), requireSystemRole('trainee'));
 
   router.get('/:assignmentId/assessment', controller.detail);
+  router.get('/:assignmentId/assessment/review', controller.review);
   router.post(
     '/:assignmentId/assessment/submit',
     requireTrustedMutation,

@@ -45,6 +45,11 @@ export interface AssessmentSubmissionAnswer {
   optionId: number;
 }
 
+export interface SubmittedAssessmentReview {
+  attempt: AssessmentAttemptSummary;
+  answers: AssessmentSubmissionAnswer[];
+}
+
 export interface AssessmentSubmissionResult {
   assignmentId: number;
   assessmentId: number;

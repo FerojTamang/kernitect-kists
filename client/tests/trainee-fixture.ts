@@ -66,6 +66,9 @@ export async function removeTrainee() {
   try {
     if (userId !== undefined) {
       // Only records owned by the account created above; never reset demo data.
+      await pool.query('DELETE FROM support_messages WHERE trainee_id = $1', [
+        userId,
+      ]);
       await pool.query('DELETE FROM progress WHERE trainee_id = $1', [userId]);
       await pool.query(
         'DELETE FROM training_assignments WHERE trainee_id = $1',

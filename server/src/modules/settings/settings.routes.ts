@@ -1,7 +1,13 @@
 import express, { Router } from 'express';
 import type { Pool } from 'pg';
-import { requireAuthentication, requireSystemRole } from '../../middleware/authentication.js';
-import { requireTrustedMutation, requireTrustedRequest } from '../../middleware/auth-security.js';
+import {
+  requireAuthentication,
+  requireSystemRole,
+} from '../../middleware/authentication.js';
+import {
+  requireTrustedMutation,
+  requireTrustedRequest,
+} from '../../middleware/auth-security.js';
 import type { AuthService } from '../auth/auth.service.js';
 import type { SystemRole } from '../auth/auth.types.js';
 import { SettingsController } from './settings.controller.js';
@@ -19,8 +25,18 @@ export function createSettingsRouter(
     `/api/${role === 'administrator' ? 'admin' : 'trainee'}/settings/avatar`,
   );
   router.use(requireAuthentication(authService), requireSystemRole(role));
+  if (role === 'administrator')
+    router.patch('/profile', requireTrustedMutation, controller.updateName);
   router.get('/avatar', controller.avatar);
-  router.post('/avatar', requireTrustedRequest, express.raw({ type: ['image/jpeg','image/png','image/webp'], limit: '2mb' }), controller.uploadAvatar);
+  router.post(
+    '/avatar',
+    requireTrustedRequest,
+    express.raw({
+      type: ['image/jpeg', 'image/png', 'image/webp'],
+      limit: '2mb',
+    }),
+    controller.uploadAvatar,
+  );
   router.delete('/avatar', requireTrustedRequest, controller.removeAvatar);
   router.post('/password', requireTrustedMutation, controller.password);
   return router;

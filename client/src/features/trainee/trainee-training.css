@@ -215,6 +215,10 @@
   filter: saturate(0.94) contrast(1.03);
 }
 
+.assigned-module-image.manual-handling {
+  object-position: center 5%;
+}
+
 .module-status-badge {
   position: absolute;
   top: 12px;

@@ -36,4 +36,9 @@ export const adminNavigation: NavigationItem[] = [
     label: 'Settings',
     description: 'Manage your administrator profile and account security.',
   },
+  {
+    path: 'support',
+    label: 'Support messages',
+    description: 'Review and manage trainee support requests.',
+  },
 ];

@@ -55,7 +55,8 @@ test('9E-B3 administrator can trace the workflow trainee assignment into progres
 
   const assignmentsResponse = await page.request.get('/api/admin/assignments');
   expect(assignmentsResponse.status()).toBe(200);
-  const assignmentsData = (await assignmentsResponse.json()) as AssignmentsPayload;
+  const assignmentsData =
+    (await assignmentsResponse.json()) as AssignmentsPayload;
 
   const workflowAssignments = assignmentsData.assignments.filter(
     (item) => item.traineeEmail === workflowEmail && item.status === 'active',
@@ -66,8 +67,9 @@ test('9E-B3 administrator can trace the workflow trainee assignment into progres
   ).toBeGreaterThanOrEqual(1);
 
   const assignment =
-    workflowAssignments.find((item) => item.trainingModuleTitle === 'Manual Handling') ??
-    workflowAssignments[0]!;
+    workflowAssignments.find(
+      (item) => item.trainingModuleTitle === 'Manual Handling',
+    ) ?? workflowAssignments[0]!;
 
   const progressResponse = await page.request.get('/api/admin/progress');
   expect(progressResponse.status()).toBe(200);
@@ -77,7 +79,10 @@ test('9E-B3 administrator can trace the workflow trainee assignment into progres
     (item) => item.assignmentId === assignment.id,
   );
 
-  expect(record, 'The B2 assignment should appear in administrator progress monitoring').toBeDefined();
+  expect(
+    record,
+    'The B2 assignment should appear in administrator progress monitoring',
+  ).toBeDefined();
   expect(record).toMatchObject({
     traineeEmail: workflowEmail,
     trainingModuleId: assignment.trainingModuleId,
@@ -86,8 +91,12 @@ test('9E-B3 administrator can trace the workflow trainee assignment into progres
     assignmentStatus: assignment.status,
   });
 
-  const workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
-  await workflow.getByRole('link', { name: 'Open progress monitoring' }).click();
+  const workflow = page.getByRole('navigation', {
+    name: 'Administrator workflow',
+  });
+  await workflow
+    .getByRole('link', { name: 'Open progress monitoring' })
+    .click();
   await expect(page).toHaveURL(/\/admin\/progress$/);
 
   await page.getByLabel('Search trainees').fill(workflowEmail);
@@ -95,7 +104,9 @@ test('9E-B3 administrator can trace the workflow trainee assignment into progres
     .getByLabel('Training module')
     .selectOption(String(assignment.trainingModuleId));
 
-  const progressRecords = page.getByRole('region', { name: 'Trainee progress records' });
+  const progressRecords = page.getByRole('region', {
+    name: 'Trainee progress records',
+  });
   const row = progressRecords
     .locator('tbody tr')
     .filter({ hasText: workflowEmail })
@@ -105,8 +116,12 @@ test('9E-B3 administrator can trace the workflow trainee assignment into progres
   await expect(row).toBeVisible();
   await expect(row).toContainText(workflowEmail);
   await expect(row).toContainText(assignment.trainingModuleTitle);
-  await expect(row).toContainText(assignment.required ? 'Required assignment' : 'Optional assignment');
+  await expect(row).toContainText(
+    assignment.required ? 'Required assignment' : 'Optional assignment',
+  );
   await expect(row).toContainText(`${record!.progressPercentage}%`);
 
-  await expect(page.locator('.admin-progress-filter-meta')).toContainText('Showing 1 of');
+  await expect(page.locator('.admin-progress-filter-meta')).toContainText(
+    'Showing 1 of',
+  );
 });

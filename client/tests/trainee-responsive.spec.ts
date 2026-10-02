@@ -1,9 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import {
-  createTrainee,
-  removeTrainee,
-  trainee,
-} from './trainee-fixture';
+import { createTrainee, removeTrainee, trainee } from './trainee-fixture';
 
 const password = process.env.KISTS_DEMO_PASSWORD!;
 
@@ -58,14 +54,19 @@ test('trainee dashboard and training remain responsive across key breakpoints', 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/trainee/dashboard');
 
-  const sidebarBox = await page.locator('.trainee-shell .sidebar').boundingBox();
+  const sidebarBox = await page
+    .locator('.trainee-shell .sidebar')
+    .boundingBox();
   expect(sidebarBox).not.toBeNull();
   expect((sidebarBox?.x ?? 0) + (sidebarBox?.width ?? 0)).toBeLessThanOrEqual(
     390.5,
   );
 
   await page.goto('/trainee/training');
-  const moduleCardBox = await page.locator('.assigned-module-card').first().boundingBox();
+  const moduleCardBox = await page
+    .locator('.assigned-module-card')
+    .first()
+    .boundingBox();
   expect(moduleCardBox).not.toBeNull();
   expect(
     (moduleCardBox?.x ?? 0) + (moduleCardBox?.width ?? 0),

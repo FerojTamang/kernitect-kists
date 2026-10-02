@@ -20,6 +20,7 @@ export interface AdminDashboardTrainee {
   latestAssessmentScore: number | null;
   latestAssessmentPassed: boolean | null;
   certificateIssued: boolean;
+  currentStage: string;
 }
 
 export interface AdminDashboardModule {
@@ -28,7 +29,12 @@ export interface AdminDashboardModule {
   slug: string;
   assignedCount: number;
   completedCount: number;
-  averageProgress: number;
+  completionRate: number;
+}
+
+export interface AdminDashboardAttention {
+  traineesInProgress: number;
+  assessmentsAwaitingCompletion: number;
 }
 
 export interface AdminDashboardData {
@@ -36,6 +42,7 @@ export interface AdminDashboardData {
   summary: AdminDashboardSummary;
   trainees: AdminDashboardTrainee[];
   modules: AdminDashboardModule[];
+  attention: AdminDashboardAttention;
 }
 
 export interface AdminJobRole {
@@ -78,6 +85,7 @@ export interface CreateTraineeInput {
   password: string;
   jobRoleId: number | null;
   isActive: boolean;
+  requiredTrainingModuleIds?: number[];
 }
 
 export interface UpdateTraineeInput {
@@ -110,6 +118,7 @@ export interface AdminAssignment {
   assignedByLastName: string;
   progressPercentage: number;
   completedAt: string | null;
+  progressStage: string;
 }
 
 export interface AdminAssignmentTrainee {
@@ -161,6 +170,7 @@ export interface AdminProgressRecord {
   required: boolean;
   assignmentStatus: AdminAssignmentStatus;
   progressPercentage: number;
+  progressStage: string;
   startedAt: string | null;
   completedAt: string | null;
   lastAccessedAt: string | null;

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import dashboardHero from '../../assets/images/dashboard/dashboard-hero.jpg';
 import manualHandlingImage from '../../assets/images/dashboard/manual-handling.jpg';
@@ -14,6 +14,7 @@ import type {
 import './trainee-dashboard.css';
 import { DashboardIcon } from './DashboardIcon';
 import { useAuth } from '../auth/auth.context';
+import { SupportNotifications } from '../support/SupportNotifications';
 
 function statusLabel(status: AssignmentStatus): string {
   return status === 'in_progress'
@@ -77,9 +78,7 @@ function ContinueLearningCard({
   assignment: DashboardAssignment;
 }) {
   const navigate = useNavigate();
-  const learningProgress = assignment.title.toLowerCase().includes('manual')
-    ? assignment.learningProgressPercentage
-    : assignment.progressPercentage;
+  const learningProgress = assignment.learningProgressPercentage;
   const actionLabel =
     assignment.nextAction === 'start'
       ? 'Start'
@@ -182,7 +181,7 @@ function AssignedTrainingCard({
             </span>
             <span>
               <DashboardIcon name="Progress" />
-              {`${assignment.title.toLowerCase().includes('manual') ? assignment.learningProgressPercentage : assignment.progressPercentage}%`}
+              {`${assignment.learningProgressPercentage}%`}
             </span>
           </div>
           <button
@@ -200,10 +199,59 @@ function AssignedTrainingCard({
 }
 
 export function TraineeDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [dashboard, setDashboard] = useState<TraineeDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [profileMenuError, setProfileMenuError] = useState<string | null>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+
+    profileRef.current
+      ?.querySelector<HTMLElement>('[role="menuitem"]')
+      ?.focus();
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!profileRef.current?.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setProfileMenuOpen(false);
+        profileTriggerRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [profileMenuOpen]);
+
+  async function signOutFromProfile() {
+    if (signingOut) return;
+    setProfileMenuOpen(false);
+    setProfileMenuError(null);
+    setSigningOut(true);
+    try {
+      await logout();
+    } catch (logoutError) {
+      setProfileMenuError(
+        logoutError instanceof Error
+          ? logoutError.message
+          : 'Unable to sign out. Please try again.',
+      );
+    } finally {
+      setSigningOut(false);
+    }
+  }
 
   async function loadDashboard() {
     setLoading(true);
@@ -266,14 +314,8 @@ export function TraineeDashboard() {
   return (
     <div className="trainee-dashboard">
       <div className="dashboard-top-row">
-        <div className="dashboard-profile">
-          <button
-            className="notification-bell"
-            type="button"
-            aria-label="Notifications"
-          >
-            <DashboardIcon name="bell" />
-          </button>
+        <div className="dashboard-profile" ref={profileRef}>
+          <SupportNotifications role="trainee" />
           <div className="profile-divider" aria-hidden="true" />
           <span className="profile-avatar" aria-hidden="true">
             {user?.avatarUrl ? (
@@ -291,9 +333,70 @@ export function TraineeDashboard() {
             </strong>
             <small>Trainee</small>
           </div>
-          <span className="chevron" aria-hidden="true">
+          <button
+            ref={profileTriggerRef}
+            className={`profile-menu-trigger${profileMenuOpen ? ' open' : ''}`}
+            type="button"
+            aria-label="Account menu"
+            aria-haspopup="menu"
+            aria-expanded={profileMenuOpen}
+            aria-controls="trainee-profile-menu"
+            onClick={() => {
+              setProfileMenuError(null);
+              setProfileMenuOpen((current) => !current);
+            }}
+          >
             <DashboardIcon name="chevron" />
-          </span>
+          </button>
+          {profileMenuOpen && (
+            <div
+              className="profile-dropdown"
+              id="trainee-profile-menu"
+              role="menu"
+              aria-label="Trainee account"
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')
+                  return;
+                const items = Array.from(
+                  event.currentTarget.querySelectorAll<HTMLElement>(
+                    '[role="menuitem"]',
+                  ),
+                );
+                const index = items.indexOf(
+                  document.activeElement as HTMLElement,
+                );
+                const next =
+                  event.key === 'ArrowDown'
+                    ? (index + 1) % items.length
+                    : (index - 1 + items.length) % items.length;
+                event.preventDefault();
+                items[next]?.focus();
+              }}
+            >
+              <Link
+                to="/trainee/settings"
+                role="menuitem"
+                onClick={() => setProfileMenuOpen(false)}
+              >
+                <DashboardIcon name="Settings" />
+                View Settings
+              </Link>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={signingOut}
+                onClick={() => void signOutFromProfile()}
+              >
+                <DashboardIcon name="arrow" />
+                Log out
+              </button>
+            </div>
+          )}
+          {profileMenuError && (
+            <p className="profile-menu-error" role="alert">
+              {profileMenuError}
+            </p>
+          )}
         </div>
       </div>
 
@@ -425,7 +528,9 @@ export function TraineeDashboard() {
                       <span>
                         {statusLabel(assignment.status)}: {assignment.title}
                       </span>
-                      <small>{assignment.progressPercentage}%</small>
+                      <small>
+                        {assignment.learningProgressPercentage}% learning
+                      </small>
                     </div>
                   ))
                 ) : (
@@ -435,17 +540,48 @@ export function TraineeDashboard() {
             </div>
           </section>
 
-          <section className="support-card">
-            <div className="support-mark" aria-hidden="true">
-              <DashboardIcon name="help" />
+          <section
+            className="support-card help-support-card"
+            aria-labelledby="dashboard-help-title"
+          >
+            <div className="help-support-heading">
+              <div className="support-mark" aria-hidden="true">
+                <DashboardIcon name="help" />
+              </div>
+              <div className="support-copy">
+                <h2 id="dashboard-help-title">Help &amp; Support</h2>
+                <p>
+                  Get help with training, assessments, certificates or your
+                  KISTS account.
+                </p>
+              </div>
             </div>
-            <div className="support-copy">
-              <h2>Need help?</h2>
-              <p>Contact your administrator or visit our help resources.</p>
+            <div className="help-support-actions">
+              <Link to="/trainee/help">
+                <span className="help-support-action-icon" aria-hidden="true">
+                  <DashboardIcon name="Resources" />
+                </span>
+                <span>
+                  <strong>View Help &amp; FAQ</strong>
+                  <small>
+                    Find answers to common questions about using KISTS.
+                  </small>
+                </span>
+                <DashboardIcon name="arrow" />
+              </Link>
+              <Link to="/trainee/support">
+                <span className="help-support-action-icon" aria-hidden="true">
+                  <DashboardIcon name="person" />
+                </span>
+                <span>
+                  <strong>Contact Administrator</strong>
+                  <small>
+                    Send a message about your account, training or progress.
+                  </small>
+                </span>
+                <DashboardIcon name="arrow" />
+              </Link>
             </div>
-            <button className="support-button" type="button">
-              Contact Administrator
-            </button>
           </section>
         </aside>
       </div>

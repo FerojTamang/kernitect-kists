@@ -38,7 +38,7 @@ test('certificate page explains outstanding completion requirements', async ({
 
   await page.goto('/trainee/certificates');
   await expect(
-    page.getByRole('heading', { name: 'No certificates yet' }),
+    page.getByRole('heading', { name: 'Certificate in progress' }),
   ).toBeVisible();
   await expect(page.getByText('1 / 2')).toBeVisible();
 });
@@ -88,12 +88,18 @@ test('issued digital certificate displays evidence and supports print or PDF sav
   );
 
   await page.goto('/trainee/certificates');
-  await expect(page.getByRole('heading', { name: 'My Certificates' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'My Certificates' }),
+  ).toBeVisible();
   await expect(page.getByText('Certificates earned')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Current Certificate' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Current Certificate' }),
+  ).toBeVisible();
   const libraryCard = page.locator('.certificate-library-card');
   await expect(libraryCard.getByText('17 September 2026')).toBeVisible();
-  await expect(libraryCard.getByText('KISTS-20260917-ABCDEF123456')).toBeVisible();
+  await expect(
+    libraryCard.getByText('KISTS-20260917-ABCDEF123456'),
+  ).toBeVisible();
   await page.getByRole('link', { name: 'View Certificate' }).click();
   await expect(page).toHaveURL(/\/trainee\/certificates\/700$/);
   await expect(
@@ -124,8 +130,15 @@ test('issued digital certificate displays evidence and supports print or PDF sav
     await page.setViewportSize(viewport);
     const dimensions = await certificate.evaluate((element) => {
       const box = element.getBoundingClientRect();
-      const inner = element.querySelector('.certificate-document-inner')?.getBoundingClientRect();
-      return { width: box.width, height: box.height, bottom: box.bottom, innerHeight: inner?.height ?? 0 };
+      const inner = element
+        .querySelector('.certificate-document-inner')
+        ?.getBoundingClientRect();
+      return {
+        width: box.width,
+        height: box.height,
+        bottom: box.bottom,
+        innerHeight: inner?.height ?? 0,
+      };
     });
     expect(dimensions.width).toBeGreaterThan(800);
     expect(dimensions.height).toBeGreaterThan(450);

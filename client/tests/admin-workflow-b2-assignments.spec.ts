@@ -50,19 +50,29 @@ test('9E-B2 administrator can assign required training to the workflow trainee a
 }) => {
   await signIn(page);
 
-  const workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
-  await workflow.getByRole('link', { name: 'Open training assignments' }).click();
+  const workflow = page.getByRole('navigation', {
+    name: 'Administrator workflow',
+  });
+  await workflow
+    .getByRole('link', { name: 'Open training assignments' })
+    .click();
   await expect(page).toHaveURL(/\/admin\/assignments$/);
 
   let payload = await loadAssignments(page);
   const trainee = payload.trainees.find((item) => item.email === workflowEmail);
-  expect(trainee, '9E-B1 workflow trainee should exist before B2').toBeDefined();
+  expect(
+    trainee,
+    '9E-B1 workflow trainee should exist before B2',
+  ).toBeDefined();
   expect(trainee?.isActive).toBe(true);
 
   const targetModule =
     payload.modules.find((module) => module.title === 'Manual Handling') ??
     payload.modules[0];
-  expect(targetModule, 'At least one active training module is required').toBeDefined();
+  expect(
+    targetModule,
+    'At least one active training module is required',
+  ).toBeDefined();
 
   let assignment = payload.assignments.find(
     (item) =>
@@ -75,7 +85,9 @@ test('9E-B2 administrator can assign required training to the workflow trainee a
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
 
-    await dialog.getByLabel('Trainee', { exact: true }).selectOption(String(trainee!.id));
+    await dialog
+      .getByLabel('Trainee', { exact: true })
+      .selectOption(String(trainee!.id));
     await dialog
       .getByLabel('Training module', { exact: true })
       .selectOption(String(targetModule!.id));
@@ -108,9 +120,13 @@ test('9E-B2 administrator can assign required training to the workflow trainee a
 
   await page.getByLabel('Search assignments').fill(workflowEmail);
   const results = page.locator('.admin-assignments-table-wrap');
-  await expect(results.getByText(workflowEmail, { exact: true }).first()).toBeVisible();
+  await expect(
+    results.getByText(workflowEmail, { exact: true }).first(),
+  ).toBeVisible();
   await expect(
     results.getByText(targetModule!.title, { exact: true }).first(),
   ).toBeVisible();
-  await expect(results.getByText('Required', { exact: true }).first()).toBeVisible();
+  await expect(
+    results.getByText('Required', { exact: true }).first(),
+  ).toBeVisible();
 });

@@ -34,7 +34,9 @@ async function expectNoDocumentOverflow(
   const metrics = await page.evaluate(() => {
     const documentWidth = document.documentElement.scrollWidth;
     const viewportWidth = window.innerWidth;
-    const offenders = Array.from(document.querySelectorAll<HTMLElement>('body *'))
+    const offenders = Array.from(
+      document.querySelectorAll<HTMLElement>('body *'),
+    )
       .map((element) => {
         const rect = element.getBoundingClientRect();
         return {

@@ -16,39 +16,45 @@ test('administrator workflow navigation connects dashboard, users, assignments a
 }) => {
   await signIn(page);
 
-  let workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
+  let workflow = page.getByRole('navigation', {
+    name: 'Administrator navigation',
+  });
   await expect(workflow).toBeVisible();
-  await expect(
-    workflow.getByRole('link', { name: 'Open administrator dashboard' }),
-  ).toHaveAttribute('aria-current', 'page');
+  await expect(workflow.getByRole('link', { name: 'Dashboard' })).toHaveClass(
+    /active/,
+  );
 
-  await workflow.getByRole('link', { name: 'Open users & job roles' }).click();
+  await workflow.getByRole('link', { name: 'Users' }).click();
   await expect(page).toHaveURL(/\/admin\/users$/);
-  await expect(page.getByRole('heading', { name: 'Users & job roles' })).toBeVisible();
-  workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
   await expect(
-    workflow.getByRole('link', { name: 'Open users & job roles' }),
-  ).toHaveAttribute('aria-current', 'page');
+    page.getByRole('heading', { name: 'Users & job roles' }),
+  ).toBeVisible();
+  workflow = page.getByRole('navigation', { name: 'Administrator navigation' });
+  await expect(workflow.getByRole('link', { name: 'Users' })).toHaveClass(
+    /active/,
+  );
 
-  await workflow.getByRole('link', { name: 'Open training assignments' }).click();
+  await workflow.getByRole('link', { name: 'Assignments' }).click();
   await expect(page).toHaveURL(/\/admin\/assignments$/);
   await expect(
     page.getByRole('heading', { name: 'Training assignments' }),
   ).toBeVisible();
-  workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
-  await expect(
-    workflow.getByRole('link', { name: 'Open training assignments' }),
-  ).toHaveAttribute('aria-current', 'page');
+  workflow = page.getByRole('navigation', { name: 'Administrator navigation' });
+  await expect(workflow.getByRole('link', { name: 'Assignments' })).toHaveClass(
+    /active/,
+  );
 
-  await workflow.getByRole('link', { name: 'Open progress monitoring' }).click();
+  await workflow.getByRole('link', { name: 'Progress & results' }).click();
   await expect(page).toHaveURL(/\/admin\/progress$/);
-  await expect(page.getByRole('heading', { name: 'Progress & results' })).toBeVisible();
-  workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
   await expect(
-    workflow.getByRole('link', { name: 'Open progress monitoring' }),
-  ).toHaveAttribute('aria-current', 'page');
+    page.getByRole('heading', { name: 'Progress & results' }),
+  ).toBeVisible();
+  workflow = page.getByRole('navigation', { name: 'Administrator navigation' });
+  await expect(
+    workflow.getByRole('link', { name: 'Progress & results' }),
+  ).toHaveClass(/active/);
 
-  await workflow.getByRole('link', { name: 'Open administrator dashboard' }).click();
+  await workflow.getByRole('link', { name: 'Dashboard' }).click();
   await expect(page).toHaveURL(/\/admin\/dashboard$/);
   await expect(
     page.getByRole('heading', { name: 'Administrator dashboard' }),

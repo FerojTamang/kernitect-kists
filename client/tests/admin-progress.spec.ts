@@ -50,15 +50,23 @@ test('administrator progress page summarizes, filters and responsively displays 
   ).length;
 
   await page.getByLabel('Search trainees').fill(first.traineeEmail);
-  await expect(page.getByText(first.traineeEmail, { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText(first.traineeEmail, { exact: true }).first(),
+  ).toBeVisible();
   await expect(page.locator('.admin-progress-filter-meta')).toContainText(
     `Showing ${matchingEmailRecords} of ${data.records.length} assignments`,
   );
 
-  await page.getByLabel('Training module').selectOption(String(first.trainingModuleId));
-  const progressRecords = page.getByRole('region', { name: 'Trainee progress records' });
+  await page
+    .getByLabel('Training module')
+    .selectOption(String(first.trainingModuleId));
+  const progressRecords = page.getByRole('region', {
+    name: 'Trainee progress records',
+  });
   await expect(
-    progressRecords.getByText(first.trainingModuleTitle, { exact: true }).first(),
+    progressRecords
+      .getByText(first.trainingModuleTitle, { exact: true })
+      .first(),
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Clear filters' }).click();

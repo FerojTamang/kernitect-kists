@@ -105,7 +105,8 @@ try {
        WHERE training_assignment_id IN (
          SELECT a.id FROM training_assignments a
          JOIN training_modules m ON m.id = a.training_module_id
-         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+         WHERE a.trainee_id = $1
+           AND m.slug IN ('manual-handling', 'forklift-pedestrian-safety')
        )`,
       [trainee.rows[0].id],
     );
@@ -114,7 +115,8 @@ try {
        WHERE training_assignment_id IN (
          SELECT a.id FROM training_assignments a
          JOIN training_modules m ON m.id = a.training_module_id
-         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+         WHERE a.trainee_id = $1
+           AND m.slug IN ('manual-handling', 'forklift-pedestrian-safety')
        )`,
       [trainee.rows[0].id],
     );
@@ -123,7 +125,8 @@ try {
        WHERE training_assignment_id IN (
          SELECT a.id FROM training_assignments a
          JOIN training_modules m ON m.id = a.training_module_id
-         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+         WHERE a.trainee_id = $1
+           AND m.slug IN ('manual-handling', 'forklift-pedestrian-safety')
        )`,
       [trainee.rows[0].id],
     );
@@ -164,7 +167,7 @@ try {
     // Phase 7 demo assessment reset.
     // Submitted assessment attempts are intentionally immutable in normal application use.
     // This local-only demo reset temporarily disables the two protection triggers inside
-    // the existing transaction, deletes only Alex Morgan's Manual Handling assessment data,
+    // the existing transaction, deletes only Alex Morgan's two demo-module assessment records,
     // and then immediately re-enables the triggers. If the transaction fails, PostgreSQL
     // rolls the trigger-state changes back with the rest of the reset.
     await client.query(
@@ -179,7 +182,8 @@ try {
          SELECT aa.id FROM assessment_attempts aa
          JOIN training_assignments a ON a.id = aa.training_assignment_id
          JOIN training_modules m ON m.id = a.training_module_id
-         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+         WHERE a.trainee_id = $1
+           AND m.slug IN ('manual-handling', 'forklift-pedestrian-safety')
        )`,
       [trainee.rows[0].id],
     );
@@ -188,7 +192,8 @@ try {
        WHERE training_assignment_id IN (
          SELECT a.id FROM training_assignments a
          JOIN training_modules m ON m.id = a.training_module_id
-         WHERE a.trainee_id = $1 AND m.slug = 'manual-handling'
+         WHERE a.trainee_id = $1
+           AND m.slug IN ('manual-handling', 'forklift-pedestrian-safety')
        )`,
       [trainee.rows[0].id],
     );
@@ -199,12 +204,12 @@ try {
       'ALTER TABLE assessment_responses ENABLE TRIGGER validate_response',
     );
     await client.query(
-      `UPDATE progress p SET percentage = 60,
-        started_at = COALESCE(p.started_at, clock_timestamp() - interval '45 minutes'),
-        last_accessed_at = clock_timestamp(), completed_at = NULL
+      `UPDATE progress p SET percentage = 0,
+        started_at = NULL, last_accessed_at = NULL, completed_at = NULL,
+        updated_at = clock_timestamp()
        FROM training_assignments a JOIN training_modules m ON m.id = a.training_module_id
        WHERE p.training_assignment_id = a.id AND a.trainee_id = $1
-         AND m.slug = 'manual-handling'`,
+         AND m.slug IN ('manual-handling', 'forklift-pedestrian-safety')`,
       [trainee.rows[0].id],
     );
   });

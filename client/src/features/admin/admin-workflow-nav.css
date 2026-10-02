@@ -145,14 +145,16 @@
   }
 }
 
-
 /* Step 10A — presentation polish. Keep the workflow compact, scannable and brand-consistent. */
 .admin-workflow-nav {
   margin: 0 0 18px;
   padding: 15px;
   border-color: rgba(101, 78, 168, 0.14);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(249, 247, 255, 0.96));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(249, 247, 255, 0.96)
+  );
   box-shadow: 0 14px 34px rgba(35, 28, 66, 0.07);
 }
 
@@ -243,8 +245,16 @@ body .administrator-shell {
 body .administrator-shell .sidebar {
   border-right: 1px solid rgba(148, 163, 184, 0.12);
   background:
-    radial-gradient(circle at 16% 8%, rgba(82, 118, 255, 0.18), transparent 26%),
-    radial-gradient(circle at 82% 72%, rgba(108, 92, 231, 0.14), transparent 32%),
+    radial-gradient(
+      circle at 16% 8%,
+      rgba(82, 118, 255, 0.18),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 82% 72%,
+      rgba(108, 92, 231, 0.14),
+      transparent 32%
+    ),
     linear-gradient(180deg, #101f36 0%, #0b1728 52%, #091321 100%);
   box-shadow: 12px 0 34px rgba(15, 23, 42, 0.08);
 }
@@ -339,7 +349,11 @@ body .administrator-shell .sidebar-signout:hover {
 
 body .administrator-shell .admin-dashboard {
   background:
-    radial-gradient(circle at 92% 2%, rgba(59, 130, 246, 0.07), transparent 22rem),
+    radial-gradient(
+      circle at 92% 2%,
+      rgba(59, 130, 246, 0.07),
+      transparent 22rem
+    ),
     linear-gradient(180deg, #f8fbff 0%, #f5f7fb 45%, #f7f8fc 100%);
 }
 
@@ -372,8 +386,14 @@ body .administrator-shell .admin-hero {
   border-color: rgba(147, 197, 253, 0.16);
   border-radius: 20px;
   background:
-    linear-gradient(90deg, rgba(5, 21, 43, 0.96) 0%, rgba(10, 35, 67, 0.92) 44%, rgba(10, 40, 75, 0.68) 100%),
-    url('../../assets/images/dashboard/dashboard-hero.jpg') center 43% / cover no-repeat;
+    linear-gradient(
+      90deg,
+      rgba(5, 21, 43, 0.96) 0%,
+      rgba(10, 35, 67, 0.92) 44%,
+      rgba(10, 40, 75, 0.68) 100%
+    ),
+    url('../../assets/images/dashboard/dashboard-hero.jpg') center 43% / cover
+      no-repeat;
   box-shadow: 0 18px 42px rgba(15, 38, 69, 0.14);
 }
 
@@ -385,7 +405,11 @@ body .administrator-shell .admin-hero::after {
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.18), transparent 68%);
+  background: radial-gradient(
+    circle,
+    rgba(96, 165, 250, 0.18),
+    transparent 68%
+  );
   content: '';
 }
 
@@ -523,7 +547,8 @@ body .administrator-shell .admin-module-progress > span {
 body .administrator-shell .admin-attention-panel {
   background:
     linear-gradient(#fff, #fff) padding-box,
-    linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.14)) border-box;
+    linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(99, 102, 241, 0.14))
+      border-box;
 }
 
 body .administrator-shell .admin-quick-actions a {
@@ -622,7 +647,10 @@ body .administrator-shell .admin-primary-button:hover {
   }
 
   body .administrator-shell .admin-users-header .admin-users-primary,
-  body .administrator-shell .admin-assignments-header .admin-assignments-primary {
+  body
+    .administrator-shell
+    .admin-assignments-header
+    .admin-assignments-primary {
     width: fit-content;
     max-width: 100%;
   }

@@ -39,7 +39,9 @@ test('9E-B1 administrator can create or restore a trainee and verify the job rol
 }) => {
   await signIn(page);
 
-  const workflow = page.getByRole('navigation', { name: 'Administrator workflow' });
+  const workflow = page.getByRole('navigation', {
+    name: 'Administrator workflow',
+  });
   await workflow.getByRole('link', { name: 'Open users & job roles' }).click();
   await expect(page).toHaveURL(/\/admin\/users$/);
 

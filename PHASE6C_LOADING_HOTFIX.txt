@@ -1,6 +1,0 @@
-Phase 6C loading hotfix
-
-1. Fixes the Photo Sphere Viewer getPlugin TypeScript typing using the documented generic form.
-2. Preflights the JPG before creating the 360 viewer.
-3. Shows a clear in-app error when the file is not a valid decodable 2:1 panorama instead of sitting on Loading forever.
-4. Does not modify the panorama asset, database, or scenario backend.

@@ -111,6 +111,26 @@
   border-bottom: 1px solid #edf0f5;
 }
 
+.admin-assignments-toolbar.has-active-filters {
+  grid-template-columns: minmax(200px, 1fr) 190px 170px 145px auto;
+}
+
+.admin-assignments-clear {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: #6254d7;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-assignments-clear:focus-visible {
+  outline: 2px solid #6254d7;
+  outline-offset: 3px;
+}
+
 .admin-assignments-search {
   display: flex;
   align-items: center;
@@ -143,8 +163,7 @@
 .admin-assignments-table-wrap {
   width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 .admin-assignments table {
@@ -154,6 +173,9 @@
 }
 
 .admin-assignments th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   padding: 12px 16px;
   background: #f8fafc;
   color: #64748b;
@@ -232,6 +254,12 @@
 
 .admin-assignment-progress b {
   font-size: 0.76rem;
+}
+
+.admin-assignments td small.admin-assignment-stage {
+  margin-top: 6px;
+  color: #596783;
+  font-weight: 600;
 }
 
 .admin-assignments-empty {
@@ -404,8 +432,13 @@
 }
 
 @media (max-width: 1120px) {
-  .admin-assignments-toolbar {
+  .admin-assignments-toolbar,
+  .admin-assignments-toolbar.has-active-filters {
     grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 0.6fr));
+  }
+
+  .admin-assignments-clear {
+    justify-self: start;
   }
 }
 
@@ -414,7 +447,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .admin-assignments-toolbar {
+  .admin-assignments-toolbar,
+  .admin-assignments-toolbar.has-active-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -435,6 +469,7 @@
   }
 
   .admin-assignments-toolbar,
+  .admin-assignments-toolbar.has-active-filters,
   .admin-assignments-stats {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -449,14 +484,17 @@
   }
 }
 
-
 /* Step 10A — admin presentation polish. No assignment behavior changes. */
 .admin-assignments {
   --admin-accent: #6c5ce7;
   --admin-ink: #172033;
   --admin-border: #e4e8f0;
   background:
-    radial-gradient(circle at 92% 2%, rgba(108, 92, 231, 0.08), transparent 30rem),
+    radial-gradient(
+      circle at 92% 2%,
+      rgba(108, 92, 231, 0.08),
+      transparent 30rem
+    ),
     linear-gradient(180deg, #fafbfe 0%, #f6f8fc 100%);
 }
 
@@ -595,6 +633,7 @@
   color: #687386;
   font-size: 0.69rem;
   letter-spacing: 0.055em;
+  box-shadow: inset 0 -1px #e9edf3;
 }
 
 .admin-assignments tbody tr {
@@ -716,10 +755,9 @@
   }
 }
 
-
 /* Step 10C-1 tablet hotfix: render assignment records as cards while the
    administrator sidebar leaves insufficient room for the 980px desktop table. */
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .admin-assignments-table-wrap {
     overflow: visible;
   }
@@ -783,12 +821,24 @@
     text-transform: uppercase;
   }
 
-  .admin-assignments td:nth-child(1)::before { content: 'Trainee'; }
-  .admin-assignments td:nth-child(2)::before { content: 'Training module'; }
-  .admin-assignments td:nth-child(3)::before { content: 'Requirement'; }
-  .admin-assignments td:nth-child(4)::before { content: 'Status'; }
-  .admin-assignments td:nth-child(5)::before { content: 'Progress'; }
-  .admin-assignments td:nth-child(6)::before { content: 'Assigned'; }
+  .admin-assignments td:nth-child(1)::before {
+    content: 'Trainee';
+  }
+  .admin-assignments td:nth-child(2)::before {
+    content: 'Training module';
+  }
+  .admin-assignments td:nth-child(3)::before {
+    content: 'Requirement';
+  }
+  .admin-assignments td:nth-child(4)::before {
+    content: 'Assignment status';
+  }
+  .admin-assignments td:nth-child(5)::before {
+    content: 'Progress';
+  }
+  .admin-assignments td:nth-child(6)::before {
+    content: 'Assigned';
+  }
 
   .admin-assignment-progress {
     min-width: 0;

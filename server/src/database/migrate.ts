@@ -34,11 +34,16 @@ export async function migrate(
     .sort();
   if (
     !names.length ||
-    names.some((name) => !/^\d{3}_[a-z0-9_]+\.sql$/.test(name))
+    names.some((name) => !/^\d{3}[a-z]?_[a-z0-9_]+\.sql$/.test(name))
   ) {
-    throw new Error('Migration filenames must follow NNN_description.sql.');
+    throw new Error(
+      'Migration filenames must follow NNN_description.sql or NNNa_description.sql.',
+    );
   }
-  if (new Set(names.map((name) => name.slice(0, 3))).size !== names.length) {
+  if (
+    new Set(names.map((name) => name.match(/^\d{3}[a-z]?/)![0])).size !==
+    names.length
+  ) {
     throw new Error('Migration sequence numbers must be unique.');
   }
   await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -54,7 +59,14 @@ export async function migrate(
   const applied = await client.query<{ name: string; checksum: string }>(
     'SELECT name, checksum FROM schema_migrations ORDER BY name',
   );
-  if (applied.rows.some((row, index) => row.name !== names[index])) {
+  // This one additive insertion precedes already-applied 016–024 migrations.
+  // Accept only that exact historical gap; all recorded checksums remain checked.
+  const withoutForkliftBootstrap = names.filter(
+    (name) => name !== '015a_forklift_module_bootstrap.sql',
+  );
+  const matchesHistory = (expected: string[]) =>
+    applied.rows.every((row, index) => row.name === expected[index]);
+  if (!matchesHistory(names) && !matchesHistory(withoutForkliftBootstrap)) {
     throw new Error(
       'Applied migration history is missing, reordered or ahead of these files.',
     );

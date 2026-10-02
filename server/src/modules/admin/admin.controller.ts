@@ -23,22 +23,64 @@ export class AdminController {
     res.json(await this.service.users());
   };
 
-  trainingLibrary: RequestHandler = async (_req,res) => { res.json(await this.service.trainingLibrary()); };
-  trainingModule: RequestHandler = async (req,res) => { res.json(await this.service.trainingModule(Number(req.params.moduleId))); };
-  createTrainingModule: RequestHandler = async (req,res) => { res.status(201).json(await this.service.createTrainingModule(req.body)); };
-  updateTrainingModule: RequestHandler = async (req,res) => { res.json(await this.service.updateTrainingModule(Number(req.params.moduleId),req.body)); };
-  createAssessmentQuestion: RequestHandler = async (req,res) => { res.status(201).json(await this.service.createAssessmentQuestion(Number(req.params.moduleId),Number(req.params.assessmentId),req.body)); };
-  updateAssessmentQuestion: RequestHandler = async (req,res) => { res.json(await this.service.updateAssessmentQuestion(Number(req.params.moduleId),Number(req.params.assessmentId),Number(req.params.questionId),req.body)); };
-  deleteAssessmentQuestion: RequestHandler = async (req,res) => { await this.service.deleteAssessmentQuestion(Number(req.params.moduleId),Number(req.params.assessmentId),Number(req.params.questionId)); res.status(204).send(); };
+  trainingLibrary: RequestHandler = async (_req, res) => {
+    res.json(await this.service.trainingLibrary());
+  };
+  trainingModule: RequestHandler = async (req, res) => {
+    res.json(await this.service.trainingModule(Number(req.params.moduleId)));
+  };
+  createTrainingModule: RequestHandler = async (req, res) => {
+    res.status(201).json(await this.service.createTrainingModule(req.body));
+  };
+  updateTrainingModule: RequestHandler = async (req, res) => {
+    res.json(
+      await this.service.updateTrainingModule(
+        Number(req.params.moduleId),
+        req.body,
+      ),
+    );
+  };
+  createAssessmentQuestion: RequestHandler = async (req, res) => {
+    res
+      .status(201)
+      .json(
+        await this.service.createAssessmentQuestion(
+          Number(req.params.moduleId),
+          Number(req.params.assessmentId),
+          req.body,
+        ),
+      );
+  };
+  updateAssessmentQuestion: RequestHandler = async (req, res) => {
+    res.json(
+      await this.service.updateAssessmentQuestion(
+        Number(req.params.moduleId),
+        Number(req.params.assessmentId),
+        Number(req.params.questionId),
+        req.body,
+      ),
+    );
+  };
+  deleteAssessmentQuestion: RequestHandler = async (req, res) => {
+    await this.service.deleteAssessmentQuestion(
+      Number(req.params.moduleId),
+      Number(req.params.assessmentId),
+      Number(req.params.questionId),
+    );
+    res.status(204).send();
+  };
 
   createTrainee: RequestHandler = async (req, res) => {
-    const result = await this.service.createTrainee(req.body);
+    const user = req.authenticatedUser as AuthUser;
+    const result = await this.service.createTrainee(req.body, user.id);
     res.status(201).json(result);
   };
 
   updateTrainee: RequestHandler = async (req, res) => {
     const user = req.authenticatedUser as AuthUser;
-    res.json(await this.service.updateTrainee(user, Number(req.params.id), req.body));
+    res.json(
+      await this.service.updateTrainee(user, Number(req.params.id), req.body),
+    );
   };
 
   traineeAvatar: RequestHandler = async (req, res) => {
@@ -46,7 +88,12 @@ export class AdminController {
     if (!(await this.service.traineeExists(traineeId)))
       throw new HttpError(404, 'Trainee account not found.', 'USER_NOT_FOUND');
     const avatar = await this.settingsService.avatar(traineeId);
-    res.set({ 'Content-Type': avatar.contentType, 'Cache-Control': 'private, no-cache' }).send(avatar.bytes);
+    res
+      .set({
+        'Content-Type': avatar.contentType,
+        'Cache-Control': 'private, no-cache',
+      })
+      .send(avatar.bytes);
   };
 
   assignments: RequestHandler = async (_req, res) => {

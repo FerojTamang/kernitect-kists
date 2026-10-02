@@ -8,6 +8,9 @@ import type {
   TrainingScenarioDetail,
 } from './scenario.types.js';
 
+const FORKLIFT_RESOURCE_REFERENCE =
+  'asset://scenarios/forklift-pedestrian/forklift-pedestrian-training-360.png';
+
 interface HazardMetadata {
   decisionPrompt?: unknown;
   decisionOptions?: unknown;
@@ -72,16 +75,24 @@ export class ScenarioService {
     ) {
       throw new HttpError(
         409,
-        'Complete the Manual Handling learning sections before starting the interactive scenario.',
+        context.resourceReference === FORKLIFT_RESOURCE_REFERENCE
+          ? 'Complete the Forklift and Pedestrian Safety learning sections before starting the interactive scenario.'
+          : 'Complete the Manual Handling learning sections before starting the interactive scenario.',
         'SCENARIO_LOCKED',
       );
     }
 
-    const attempt = await this.repository.ensureAttempt(
-      user.id,
-      assignmentId,
-      context.scenarioId,
-    );
+    const attempt =
+      (await this.repository.findAssignmentAttempt(
+        user.id,
+        assignmentId,
+        context.scenarioId,
+      )) ??
+      (await this.repository.ensureAttempt(
+        user.id,
+        assignmentId,
+        context.scenarioId,
+      ));
     if (!attempt) {
       throw new HttpError(
         404,
@@ -90,10 +101,12 @@ export class ScenarioService {
       );
     }
 
-    await this.repository.completeAttemptIfReady(
-      attempt.id,
-      context.scenarioId,
-    );
+    if (!attempt.completedAt) {
+      await this.repository.completeAttemptIfReady(
+        attempt.id,
+        context.scenarioId,
+      );
+    }
     const [hazardRows, currentAttempt] = await Promise.all([
       this.repository.findHazards(attempt.id, context.scenarioId),
       this.repository.findAttempt(attempt.id, context.scenarioId),

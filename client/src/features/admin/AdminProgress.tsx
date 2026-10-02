@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api/request';
-import { AdminWorkflowNav } from './AdminWorkflowNav';
 import './admin-progress.css';
 
 type AssignmentStatus = 'active' | 'cancelled';
@@ -19,6 +18,7 @@ type ProgressRecord = {
   required: boolean;
   assignmentStatus: AssignmentStatus;
   progressPercentage: number;
+  progressStage: string;
   startedAt: string | null;
   completedAt: string | null;
   lastAccessedAt: string | null;
@@ -62,6 +62,27 @@ function stageLabel(completed: number, total: number) {
   return 'Not started';
 }
 
+function stageState(completed: number, total: number) {
+  if (total === 0) return 'not-required';
+  if (completed >= total) return 'complete';
+  if (completed > 0) return 'in-progress';
+  return 'not-started';
+}
+
+function StageBadge({
+  completed,
+  total,
+}: {
+  completed: number;
+  total: number;
+}) {
+  return (
+    <span className={badgeClass(stageState(completed, total))}>
+      {stageLabel(completed, total)}
+    </span>
+  );
+}
+
 function assessmentLabel(record: ProgressRecord) {
   if (record.assessmentTotal === 0) return 'Not required';
   if (record.assessmentAttempts === 0) return 'Not attempted';
@@ -73,9 +94,11 @@ function formatScore(score: number | null) {
   return score === null ? '—' : `${score}%`;
 }
 
-function completionState(record: ProgressRecord): Exclude<CompletionFilter, 'all'> {
-  if (record.completedAt) return 'complete';
-  if (record.progressPercentage > 0 || record.startedAt) return 'in-progress';
+function completionState(
+  record: ProgressRecord,
+): Exclude<CompletionFilter, 'all'> {
+  if (record.progressStage === 'Completed') return 'complete';
+  if (record.progressStage !== 'Not started') return 'in-progress';
   return 'not-started';
 }
 
@@ -113,7 +136,7 @@ function ProgressSummary({ data }: { data: ProgressData }) {
       <article>
         <span>Certificates issued</span>
         <strong>{data.summary.certificatesIssued}</strong>
-        <small>Unique trainees certified</small>
+        <small>Current eligible certificates</small>
       </article>
     </section>
   );
@@ -136,12 +159,25 @@ function ProgressRow({ record }: { record: ProgressRecord }) {
         <strong>{record.trainingModuleTitle}</strong>
         <small>{record.required ? 'Required' : 'Optional'} assignment</small>
       </td>
-      <td>{stageLabel(record.learningCompleted, record.learningTotal)}</td>
-      <td>{stageLabel(record.scenarioCompleted, record.scenarioTotal)}</td>
       <td>
-        <span className={badgeClass(assessment)}>{assessmentLabel(record)}</span>
+        <StageBadge
+          completed={record.learningCompleted}
+          total={record.learningTotal}
+        />
+      </td>
+      <td>
+        <StageBadge
+          completed={record.scenarioCompleted}
+          total={record.scenarioTotal}
+        />
+      </td>
+      <td>
+        <span className={badgeClass(assessment)}>
+          {assessmentLabel(record)}
+        </span>
         <small>
-          {record.assessmentAttempts} attempt{record.assessmentAttempts === 1 ? '' : 's'}
+          {record.assessmentAttempts} attempt
+          {record.assessmentAttempts === 1 ? '' : 's'}
           {' · '}latest {formatScore(record.latestAssessmentScore)}
         </small>
       </td>
@@ -162,11 +198,17 @@ function ProgressRow({ record }: { record: ProgressRecord }) {
       </td>
       <td>
         <span
-          className={badgeClass(record.certificateIssued ? 'issued' : 'pending')}
+          className={badgeClass(
+            record.certificateIssued ? 'issued' : 'pending',
+          )}
         >
           {record.certificateIssued ? 'Issued' : 'Pending'}
         </span>
-        {record.certificateNumber ? <small>{record.certificateNumber}</small> : null}
+        {record.certificateNumber ? (
+          <small className="admin-progress-certificate-id">
+            {record.certificateNumber}
+          </small>
+        ) : null}
       </td>
     </tr>
   );
@@ -202,24 +244,40 @@ function ProgressCard({ record }: { record: ProgressRecord }) {
       <dl>
         <div>
           <dt>Learning</dt>
-          <dd>{stageLabel(record.learningCompleted, record.learningTotal)}</dd>
+          <dd>
+            <StageBadge
+              completed={record.learningCompleted}
+              total={record.learningTotal}
+            />
+          </dd>
         </div>
         <div>
           <dt>360° scenario</dt>
-          <dd>{stageLabel(record.scenarioCompleted, record.scenarioTotal)}</dd>
+          <dd>
+            <StageBadge
+              completed={record.scenarioCompleted}
+              total={record.scenarioTotal}
+            />
+          </dd>
         </div>
         <div>
           <dt>Assessment</dt>
           <dd>
-            <span className={badgeClass(assessment)}>{assessmentLabel(record)}</span>
-            <small>{formatScore(record.latestAssessmentScore)} latest score</small>
+            <span className={badgeClass(assessment)}>
+              {assessmentLabel(record)}
+            </span>
+            <small>
+              {formatScore(record.latestAssessmentScore)} latest score
+            </small>
           </dd>
         </div>
         <div>
           <dt>Certificate</dt>
           <dd>
             <span
-              className={badgeClass(record.certificateIssued ? 'issued' : 'pending')}
+              className={badgeClass(
+                record.certificateIssued ? 'issued' : 'pending',
+              )}
             >
               {record.certificateIssued ? 'Issued' : 'Pending'}
             </span>
@@ -254,7 +312,9 @@ export function AdminProgress() {
       setData(await apiRequest<ProgressData>('/admin/progress'));
     } catch (requestError) {
       if (!(requestError instanceof ApiError && requestError.status === 401)) {
-        setError('We could not load trainee progress and results. Please try again.');
+        setError(
+          'We could not load trainee progress and results. Please try again.',
+        );
       }
     } finally {
       setLoading(false);
@@ -272,7 +332,9 @@ export function AdminProgress() {
           !cancelled &&
           !(requestError instanceof ApiError && requestError.status === 401)
         ) {
-          setError('We could not load trainee progress and results. Please try again.');
+          setError(
+            'We could not load trainee progress and results. Please try again.',
+          );
         }
       })
       .finally(() => {
@@ -308,7 +370,9 @@ export function AdminProgress() {
         assessment === 'all' || assessmentState(record) === assessment;
       const matchesCertificate =
         certificate === 'all' ||
-        (certificate === 'issued' ? record.certificateIssued : !record.certificateIssued);
+        (certificate === 'issued'
+          ? record.certificateIssued
+          : !record.certificateIssued);
 
       return (
         matchesSearch &&
@@ -352,7 +416,10 @@ export function AdminProgress() {
         <div className="admin-progress-state">
           <h1>Progress unavailable</h1>
           <p>{error}</p>
-          <button className="admin-progress-primary" onClick={() => void load()}>
+          <button
+            className="admin-progress-primary"
+            onClick={() => void load()}
+          >
             Try again
           </button>
         </div>
@@ -367,17 +434,14 @@ export function AdminProgress() {
           <p className="admin-progress-eyebrow">Training monitoring</p>
           <h1>Progress &amp; results</h1>
           <p>
-            Review each trainee assignment from learning through the 360° scenario,
-            assessment and certification.
+            Review each trainee assignment from learning through the 360°
+            scenario, assessment and certification.
           </p>
         </div>
         <div className="admin-progress-readonly">
           <strong>Read-only monitoring</strong>
-          <span>Phase 9D</span>
         </div>
       </header>
-
-      <AdminWorkflowNav />
 
       <ProgressSummary data={data} />
 
@@ -393,7 +457,10 @@ export function AdminProgress() {
         </label>
         <label>
           <span>Training module</span>
-          <select value={moduleId} onChange={(event) => setModuleId(event.target.value)}>
+          <select
+            value={moduleId}
+            onChange={(event) => setModuleId(event.target.value)}
+          >
             <option value="all">All modules</option>
             {data.modules.map((module) => (
               <option key={module.id} value={module.id}>
@@ -406,7 +473,9 @@ export function AdminProgress() {
           <span>Completion</span>
           <select
             value={completion}
-            onChange={(event) => setCompletion(event.target.value as CompletionFilter)}
+            onChange={(event) =>
+              setCompletion(event.target.value as CompletionFilter)
+            }
           >
             <option value="all">All completion states</option>
             <option value="complete">Complete</option>
@@ -418,7 +487,9 @@ export function AdminProgress() {
           <span>Assessment</span>
           <select
             value={assessment}
-            onChange={(event) => setAssessment(event.target.value as AssessmentFilter)}
+            onChange={(event) =>
+              setAssessment(event.target.value as AssessmentFilter)
+            }
           >
             <option value="all">All assessment states</option>
             <option value="passed">Passed</option>
@@ -430,7 +501,9 @@ export function AdminProgress() {
           <span>Certificate</span>
           <select
             value={certificate}
-            onChange={(event) => setCertificate(event.target.value as CertificateFilter)}
+            onChange={(event) =>
+              setCertificate(event.target.value as CertificateFilter)
+            }
           >
             <option value="all">All certificate states</option>
             <option value="issued">Issued</option>
@@ -450,7 +523,10 @@ export function AdminProgress() {
         </div>
       </section>
 
-      <section className="admin-progress-panel" aria-label="Trainee progress records">
+      <section
+        className="admin-progress-panel"
+        aria-label="Trainee progress records"
+      >
         <div className="admin-progress-table-wrap">
           <table>
             <thead>

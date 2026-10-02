@@ -26,6 +26,10 @@ import { AdminAssignments } from './features/admin/AdminAssignments';
 import { AdminProgress } from './features/admin/AdminProgress';
 import { AdminSettings } from './features/admin/AdminSettings';
 import { AdminTrainingContent } from './features/admin/AdminTrainingContent';
+import { TraineeHelp } from './features/support/TraineeHelp';
+import { TraineeSupport } from './features/support/TraineeSupport';
+import { TraineeAiAssistant } from './features/support/TraineeAiAssistant';
+import { AdminSupportMessages } from './features/support/AdminSupportMessages';
 
 export function App() {
   return (
@@ -47,6 +51,9 @@ export function App() {
           <Route path="training" element={<TraineeTraining />} />
           <Route path="progress" element={<TraineeProgress />} />
           <Route path="resources" element={<TraineeResources />} />
+          <Route path="help" element={<TraineeHelp />} />
+          <Route path="help/ai-assistant" element={<TraineeAiAssistant />} />
+          <Route path="support" element={<TraineeSupport />} />
           <Route path="settings" element={<TraineeSettings />} />
           <Route path="scenarios" element={<TraineeScenarios />} />
           <Route path="certificates" element={<TraineeCertificates />} />
@@ -88,10 +95,7 @@ export function App() {
                 />
               ),
           )}
-          <Route
-            path="assessments"
-            element={<TraineeAssessments />}
-          />
+          <Route path="assessments" element={<TraineeAssessments />} />
         </Route>
       </Route>
 
@@ -111,6 +115,7 @@ export function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="assignments" element={<AdminAssignments />} />
           <Route path="progress" element={<AdminProgress />} />
+          <Route path="support" element={<AdminSupportMessages />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="training" element={<AdminTrainingContent />} />
           <Route path="training/:moduleId" element={<AdminTrainingContent />} />
@@ -120,6 +125,7 @@ export function App() {
               item.path !== 'users' &&
               item.path !== 'assignments' &&
               item.path !== 'progress' &&
+              item.path !== 'support' &&
               item.path !== 'settings' &&
               item.path !== 'training' && (
                 <Route
