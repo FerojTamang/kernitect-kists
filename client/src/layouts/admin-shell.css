@@ -296,3 +296,95 @@ body .administrator-shell .topbar {
     padding-inline: 16px;
   }
 }
+
+/* The normal trainee and administrator sidebars share one compact brand treatment. */
+@media (min-width: 861px) {
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-block {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    width: 196px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+  .trainee-dashboard-shell .sidebar .brand-block {
+    top: -8px;
+    left: 2px;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .dashboard-logo-frame {
+    display: block;
+    width: 196px;
+    max-width: 100%;
+    aspect-ratio: 2.3;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .dashboard-logo-frame .brand-logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    object-fit: contain;
+    filter: none;
+    transform: none;
+    mix-blend-mode: normal;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-tagline {
+    margin: 2px 0 24px;
+    color: #d7def2;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-copy {
+    width: 100%;
+    margin-top: 0;
+    color: #fff;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-name {
+    width: max-content;
+    margin: 0 0 6px;
+    padding-bottom: 7px;
+    color: #fff;
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 43px;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-subtitle {
+    display: block;
+    color: #d7def2;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-divider {
+    display: block;
+    width: 48px;
+    height: 3px;
+    margin-top: 12px;
+    border: 0;
+    background: #6c5ce7;
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1200px) {
+  .trainee-dashboard-shell .sidebar .brand-block {
+    top: -6px;
+    left: 10px;
+  }
+}
+
+.app-shell:is(.trainee-dashboard-shell, .administrator-shell) .sidebar .brand-tagline {
+  transform: translateX(7px);
+}

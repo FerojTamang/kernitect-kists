@@ -72,8 +72,11 @@ export function LoginPage() {
       </a>
       <section className="login-brand-panel" aria-label="About KISTS">
         <div className="login-brand-copy">
-          <div className="login-logo-frame">
-            <BrandLogo />
+          <div className="login-logo-lockup">
+            <div className="login-logo-frame">
+              <BrandLogo />
+            </div>
+            <p className="login-logo-tagline">PEOPLE | SAFETY | PROGRESS</p>
           </div>
           <div className="login-brand-title">
             <h2>KISTS</h2>
@@ -120,13 +123,6 @@ export function LoginPage() {
         </div>
       </section>
       <section className="login-form-area" aria-labelledby="login-heading">
-        <p className="login-help">
-          Need help?{' '}
-          <span>
-            <LoginIcon name="email" />
-            Contact your administrator
-          </span>
-        </p>
         <div className="login-form-card">
           <p className="login-eyebrow">Welcome back</p>
           <h1 id="login-heading">Sign in to your training portal</h1>
@@ -249,6 +245,9 @@ export function LoginPage() {
             <div>
               <strong>Need access?</strong>
               <p>Contact your administrator to request an account.</p>
+              <a href="mailto:?subject=KISTS%20account%20access">
+                Contact Administrator
+              </a>
             </div>
           </div>
         </div>
