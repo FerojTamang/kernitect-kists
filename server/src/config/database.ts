@@ -3,19 +3,21 @@ import { readFileSync } from 'node:fs';
 import { env } from './env.js';
 
 // Use the Supabase CA certificate only for Supabase connections.
-// Local PostgreSQL continues using its existing connection settings.
+// Render provides the certificate as a secret file in production.
 const databaseUrl = new URL(env.databaseUrl);
 const isSupabase = databaseUrl.hostname.endsWith('.supabase.co');
+
+const certificatePath =
+  process.env.NODE_ENV === 'production'
+    ? '/etc/secrets/prod-ca-2021.crt'
+    : new URL('../../certs/prod-ca-2021.crt', import.meta.url);
 
 export const pool = new pg.Pool({
   connectionString: env.databaseUrl,
   ...(isSupabase
     ? {
         ssl: {
-          ca: readFileSync(
-            new URL('../../certs/prod-ca-2021.crt', import.meta.url),
-            'utf8',
-          ),
+          ca: readFileSync(certificatePath, 'utf8'),
           rejectUnauthorized: true,
         },
       }
