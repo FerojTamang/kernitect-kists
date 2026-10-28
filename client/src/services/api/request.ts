@@ -14,7 +14,8 @@ export async function apiRequest<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`/api${path}`, {
+    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+    response = await fetch(`${apiBaseUrl}/api${path}`, {
       ...options,
       credentials: 'include',
       signal: options.signal
