@@ -32,7 +32,14 @@ export const errorHandler: ErrorRequestHandler = (
     candidate < 500
       ? candidate
       : 500;
-  if (status === 500) console.error('An unexpected request error occurred.');
+  if (status === 500) {
+  const safeError =
+    error instanceof Error
+      ? { name: error.name, message: error.message, stack: error.stack }
+      : { errorType: typeof error };
+
+  console.error('Unexpected request error:', safeError);
+}
   const message =
     status === 413
       ? 'Request body too large'
@@ -41,3 +48,4 @@ export const errorHandler: ErrorRequestHandler = (
         : 'Internal server error';
   res.status(status).json({ error: { message } });
 };
+
