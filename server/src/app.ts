@@ -23,6 +23,7 @@ import { apiRouter } from './routes/index.js';
 
 export function createApp(database: Pool = pool) {
   const app = express();
+  app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(
