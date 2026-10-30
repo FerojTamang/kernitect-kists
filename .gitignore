@@ -14,3 +14,10 @@ Thumbs.db
 server/uploads/
 /server/certs/
 server/.env.local
+
+# Private keys and credentials
+*.pem
+*.key
+*.secret
+credentials/
+secrets/
