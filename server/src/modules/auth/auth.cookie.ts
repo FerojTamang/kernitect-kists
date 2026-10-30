@@ -4,11 +4,11 @@ import { env } from '../../config/env.js';
 
 export const SESSION_COOKIE = 'kists_session';
 export const sessionCookieOptions = (
-  production = env.cookieSecure,
+  production = env.isProduction,
 ): CookieOptions => ({
   httpOnly: true,
   secure: production,
-  sameSite: 'lax',
+  sameSite: production ? 'none' : 'lax',
   path: '/',
 });
 export function readSessionToken(request: Request): string | undefined {

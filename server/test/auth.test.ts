@@ -897,6 +897,8 @@ test('session cookie is HttpOnly, host-only, SameSite=Lax with an explicit eight
   assert.ok(header.includes('Expires='));
   assert.ok(!header.includes('Domain='));
   assert.ok(!header.includes('Secure'));
+  assert.equal(sessionCookieOptions(false).sameSite, 'lax');
+  assert.equal(sessionCookieOptions(true).sameSite, 'none');
   assert.equal(sessionCookieOptions(true).secure, true);
 });
 

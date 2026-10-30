@@ -55,7 +55,7 @@ There is no automatic expired-session cleanup job in this phase. Later maintenan
 - Login rate limits allow **10 failed attempts per normalized email** and **30 failed attempts per client IP** per 15 minutes, with 429/Retry-After. Email keys are hashed. Successful requests are removed from the counters.
 - Limits use process memory, appropriate to this single-process modular monolith. They reset on restart and are not distributed. `trust proxy` remains false: a future deployment must explicitly configure its actual trusted proxy chain rather than trusting arbitrary forwarded headers.
 - Error responses are controlled; passwords, SQL row details, cookies and raw tokens are not logged. HTTP-only cookies reduce token exposure but do not replace safe UI rendering and future deployment security work.
-- Production requires HTTPS `CLIENT_URL` and Secure cookies. TLS hosting/deployment is not implemented here. Nonproduction CLIENT_URL is restricted to loopback hosts.
+- Production requires HTTPS `CLIENT_URL` and cross-site session cookies use `SameSite=None; Secure` without a `Domain` attribute. Local development uses `SameSite=Lax` and nonproduction `CLIENT_URL` is restricted to loopback hosts. Credentialed frontend requests must use `credentials: 'include'`.
 
 ## System role versus job role
 
