@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 const password = process.env.KISTS_DEMO_PASSWORD!;
 const administrator = 'kists.administrator@example.invalid';
+const testApiBaseUrl = 'http://localhost:3000';
 
 async function signIn(page: Page) {
   await page.goto('/');
@@ -92,8 +93,22 @@ test('administrator settings shares profile state with the shell and supports ac
     buffer: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
   });
   await expect(page.getByText('Profile photo updated.')).toBeVisible();
-  await expect(page.locator('.admin-shell-avatar img')).toBeVisible();
-  await expect(page.locator('.settings-avatar img')).toBeVisible();
+  await expect(page.locator('.admin-shell-avatar img')).toHaveAttribute(
+    'src',
+    /\/api\/admin\/settings\/avatar\?v=1$/,
+  );
+  await expect(page.locator('.admin-shell-avatar img')).toHaveJSProperty(
+    'src',
+    `${testApiBaseUrl}/api/admin/settings/avatar?v=1`,
+  );
+  await expect(page.locator('.settings-avatar img')).toHaveAttribute(
+    'src',
+    /\/api\/admin\/settings\/avatar\?v=1$/,
+  );
+  await expect(page.locator('.settings-avatar img')).toHaveJSProperty(
+    'src',
+    `${testApiBaseUrl}/api/admin/settings/avatar?v=1`,
+  );
   await page.getByRole('button', { name: 'Remove photo' }).click();
   await expect(page.getByText('Profile photo removed.')).toBeVisible();
   await expect(page.locator('.admin-shell-avatar')).toHaveText('KA');

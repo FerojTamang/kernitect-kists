@@ -6,6 +6,7 @@ import forkliftImage from '../../assets/images/dashboard/forklift-pedestrian-saf
 import fireSafetyImage from '../../assets/images/dashboard/fire-safety-basics.jpg';
 import workingAtHeightImage from '../../assets/images/dashboard/working-at-height.jpg';
 import { apiRequest, ApiError } from '../../services/api/request';
+import { resolveApiUrl } from '../../services/api/url';
 import type {
   AssignmentStatus,
   DashboardAssignment,
@@ -319,7 +320,7 @@ export function TraineeDashboard() {
           <div className="profile-divider" aria-hidden="true" />
           <span className="profile-avatar" aria-hidden="true">
             {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="" />
+              <img src={resolveApiUrl(user.avatarUrl)} alt="" />
             ) : (
               <>
                 {trainee.firstName[0]}

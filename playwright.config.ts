@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 
+const testApiBaseUrl = 'http://localhost:3000';
+
 dotenv.config({ path: 'server/.env', quiet: true });
 if (
   !process.env.KISTS_DEMO_PASSWORD ||
@@ -39,6 +41,7 @@ export default defineConfig({
     {
       command: 'npm run dev:client',
       url: 'http://localhost:5173',
+      env: { VITE_API_BASE_URL: testApiBaseUrl },
       reuseExistingServer: true,
       timeout: 30000,
     },

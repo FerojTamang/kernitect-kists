@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, apiRequest } from '../../services/api/request';
+import { resolveApiUrl } from '../../services/api/url';
 import { useAuth } from '../auth/auth.context';
 import type { SystemRole } from '../auth/auth.types';
 import '../trainee/trainee-settings.css';
@@ -306,7 +307,10 @@ export function AccountSettings({ role }: { role: SystemRole }) {
         <div className="settings-profile-summary">
           <div className="settings-avatar">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={`${fullName} profile`} />
+              <img
+                src={resolveApiUrl(user.avatarUrl)}
+                alt={`${fullName} profile`}
+              />
             ) : (
               <span>{initials}</span>
             )}

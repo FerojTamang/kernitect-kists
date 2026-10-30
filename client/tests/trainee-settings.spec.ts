@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { createTrainee, removeTrainee, trainee } from './trainee-fixture';
 
 const password = process.env.KISTS_DEMO_PASSWORD!;
+const testApiBaseUrl = 'http://localhost:3000';
 test.beforeAll(createTrainee);
 test.afterAll(removeTrainee);
 
@@ -90,7 +91,13 @@ test('settings renders managed profile, avatar controls, password dialog and per
   await page.goto('/trainee/dashboard');
   await expect(
     page.locator('.dashboard-profile .profile-avatar img'),
-  ).toBeVisible();
+  ).toHaveAttribute('src', /\/api\/trainee\/settings\/avatar\?v=1$/);
+  await expect(
+    page.locator('.dashboard-profile .profile-avatar img'),
+  ).toHaveJSProperty(
+    'src',
+    `${testApiBaseUrl}/api/trainee/settings/avatar?v=1`,
+  );
   await page.goto('/trainee/settings');
   await page.getByRole('button', { name: 'Remove photo' }).click();
   await expect(page.getByText('Profile photo removed.')).toBeVisible();

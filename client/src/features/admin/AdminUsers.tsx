@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ApiError, apiRequest } from '../../services/api/request';
+import { resolveApiUrl } from '../../services/api/url';
 import { DashboardIcon } from '../trainee/DashboardIcon';
 import './admin-users.css';
 
@@ -318,7 +319,7 @@ export function AdminUsers() {
                     <div className="admin-users-identity">
                       <span className="admin-users-avatar" aria-hidden="true">
                         {u.avatarUrl ? (
-                          <img src={u.avatarUrl} alt="" />
+                          <img src={resolveApiUrl(u.avatarUrl)} alt="" />
                         ) : (
                           `${u.firstName[0] ?? ''}${u.lastName[0] ?? ''}`.toUpperCase()
                         )}

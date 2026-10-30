@@ -5,6 +5,7 @@ import { useAuth } from '../features/auth/auth.context';
 import type { NavigationItem } from '../types/navigation';
 import { DashboardIcon } from '../features/trainee/DashboardIcon';
 import { SupportNotifications } from '../features/support/SupportNotifications';
+import { resolveApiUrl } from '../services/api/url';
 import './admin-shell.css';
 
 interface AppLayoutProps {
@@ -242,7 +243,7 @@ export function AppLayout({ audience, basePath, navigation }: AppLayoutProps) {
               >
                 <span className="admin-shell-avatar" aria-hidden="true">
                   {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="" />
+                    <img src={resolveApiUrl(user.avatarUrl)} alt="" />
                   ) : (
                     `${user?.firstName[0] ?? ''}${user?.lastName[0] ?? ''}`.toUpperCase()
                   )}
