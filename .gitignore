@@ -13,3 +13,4 @@ Thumbs.db
 /kists-source.zip
 server/uploads/
 /server/certs/
+server/.env.local

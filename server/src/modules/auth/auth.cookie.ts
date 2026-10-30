@@ -8,7 +8,7 @@ export const sessionCookieOptions = (
 ): CookieOptions => ({
   httpOnly: true,
   secure: production,
-  sameSite: 'none',
+  sameSite: 'lax',
   path: '/',
 });
 export function readSessionToken(request: Request): string | undefined {

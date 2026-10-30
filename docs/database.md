@@ -122,7 +122,7 @@ Manual Handling and Forklift and Pedestrian Safety are catalogue rows. Additiona
 
 ## Configure local PostgreSQL
 
-Use Node.js 22.12+ and local PostgreSQL 16. For an existing installation, create an empty **`kists_dev`** database with your local owner and put its URL in ignored `server/.env`. Preserve `PORT` and `CLIENT_URL`. The role needs schema/table/function creation rights. These development privileges are not a deployment policy.
+Use Node.js 22.12+ and local PostgreSQL 16. For an existing installation, create an empty **`kists_dev`** database with your local owner and put its URL in ignored `server/.env.local`. Preserve `PORT` and `CLIENT_URL`. The server loads `.env.local` for local overrides before the deployment `.env`; process environment variables still take precedence. The role needs schema/table/function creation rights. These development privileges are not a deployment policy.
 
 Alternatively, with PostgreSQL 16 installed on Windows, run from the repository root:
 
@@ -130,7 +130,7 @@ Alternatively, with PostgreSQL 16 installed on Windows, run from the repository 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File database/scripts/start-local-postgres.ps1
 ```
 
-This creates/restarts a separate loopback-only cluster in ignored `.local/postgres/data`, port **55432**, database **`kists_dev`**. It generates a random password and stores the URL only in ignored `server/.env`. It does not alter the existing PostgreSQL service or the machine's execution policy. Initial setup refuses to replace a custom URL.
+This creates/restarts a separate loopback-only cluster in ignored `.local/postgres/data`, port **55432**, database **`kists_dev`**. It generates a random password and stores the URL only in ignored `server/.env.local`. It does not alter the existing PostgreSQL service or the machine's execution policy. Initial setup refuses to replace a custom URL.
 
 Use `-PostgresBin 'C:\path\to\PostgreSQL\bin'` or `-Port 55433` if needed, and reuse that port on subsequent starts. The cluster is not a Windows service; rerun the script after a reboot. Preserve `.local` to retain its data.
 

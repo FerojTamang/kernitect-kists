@@ -24,6 +24,7 @@ const traineeEmail = 'admin.progress.trainee@example.invalid';
 let server: Server;
 let base = '';
 let assignmentId = 0;
+let schemaCreated = false;
 
 before(async () => {
   assertLocalDevelopmentDatabase(env.databaseUrl);
@@ -32,6 +33,7 @@ before(async () => {
     await migrate(client, schema);
     await seed(client, schema);
   });
+  schemaCreated = true;
 
   const passwordHash = await hashPassword(password);
 
@@ -117,7 +119,8 @@ after(async () => {
       server.close((error) => (error ? reject(error) : resolve())),
     );
   }
-  await database.query(`DROP SCHEMA ${quotedSchema(schema)} CASCADE`);
+  if (schemaCreated)
+    await database.query(`DROP SCHEMA ${quotedSchema(schema)} CASCADE`);
   await database.end();
 });
 

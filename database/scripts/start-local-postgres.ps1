@@ -1,12 +1,12 @@
 param(
   [string]$PostgresBin = 'C:\Program Files\PostgreSQL\16\bin',
-  [int]$Port = 5433
+  [int]$Port = 55432
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $localRoot = Join-Path $projectRoot '.local/postgres'
 $dataPath = Join-Path $localRoot 'data'
-$envPath = Join-Path $projectRoot 'server/.env'
+$envPath = Join-Path $projectRoot 'server/.env.local'
 $initdb = Join-Path $PostgresBin 'initdb.exe'
 $pgctl = Join-Path $PostgresBin 'pg_ctl.exe'
 $createdb = Join-Path $PostgresBin 'createdb.exe'
@@ -14,9 +14,6 @@ if (!(Test-Path -LiteralPath $initdb)) { throw 'PostgreSQL binaries not found. S
 if ($Port -lt 1024 -or $Port -gt 65535) { throw 'Use a local development port between 1024 and 65535.' }
 New-Item -ItemType Directory -Force -Path $localRoot | Out-Null
 if (!(Test-Path -LiteralPath (Join-Path $dataPath 'PG_VERSION'))) {
-  if ((Test-Path -LiteralPath $envPath) -and ((Get-Content -Raw -LiteralPath $envPath) -notmatch '(?m)^DATABASE_URL=postgresql://kists_user:replace_me@localhost:5432/kists(?:_dev)?\s*$')) {
-    throw 'server/.env already has a custom database URL. Preserve it; use your database or configure a separate local cluster manually.'
-  }
   $randomBytes = New-Object byte[] 32
   $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
   $rng.GetBytes($randomBytes)
@@ -38,13 +35,14 @@ if (!(Test-Path -LiteralPath (Join-Path $dataPath 'PG_VERSION'))) {
 & $pgctl -D $dataPath status *> $null
 if ($LASTEXITCODE -ne 0) {
   $startup = Start-Process -FilePath $pgctl -ArgumentList @('-D', ('"' + $dataPath + '"'), '-l', ('"' + (Join-Path $localRoot 'postgres.log') + '"'), '-o', ('"-h 127.0.0.1 -p ' + $Port + '"'), '-w', 'start') -WindowStyle Hidden -PassThru
-  # Wait for pg_ctl only; -Wait would also wait for the long-running postgres child.
   $startup.WaitForExit()
   if ($startup.ExitCode -ne 0) { throw 'PostgreSQL startup failed. See .local/postgres/postgres.log.' }
 }
+if (!(Test-Path -LiteralPath $envPath)) { throw 'server/.env.local was not created.' }
 $urlLine = Get-Content -LiteralPath $envPath | Where-Object { $_ -match '^DATABASE_URL=' } | Select-Object -First 1
+if (!$urlLine) { throw 'server/.env.local must contain DATABASE_URL.' }
 $connectionUri = [Uri]($urlLine.Substring('DATABASE_URL='.Length))
-if ($connectionUri.Host -ne '127.0.0.1' -or $connectionUri.Port -ne $Port -or $connectionUri.AbsolutePath -ne '/kists_dev') { throw 'Local cluster does not match server/.env.' }
+if ($connectionUri.Host -notin @('127.0.0.1', 'localhost') -or $connectionUri.Port -ne $Port -or $connectionUri.AbsolutePath -ne '/kists_dev') { throw 'Local cluster does not match server/.env.local.' }
 $savedPgPassword = $env:PGPASSWORD
 try {
   $env:PGPASSWORD = [Uri]::UnescapeDataString(($connectionUri.UserInfo -split ':', 2)[1])
@@ -55,4 +53,4 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not create kists_dev.' }
   }
 } finally { $env:PGPASSWORD = $savedPgPassword }
-Write-Output "Local PostgreSQL is ready on 127.0.0.1:$Port. Connection details are stored only in ignored server/.env."
+Write-Output "Local PostgreSQL is ready on 127.0.0.1:$Port. Connection details are stored only in ignored server/.env.local."
