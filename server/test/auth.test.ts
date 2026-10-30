@@ -241,6 +241,10 @@ test('valid trainee login returns only safe profile fields', async () => {
   ]);
   assert.deepEqual(Object.keys(body), ['user']);
   assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(
+    response.headers.get('cross-origin-resource-policy'),
+    'same-origin',
+  );
 });
 
 test('valid administrator login has administrator system role and no job role', async () => {
@@ -1093,6 +1097,10 @@ test('trainee can upload, read and remove a validated persistent avatar', async 
   });
   assert.equal(avatar.status, 200);
   assert.equal(avatar.headers.get('content-type'), 'image/png');
+  assert.equal(
+    avatar.headers.get('cross-origin-resource-policy'),
+    'cross-origin',
+  );
   const invalid = await fetch(`${base}/api/trainee/settings/avatar`, {
     method: 'POST',
     headers: {
@@ -1174,13 +1182,13 @@ test('administrator reuses persistent avatar and password settings with role-saf
     ((await current.json()) as { user: AuthUser }).user.avatarUrl,
     '/api/admin/settings/avatar',
   );
+  const adminAvatar = await fetch(`${base}/api/admin/settings/avatar`, {
+    headers: { Cookie: cookie },
+  });
+  assert.equal(adminAvatar.status, 200);
   assert.equal(
-    (
-      await fetch(`${base}/api/admin/settings/avatar`, {
-        headers: { Cookie: cookie },
-      })
-    ).status,
-    200,
+    adminAvatar.headers.get('cross-origin-resource-policy'),
+    'cross-origin',
   );
   const traineeCookie = cookieFrom(await login(emptyTraineeEmail));
   assert.equal(

@@ -41,6 +41,7 @@ export class SettingsController {
       .set({
         'Content-Type': avatar.contentType,
         'Cache-Control': 'private, no-cache',
+        'Cross-Origin-Resource-Policy': 'cross-origin',
       })
       .send(avatar.bytes);
   };
